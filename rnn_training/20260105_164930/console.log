@@ -1,0 +1,60 @@
+2026-01-05 16:49:31,688 INFO: Logging started. Output file: rnn_training/20260105_164930/console.log
+2026-01-05 16:49:31,688 INFO: Seed: 42
+2026-01-05 16:49:33,356 INFO: Initial conds fshape: (46623, 110)
+2026-01-05 16:49:33,357 INFO: Activity snippets shape: (46623, 60, 110)
+2026-01-05 16:49:33,357 INFO: Stim snippets shape: (46623, 60, 10)
+2026-01-05 16:49:33,358 INFO: Snippet overlap: True
+2026-01-05 16:50:01,552 INFO: Snippets DataFrame shape: (46623, 18)
+2026-01-05 16:50:01,554 INFO: Valid snippets: 46623
+2026-01-05 16:50:01,554 INFO: Snippets with stim at t=0: 720
+2026-01-05 16:50:01,607 INFO: Trial holdout [1, 7]: train=30449, val=5374, test=10800
+2026-01-05 16:50:01,610 INFO: Holdout stim times per session: {np.int64(0): 62, np.int64(1): 62, np.int64(2): 62}
+2026-01-05 16:50:02,217 INFO: Removed 9684 train snippets near holdout stim times
+2026-01-05 16:50:02,329 INFO: Removed 1701 val snippets near holdout stim times
+2026-01-05 16:50:02,331 INFO: === Split Summary (trial) after removing overlaps ===
+2026-01-05 16:50:02,331 INFO: Train: 20765 samples
+2026-01-05 16:50:02,332 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-05 16:50:02,333 INFO:   First configs with stim_at_t0: [np.int64(1), np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30)]
+2026-01-05 16:50:02,333 INFO: Val: 3673 samples
+2026-01-05 16:50:02,333 INFO: Test: 10800 samples
+2026-01-05 16:50:02,334 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-05 16:50:47,395 INFO: Batch size: 4
+2026-01-05 16:50:47,397 INFO: Split strategy: trial
+2026-01-05 16:50:48,345 INFO: Dataset sizes -> train: 20765, val: 3673, test: 10800
+2026-01-05 16:50:48,350 INFO: Train input size: 10
+2026-01-05 16:50:48,350 INFO: Train output size: 110
+2026-01-05 16:50:48,350 INFO: Hidden state size: 64
+2026-01-05 16:50:48,351 INFO: Number of GRU layers: 1
+2026-01-05 16:50:48,364 INFO: Model architecture:
+RNNModel(
+  (initial_state_projection): Linear(in_features=110, out_features=64, bias=True)
+  (rnn): GRU(10, 64, batch_first=True)
+  (dense): Sequential(
+    (0): Linear(in_features=64, out_features=128, bias=True)
+    (1): GELU(approximate='none')
+    (2): Linear(in_features=128, out_features=110, bias=True)
+  )
+)
+2026-01-05 16:50:48,365 INFO: Using WeightedMAELoss: stim_weight=5.0, window=15, decay=none
+2026-01-05 16:50:48,365 INFO: Learning rate 0.001
+2026-01-05 16:50:48,366 INFO: Optimizer: Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    decoupled_weight_decay: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0
+)
+2026-01-05 16:50:48,366 INFO: Loss type: weighted_mae
+2026-01-05 16:50:48,366 INFO: Regularization coefficient: 0
+2026-01-05 16:52:02,755 INFO: Number of epochs 10
+2026-01-05 16:52:02,945 INFO: configs shape: (3, 110, 31)
+2026-01-05 16:52:02,945 INFO: roi_used shape: (512, 512)
+2026-01-05 16:52:02,946 INFO: times shape: (3, 8, 31)
+2026-01-05 16:52:02,946 INFO: dfof shape: (3, 15600, 110)

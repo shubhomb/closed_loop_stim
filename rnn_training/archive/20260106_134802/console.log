@@ -1,0 +1,54 @@
+2026-01-06 13:48:02,855 INFO: Logging started. Output file: rnn_training/20260106_134802/console.log
+2026-01-06 13:48:02,855 INFO: Seed: 42
+2026-01-06 13:48:02,856 INFO: Number of epochs 30
+2026-01-06 13:48:03,042 INFO: Target neurons: [31]
+2026-01-06 13:48:03,042 INFO: Target indices in filtered data: [30]
+2026-01-06 13:48:03,043 INFO: configs shape: (3, 110, 31)
+2026-01-06 13:48:03,043 INFO: roi_used shape: (512, 512)
+2026-01-06 13:48:03,044 INFO: times shape: (3, 8, 31)
+2026-01-06 13:48:03,044 INFO: dfof shape: (3, 15600, 110)
+2026-01-06 13:48:03,746 INFO: Creating trials DataFrame with STIM_OFFSET=10
+2026-01-06 13:48:03,749 INFO: Total trials before filtering: 744
+2026-01-06 13:48:03,750 INFO: Final trials_df size: 744
+2026-01-06 13:48:03,750 INFO: DataFrame shape: (744, 8)
+2026-01-06 13:48:03,752 INFO: Trials per session: {0: 248, 1: 248, 2: 248}
+2026-01-06 13:48:03,752 INFO: Unique values:
+2026-01-06 13:48:03,752 INFO:   Sessions: 0, 1, 2
+2026-01-06 13:48:03,753 INFO:   Configs: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+2026-01-06 13:48:03,753 INFO:   Electrodes: -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+2026-01-06 13:48:03,753 INFO:   Currents: 0, 3, 4, 5
+2026-01-06 13:48:03,754 INFO: --- Filter Status ---
+2026-01-06 13:48:03,754 INFO:   FILTER_CONFIGS: All
+2026-01-06 13:48:03,755 INFO:   FILTER_NEURONS: All
+2026-01-06 13:48:03,755 INFO:   FILTER_ELECTRODES: All
+2026-01-06 13:48:03,755 INFO:   FILTER_CURRENTS: All
+2026-01-06 13:48:03,758 INFO: trials_df head:
+   session  trial  config  electrode  current  stim_time  start_time  is_stim
+0        0      0       1          0        3       2821        2821     True
+1        0      1       1          0        3       3817        3817     True
+2        0      2       1          0        3       4191        4191     True
+3        0      3       1          0        3       6619        6619     True
+4        0      4       1          0        3       8797        8797     True
+5        0      5       1          0        3      11599       11599     True
+6        0      6       1          0        3      12657       12657     True
+7        0      7       1          0        3      12782       12782     True
+8        0      0       2          0        4       1140        1140     True
+9        0      1       2          0        4       6183        6183     True
+2026-01-06 13:48:03,760 INFO: --- Example queries ---
+2026-01-06 13:48:03,762 INFO: Electrode 9, Current 5: 24 trials
+2026-01-06 13:48:03,763 INFO: Session 0, Config 7: 8 trials
+2026-01-06 13:48:11,016 INFO: Initial conds shape: (915, 110)
+2026-01-06 13:48:11,016 INFO: Activity snippets shape: (915, 50, 110)
+2026-01-06 13:48:11,017 INFO: Stim snippets shape: (915, 50, 10)
+2026-01-06 13:48:11,017 INFO: Snippet overlap: False
+2026-01-06 13:48:25,046 INFO: Snippets DataFrame shape: (744, 18)
+2026-01-06 13:48:25,046 INFO: Valid snippets: 744
+2026-01-06 13:48:25,047 INFO: Snippets with stim at t=0: 744
+2026-01-06 13:48:25,049 INFO: Holdout stim times per session: {np.int64(0): 62, np.int64(1): 62, np.int64(2): 62}
+2026-01-06 13:48:25,063 INFO: Trial holdout [1, 7]: train=387, val=69, test=288
+2026-01-06 13:48:25,064 INFO: === Split Summary (trial) ===
+2026-01-06 13:48:25,064 INFO: Train: 387 samples (52.0%)
+2026-01-06 13:48:25,065 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-06 13:48:25,065 INFO: Val: 69 samples (9.3%)
+2026-01-06 13:48:25,065 INFO: Test: 288 samples (38.7%)
+2026-01-06 13:48:25,065 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]

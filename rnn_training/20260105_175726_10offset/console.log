@@ -1,0 +1,233 @@
+2026-01-05 17:57:31,338 INFO: Logging started. Output file: rnn_training/20260105_175726/console.log
+2026-01-05 17:57:31,338 INFO: Seed: 42
+2026-01-05 17:57:32,469 INFO: Initial conds fshape: (915, 110)
+2026-01-05 17:57:32,470 INFO: Activity snippets shape: (915, 50, 110)
+2026-01-05 17:57:32,470 INFO: Stim snippets shape: (915, 50, 10)
+2026-01-05 17:57:32,472 INFO: Snippet overlap: False
+2026-01-05 17:57:43,110 INFO: Initial conds fshape: (915, 110)
+2026-01-05 17:57:43,110 INFO: Activity snippets shape: (915, 50, 110)
+2026-01-05 17:57:43,111 INFO: Stim snippets shape: (915, 50, 10)
+2026-01-05 17:57:43,111 INFO: Snippet overlap: False
+2026-01-05 18:06:52,545 INFO: Batch size: 4
+2026-01-05 18:06:52,546 INFO: Split strategy: trial
+2026-01-05 18:06:53,596 INFO: Dataset sizes -> train: 20765, val: 3673, test: 10800
+2026-01-05 18:06:53,627 INFO: Train input size: 10
+2026-01-05 18:06:53,636 INFO: Train output size: 110
+2026-01-05 18:06:53,656 INFO: Hidden state size: 64
+2026-01-05 18:06:53,656 INFO: Number of GRU layers: 1
+2026-01-05 18:06:53,665 INFO: Model architecture:
+RNNModel(
+  (initial_state_projection): Linear(in_features=110, out_features=64, bias=True)
+  (rnn): GRU(10, 64, batch_first=True)
+  (dense): Sequential(
+    (0): Linear(in_features=64, out_features=128, bias=True)
+    (1): GELU(approximate='none')
+    (2): Linear(in_features=128, out_features=110, bias=True)
+  )
+)
+2026-01-05 18:06:53,667 INFO: Learning rate 0.001
+2026-01-05 18:06:53,668 INFO: Optimizer: Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    decoupled_weight_decay: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0
+)
+2026-01-05 18:06:53,668 INFO: Loss type: mse
+2026-01-05 18:06:53,668 INFO: Regularization coefficient: 0
+2026-01-05 18:12:37,504 INFO: Snippets DataFrame shape: (744, 18)
+2026-01-05 18:12:37,506 INFO: Valid snippets: 744
+2026-01-05 18:12:37,506 INFO: Snippets with stim at t=0: 744
+2026-01-05 18:12:37,536 INFO: Trial holdout [1, 7]: train=474, val=84, test=186
+2026-01-05 18:12:37,539 INFO: Holdout start times per session: {np.int64(0): 62, np.int64(1): 62, np.int64(2): 62}
+2026-01-05 18:12:37,562 INFO: Removed 89 train snippets near holdout start times
+2026-01-05 18:12:37,569 INFO: Removed 13 val snippets near holdout start times
+2026-01-05 18:12:37,570 INFO: === Split Summary (trial) after removing overlaps ===
+2026-01-05 18:12:37,570 INFO: Train: 385 samples
+2026-01-05 18:12:37,571 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-05 18:12:37,571 INFO:   First configs with stim_at_t0: [np.int64(1), np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31)]
+2026-01-05 18:12:37,572 INFO: Val: 71 samples
+2026-01-05 18:12:37,572 INFO: Test: 186 samples
+2026-01-05 18:12:37,572 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-05 18:17:18,001 INFO: Snippets DataFrame shape: (744, 18)
+2026-01-05 18:17:18,003 INFO: Valid snippets: 744
+2026-01-05 18:17:18,003 INFO: Snippets with stim at t=0: 744
+2026-01-05 18:17:18,007 INFO: Trial holdout [1, 7]: train=474, val=84, test=186
+2026-01-05 18:17:18,008 INFO: Holdout start times per session: {np.int64(0): 62, np.int64(1): 62, np.int64(2): 62}
+2026-01-05 18:17:18,018 INFO: Removed 89 train snippets near holdout start times
+2026-01-05 18:17:18,021 INFO: Removed 13 val snippets near holdout start times
+2026-01-05 18:17:18,022 INFO: === Split Summary (trial) after removing overlaps ===
+2026-01-05 18:17:18,022 INFO: Train: 385 samples
+2026-01-05 18:17:18,022 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-05 18:17:18,023 INFO:   First configs with stim_at_t0: [np.int64(1), np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30), np.int64(31)]
+2026-01-05 18:17:18,023 INFO: Val: 71 samples
+2026-01-05 18:17:18,024 INFO: Test: 186 samples
+2026-01-05 18:17:18,024 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-05 18:18:12,574 INFO: Batch size: 4
+2026-01-05 18:18:12,575 INFO: Split strategy: trial
+2026-01-05 18:18:12,659 INFO: Dataset sizes -> train: 385, val: 71, test: 186
+2026-01-05 18:18:12,660 INFO: Train input size: 10
+2026-01-05 18:18:12,660 INFO: Train output size: 110
+2026-01-05 18:18:12,660 INFO: Hidden state size: 64
+2026-01-05 18:18:12,661 INFO: Number of GRU layers: 1
+2026-01-05 18:18:12,670 INFO: Model architecture:
+RNNModel(
+  (initial_state_projection): Linear(in_features=110, out_features=64, bias=True)
+  (rnn): GRU(10, 64, batch_first=True)
+  (dense): Sequential(
+    (0): Linear(in_features=64, out_features=128, bias=True)
+    (1): GELU(approximate='none')
+    (2): Linear(in_features=128, out_features=110, bias=True)
+  )
+)
+2026-01-05 18:18:12,671 INFO: Learning rate 0.001
+2026-01-05 18:18:12,672 INFO: Optimizer: Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    decoupled_weight_decay: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0
+)
+2026-01-05 18:18:12,672 INFO: Loss type: mse
+2026-01-05 18:18:12,672 INFO: Regularization coefficient: 0
+2026-01-05 18:18:19,103 INFO: Epoch 1 Train loss: 0.02246545637389282
+2026-01-05 18:18:19,368 INFO: Epoch 1 Validation loss: 0.020244037758716395
+2026-01-05 18:18:19,372 INFO:   Saved best model with val loss 0.020244 to rnn_training/20260105_175726/best_model.pth
+2026-01-05 18:18:23,722 INFO: Epoch 2 Train loss: 0.020699517453065166
+2026-01-05 18:18:23,887 INFO: Epoch 2 Validation loss: 0.01611289959138548
+2026-01-05 18:18:23,892 INFO:   Saved best model with val loss 0.016113 to rnn_training/20260105_175726/best_model.pth
+2026-01-05 18:18:28,134 INFO: Epoch 3 Train loss: 0.01630586502807481
+2026-01-05 18:18:28,293 INFO: Epoch 3 Validation loss: 0.01662217369171935
+2026-01-05 18:18:32,756 INFO: Epoch 4 Train loss: 0.01609365363157802
+2026-01-05 18:18:32,914 INFO: Epoch 4 Validation loss: 0.015595920449516304
+2026-01-05 18:18:32,918 INFO:   Saved best model with val loss 0.015596 to rnn_training/20260105_175726/best_model.pth
+2026-01-05 18:18:37,288 INFO: Epoch 5 Train loss: 0.015908542338323284
+2026-01-05 18:18:37,450 INFO: Epoch 5 Validation loss: 0.016811210530954347
+2026-01-05 18:18:41,794 INFO: Epoch 6 Train loss: 0.015623395865807285
+2026-01-05 18:18:41,954 INFO: Epoch 6 Validation loss: 0.015417990091086273
+2026-01-05 18:18:41,959 INFO:   Saved best model with val loss 0.015418 to rnn_training/20260105_175726/best_model.pth
+2026-01-05 18:18:46,213 INFO: Epoch 7 Train loss: 0.015748141268147275
+2026-01-05 18:18:46,374 INFO: Epoch 7 Validation loss: 0.015348096548671454
+2026-01-05 18:18:46,378 INFO:   Saved best model with val loss 0.015348 to rnn_training/20260105_175726/best_model.pth
+2026-01-05 18:18:50,661 INFO: Epoch 8 Train loss: 0.015551490907545214
+2026-01-05 18:18:50,816 INFO: Epoch 8 Validation loss: 0.016587980629377802
+2026-01-05 18:18:55,189 INFO: Epoch 9 Train loss: 0.015551741382518372
+2026-01-05 18:18:55,350 INFO: Epoch 9 Validation loss: 0.015425685530817005
+2026-01-05 18:18:59,657 INFO: Epoch 10 Train loss: 0.015400932501856382
+2026-01-05 18:18:59,819 INFO: Epoch 10 Validation loss: 0.015866096485668505
+2026-01-05 18:19:17,904 INFO: Test Loss: 0.016322
+2026-01-05 18:21:18,211 INFO: Config 1 has 0 matching snippets (stim at t=3), neurons: [7, 22, 26, 78]
+2026-01-05 18:21:18,211 INFO: No matching snippets for config 1 with stim at offset 3, skipping.
+2026-01-05 18:21:18,212 INFO: Config 2 has 0 matching snippets (stim at t=3), neurons: [7, 22, 26, 78]
+2026-01-05 18:21:18,212 INFO: No matching snippets for config 2 with stim at offset 3, skipping.
+2026-01-05 18:21:18,213 INFO: Config 3 has 0 matching snippets (stim at t=3), neurons: [7, 22, 26, 78]
+2026-01-05 18:21:18,213 INFO: No matching snippets for config 3 with stim at offset 3, skipping.
+2026-01-05 18:21:18,214 INFO: Config 4 has 0 matching snippets (stim at t=3), neurons: [19, 47]
+2026-01-05 18:21:18,214 INFO: No matching snippets for config 4 with stim at offset 3, skipping.
+2026-01-05 18:21:18,215 INFO: Config 5 has 0 matching snippets (stim at t=3), neurons: [19, 47]
+2026-01-05 18:21:18,215 INFO: No matching snippets for config 5 with stim at offset 3, skipping.
+2026-01-05 18:21:18,215 INFO: Config 6 has 0 matching snippets (stim at t=3), neurons: [19, 47]
+2026-01-05 18:21:18,216 INFO: No matching snippets for config 6 with stim at offset 3, skipping.
+2026-01-05 18:21:18,216 INFO: Config 7 has 0 matching snippets (stim at t=3), neurons: [7, 16, 26, 27, 31, 37, 59, 78]
+2026-01-05 18:21:18,216 INFO: No matching snippets for config 7 with stim at offset 3, skipping.
+2026-01-05 18:21:18,217 INFO: Config 8 has 0 matching snippets (stim at t=3), neurons: [7, 16, 26, 27, 31, 37, 59, 78]
+2026-01-05 18:21:18,217 INFO: No matching snippets for config 8 with stim at offset 3, skipping.
+2026-01-05 18:21:18,218 INFO: Config 9 has 0 matching snippets (stim at t=3), neurons: [7, 16, 26, 27, 31, 37, 59, 78]
+2026-01-05 18:21:18,218 INFO: No matching snippets for config 9 with stim at offset 3, skipping.
+2026-01-05 18:21:18,218 INFO: Config 10 has 0 matching snippets (stim at t=3), neurons: [26]
+2026-01-05 18:21:18,219 INFO: No matching snippets for config 10 with stim at offset 3, skipping.
+2026-01-05 18:21:18,219 INFO: Config 11 has 0 matching snippets (stim at t=3), neurons: [26]
+2026-01-05 18:21:18,219 INFO: No matching snippets for config 11 with stim at offset 3, skipping.
+2026-01-05 18:21:18,220 INFO: Config 12 has 0 matching snippets (stim at t=3), neurons: [26]
+2026-01-05 18:21:18,220 INFO: No matching snippets for config 12 with stim at offset 3, skipping.
+2026-01-05 18:21:18,220 INFO: Config 13 has 0 matching snippets (stim at t=3), neurons: [22, 23, 45, 63]
+2026-01-05 18:21:18,220 INFO: No matching snippets for config 13 with stim at offset 3, skipping.
+2026-01-05 18:21:18,221 INFO: Config 14 has 0 matching snippets (stim at t=3), neurons: [22, 23, 45, 63]
+2026-01-05 18:21:18,221 INFO: No matching snippets for config 14 with stim at offset 3, skipping.
+2026-01-05 18:21:18,221 INFO: Config 15 has 0 matching snippets (stim at t=3), neurons: [22, 23, 45, 63]
+2026-01-05 18:21:18,222 INFO: No matching snippets for config 15 with stim at offset 3, skipping.
+2026-01-05 18:21:18,222 INFO: Config 16 has 0 matching snippets (stim at t=3), neurons: [50, 63]
+2026-01-05 18:21:18,222 INFO: No matching snippets for config 16 with stim at offset 3, skipping.
+2026-01-05 18:21:18,223 INFO: Config 17 has 0 matching snippets (stim at t=3), neurons: [50, 63]
+2026-01-05 18:21:18,223 INFO: No matching snippets for config 17 with stim at offset 3, skipping.
+2026-01-05 18:21:18,224 INFO: Config 18 has 0 matching snippets (stim at t=3), neurons: [50, 63]
+2026-01-05 18:21:18,224 INFO: No matching snippets for config 18 with stim at offset 3, skipping.
+2026-01-05 18:21:18,224 INFO: Config 19 has 0 matching snippets (stim at t=3), neurons: [4, 19, 33, 44, 46]
+2026-01-05 18:21:18,225 INFO: No matching snippets for config 19 with stim at offset 3, skipping.
+2026-01-05 18:21:18,225 INFO: Config 20 has 0 matching snippets (stim at t=3), neurons: [4, 19, 33, 44, 46]
+2026-01-05 18:21:18,225 INFO: No matching snippets for config 20 with stim at offset 3, skipping.
+2026-01-05 18:21:18,226 INFO: Config 21 has 0 matching snippets (stim at t=3), neurons: [4, 19, 33, 44, 46]
+2026-01-05 18:21:18,226 INFO: No matching snippets for config 21 with stim at offset 3, skipping.
+2026-01-05 18:21:18,227 INFO: Config 22 has 0 matching snippets (stim at t=3), neurons: [7, 21, 32, 37, 81]
+2026-01-05 18:21:18,227 INFO: No matching snippets for config 22 with stim at offset 3, skipping.
+2026-01-05 18:21:18,227 INFO: Config 23 has 0 matching snippets (stim at t=3), neurons: [7, 21, 32, 37, 81]
+2026-01-05 18:21:18,227 INFO: No matching snippets for config 23 with stim at offset 3, skipping.
+2026-01-05 18:21:18,228 INFO: Config 24 has 0 matching snippets (stim at t=3), neurons: [7, 21, 32, 37, 81]
+2026-01-05 18:21:18,228 INFO: No matching snippets for config 24 with stim at offset 3, skipping.
+2026-01-05 18:21:18,229 INFO: Config 25 has 0 matching snippets (stim at t=3), neurons: [31, 44, 78]
+2026-01-05 18:21:18,229 INFO: No matching snippets for config 25 with stim at offset 3, skipping.
+2026-01-05 18:21:18,229 INFO: Config 26 has 0 matching snippets (stim at t=3), neurons: [31, 44, 78]
+2026-01-05 18:21:18,230 INFO: No matching snippets for config 26 with stim at offset 3, skipping.
+2026-01-05 18:21:18,230 INFO: Config 27 has 0 matching snippets (stim at t=3), neurons: [31, 44, 78]
+2026-01-05 18:21:18,231 INFO: No matching snippets for config 27 with stim at offset 3, skipping.
+2026-01-05 18:21:18,231 INFO: Config 28 has 0 matching snippets (stim at t=3), neurons: [26, 27, 31, 100]
+2026-01-05 18:21:18,231 INFO: No matching snippets for config 28 with stim at offset 3, skipping.
+2026-01-05 18:21:18,232 INFO: Config 29 has 0 matching snippets (stim at t=3), neurons: [26, 27, 31, 100]
+2026-01-05 18:21:18,232 INFO: No matching snippets for config 29 with stim at offset 3, skipping.
+2026-01-05 18:21:18,232 INFO: Config 30 has 0 matching snippets (stim at t=3), neurons: [26, 27, 31, 100]
+2026-01-05 18:21:18,233 INFO: No matching snippets for config 30 with stim at offset 3, skipping.
+2026-01-05 18:21:18,233 INFO: Config 31 has 0 matching snippets (stim at t=3), neurons: [1, 2, 3]
+2026-01-05 18:21:18,233 INFO: No matching snippets for config 31 with stim at offset 3, skipping.
+2026-01-05 18:21:39,916 INFO: Config 1 has 24 matching snippets (stim at t=0), neurons: [7, 22, 26, 78]
+2026-01-05 18:21:41,218 INFO: Config 2 has 24 matching snippets (stim at t=0), neurons: [7, 22, 26, 78]
+2026-01-05 18:21:42,382 INFO: Config 3 has 24 matching snippets (stim at t=0), neurons: [7, 22, 26, 78]
+2026-01-05 18:21:43,484 INFO: Config 4 has 24 matching snippets (stim at t=0), neurons: [19, 47]
+2026-01-05 18:21:44,014 INFO: Config 5 has 24 matching snippets (stim at t=0), neurons: [19, 47]
+2026-01-05 18:21:44,543 INFO: Config 6 has 24 matching snippets (stim at t=0), neurons: [19, 47]
+2026-01-05 18:21:45,075 INFO: Config 7 has 24 matching snippets (stim at t=0), neurons: [7, 16, 26, 27, 31, 37, 59, 78]
+2026-01-05 18:21:47,371 INFO: Config 8 has 24 matching snippets (stim at t=0), neurons: [7, 16, 26, 27, 31, 37, 59, 78]
+2026-01-05 18:21:49,600 INFO: Config 9 has 24 matching snippets (stim at t=0), neurons: [7, 16, 26, 27, 31, 37, 59, 78]
+2026-01-05 18:21:51,847 INFO: Config 10 has 24 matching snippets (stim at t=0), neurons: [26]
+2026-01-05 18:21:52,116 INFO: Config 11 has 24 matching snippets (stim at t=0), neurons: [26]
+2026-01-05 18:21:52,392 INFO: Config 12 has 24 matching snippets (stim at t=0), neurons: [26]
+2026-01-05 18:21:52,665 INFO: Config 13 has 24 matching snippets (stim at t=0), neurons: [22, 23, 45, 63]
+2026-01-05 18:21:53,807 INFO: Config 14 has 24 matching snippets (stim at t=0), neurons: [22, 23, 45, 63]
+2026-01-05 18:21:55,540 INFO: Config 15 has 24 matching snippets (stim at t=0), neurons: [22, 23, 45, 63]
+2026-01-05 18:21:56,680 INFO: Config 16 has 24 matching snippets (stim at t=0), neurons: [50, 63]
+2026-01-05 18:21:57,240 INFO: Config 17 has 24 matching snippets (stim at t=0), neurons: [50, 63]
+2026-01-05 18:21:57,805 INFO: Config 18 has 24 matching snippets (stim at t=0), neurons: [50, 63]
+2026-01-05 18:21:58,378 INFO: Config 19 has 24 matching snippets (stim at t=0), neurons: [4, 19, 33, 44, 46]
+2026-01-05 18:21:59,787 INFO: Config 20 has 24 matching snippets (stim at t=0), neurons: [4, 19, 33, 44, 46]
+2026-01-05 18:22:01,163 INFO: Config 21 has 24 matching snippets (stim at t=0), neurons: [4, 19, 33, 44, 46]
+2026-01-05 18:22:02,522 INFO: Config 22 has 24 matching snippets (stim at t=0), neurons: [7, 21, 32, 37, 81]
+2026-01-05 18:22:03,963 INFO: Config 23 has 24 matching snippets (stim at t=0), neurons: [7, 21, 32, 37, 81]
+2026-01-05 18:22:05,661 INFO: Config 24 has 24 matching snippets (stim at t=0), neurons: [7, 21, 32, 37, 81]
+2026-01-05 18:22:07,312 INFO: Config 25 has 24 matching snippets (stim at t=0), neurons: [31, 44, 78]
+2026-01-05 18:22:08,124 INFO: Config 26 has 24 matching snippets (stim at t=0), neurons: [31, 44, 78]
+2026-01-05 18:22:08,920 INFO: Config 27 has 24 matching snippets (stim at t=0), neurons: [31, 44, 78]
+2026-01-05 18:22:09,726 INFO: Config 28 has 24 matching snippets (stim at t=0), neurons: [26, 27, 31, 100]
+2026-01-05 18:22:10,822 INFO: Config 29 has 24 matching snippets (stim at t=0), neurons: [26, 27, 31, 100]
+2026-01-05 18:22:12,018 INFO: Config 30 has 24 matching snippets (stim at t=0), neurons: [26, 27, 31, 100]
+2026-01-05 18:22:13,178 INFO: Config 31 has 24 matching snippets (stim at t=0), neurons: [1, 2, 3]
+2026-01-05 18:25:12,327 INFO: Number of epochs 10
+2026-01-05 18:25:12,518 INFO: configs shape: (3, 110, 31)
+2026-01-05 18:25:12,518 INFO: roi_used shape: (512, 512)
+2026-01-05 18:25:12,519 INFO: times shape: (3, 8, 31)
+2026-01-05 18:25:12,519 INFO: dfof shape: (3, 15600, 110)
+2026-01-05 18:25:13,200 INFO: Total trials added: 744
+2026-01-05 18:25:13,201 INFO: First 5 rows: [{'session': 0, 'trial': 0, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 2811, 'is_stim': True}, {'session': 0, 'trial': 1, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 3807, 'is_stim': True}, {'session': 0, 'trial': 2, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 4181, 'is_stim': True}, {'session': 0, 'trial': 3, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 6609, 'is_stim': True}, {'session': 0, 'trial': 4, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 8787, 'is_stim': True}]
+2026-01-05 18:25:13,201 INFO: STIM_OFFSET used: 0

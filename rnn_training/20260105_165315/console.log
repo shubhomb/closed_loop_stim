@@ -1,0 +1,99 @@
+2026-01-05 16:53:26,640 INFO: Logging started. Output file: rnn_training/20260105_165315/console.log
+2026-01-05 16:53:26,640 INFO: Seed: 42
+2026-01-05 16:53:28,435 INFO: Initial conds fshape: (46623, 110)
+2026-01-05 16:53:28,437 INFO: Activity snippets shape: (46623, 60, 110)
+2026-01-05 16:53:28,437 INFO: Stim snippets shape: (46623, 60, 10)
+2026-01-05 16:53:28,438 INFO: Snippet overlap: True
+2026-01-05 16:53:32,473 INFO: Snippets DataFrame shape: (46623, 18)
+2026-01-05 16:53:32,474 INFO: Valid snippets: 46623
+2026-01-05 16:53:32,474 INFO: Snippets with stim at t=0: 720
+2026-01-05 16:53:32,524 INFO: Trial holdout [1, 7]: train=30449, val=5374, test=10800
+2026-01-05 16:53:32,526 INFO: Holdout stim times per session: {np.int64(0): 62, np.int64(1): 62, np.int64(2): 62}
+2026-01-05 16:53:33,131 INFO: Removed 9684 train snippets near holdout stim times
+2026-01-05 16:53:33,243 INFO: Removed 1701 val snippets near holdout stim times
+2026-01-05 16:53:33,245 INFO: === Split Summary (trial) after removing overlaps ===
+2026-01-05 16:53:33,246 INFO: Train: 20765 samples
+2026-01-05 16:53:33,246 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-05 16:53:33,247 INFO:   First configs with stim_at_t0: [np.int64(1), np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16), np.int64(17), np.int64(18), np.int64(19), np.int64(20), np.int64(21), np.int64(22), np.int64(23), np.int64(24), np.int64(25), np.int64(26), np.int64(27), np.int64(28), np.int64(29), np.int64(30)]
+2026-01-05 16:53:33,248 INFO: Val: 3673 samples
+2026-01-05 16:53:33,248 INFO: Test: 10800 samples
+2026-01-05 16:53:33,248 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-05 16:53:33,498 INFO: Batch size: 4
+2026-01-05 16:53:33,498 INFO: Split strategy: trial
+2026-01-05 16:53:34,038 INFO: Dataset sizes -> train: 20765, val: 3673, test: 10800
+2026-01-05 16:53:34,039 INFO: Train input size: 10
+2026-01-05 16:53:34,039 INFO: Train output size: 110
+2026-01-05 16:53:34,040 INFO: Hidden state size: 64
+2026-01-05 16:53:34,040 INFO: Number of GRU layers: 1
+2026-01-05 16:53:34,049 INFO: Model architecture:
+RNNModel(
+  (initial_state_projection): Linear(in_features=110, out_features=64, bias=True)
+  (rnn): GRU(10, 64, batch_first=True)
+  (dense): Sequential(
+    (0): Linear(in_features=64, out_features=128, bias=True)
+    (1): GELU(approximate='none')
+    (2): Linear(in_features=128, out_features=110, bias=True)
+  )
+)
+2026-01-05 16:53:34,049 INFO: Using WeightedMAELoss: stim_weight=5.0, window=15, decay=none
+2026-01-05 16:53:34,050 INFO: Learning rate 0.001
+2026-01-05 16:53:34,050 INFO: Optimizer: Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    decoupled_weight_decay: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0
+)
+2026-01-05 16:53:34,050 INFO: Loss type: weighted_mae
+2026-01-05 16:53:34,051 INFO: Regularization coefficient: 0
+2026-01-05 16:55:52,067 INFO: Epoch 1 Train loss: 0.1390185940209682
+2026-01-05 16:56:01,149 INFO: Epoch 1 Validation loss: 0.13172782505407277
+2026-01-05 16:56:01,156 INFO:   Saved best model with val loss 0.131728 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 16:58:16,692 INFO: Epoch 2 Train loss: 0.12735413739459073
+2026-01-05 16:58:26,030 INFO: Epoch 2 Validation loss: 0.12476935048389591
+2026-01-05 16:58:26,035 INFO:   Saved best model with val loss 0.124769 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:00:42,508 INFO: Epoch 3 Train loss: 0.1225317223920123
+2026-01-05 17:00:51,378 INFO: Epoch 3 Validation loss: 0.12067376694033718
+2026-01-05 17:00:51,383 INFO:   Saved best model with val loss 0.120674 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:03:06,373 INFO: Epoch 4 Train loss: 0.1196386762765296
+2026-01-05 17:03:15,275 INFO: Epoch 4 Validation loss: 0.11718937379363574
+2026-01-05 17:03:15,279 INFO:   Saved best model with val loss 0.117189 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:05:36,224 INFO: Epoch 5 Train loss: 0.11687316912973814
+2026-01-05 17:05:46,078 INFO: Epoch 5 Validation loss: 0.11563176521968037
+2026-01-05 17:05:46,083 INFO:   Saved best model with val loss 0.115632 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:08:08,819 INFO: Epoch 6 Train loss: 0.11463093048649152
+2026-01-05 17:08:18,039 INFO: Epoch 6 Validation loss: 0.11464006837133878
+2026-01-05 17:08:18,045 INFO:   Saved best model with val loss 0.114640 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:10:36,146 INFO: Epoch 7 Train loss: 0.11322403901633142
+2026-01-05 17:10:45,348 INFO: Epoch 7 Validation loss: 0.11236457132754389
+2026-01-05 17:10:45,352 INFO:   Saved best model with val loss 0.112365 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:13:01,693 INFO: Epoch 8 Train loss: 0.11144908135328527
+2026-01-05 17:13:10,414 INFO: Epoch 8 Validation loss: 0.11077137338086301
+2026-01-05 17:13:10,421 INFO:   Saved best model with val loss 0.110771 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:15:25,852 INFO: Epoch 9 Train loss: 0.10985445946655932
+2026-01-05 17:15:34,652 INFO: Epoch 9 Validation loss: 0.11003367876263298
+2026-01-05 17:15:34,657 INFO:   Saved best model with val loss 0.110034 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:17:50,137 INFO: Epoch 10 Train loss: 0.10853060015333493
+2026-01-05 17:17:58,743 INFO: Epoch 10 Validation loss: 0.10916773059040008
+2026-01-05 17:17:58,748 INFO:   Saved best model with val loss 0.109168 to rnn_training/20260105_165315/best_model.pth
+2026-01-05 17:49:59,867 INFO: Test Loss: 0.143345
+2026-01-05 17:57:13,351 INFO: Total trials added: 744
+2026-01-05 17:57:13,368 INFO: First 5 rows: [{'session': 0, 'trial': 0, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 2821, 'is_stim': True}, {'session': 0, 'trial': 1, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 3817, 'is_stim': True}, {'session': 0, 'trial': 2, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 4191, 'is_stim': True}, {'session': 0, 'trial': 3, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 6619, 'is_stim': True}, {'session': 0, 'trial': 4, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 8797, 'is_stim': True}]
+2026-01-05 17:57:13,368 INFO: STIM_OFFSET used: 10
+2026-01-05 17:57:16,246 INFO: Logging started. Output file: rnn_training/20260105_165315/console.log
+2026-01-05 17:57:16,246 INFO: Seed: 42
+2026-01-05 17:57:26,225 INFO: Number of epochs 10
+2026-01-05 17:57:26,422 INFO: configs shape: (3, 110, 31)
+2026-01-05 17:57:26,422 INFO: roi_used shape: (512, 512)
+2026-01-05 17:57:26,423 INFO: times shape: (3, 8, 31)
+2026-01-05 17:57:26,423 INFO: dfof shape: (3, 15600, 110)
+2026-01-05 17:57:28,018 INFO: Total trials added: 744
+2026-01-05 17:57:28,019 INFO: First 5 rows: [{'session': 0, 'trial': 0, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 2821, 'is_stim': True}, {'session': 0, 'trial': 1, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 3817, 'is_stim': True}, {'session': 0, 'trial': 2, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 4191, 'is_stim': True}, {'session': 0, 'trial': 3, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 6619, 'is_stim': True}, {'session': 0, 'trial': 4, 'config': 1, 'electrode': 0, 'current': 3, 'start_time': 8797, 'is_stim': True}]
+2026-01-05 17:57:28,020 INFO: STIM_OFFSET used: 10

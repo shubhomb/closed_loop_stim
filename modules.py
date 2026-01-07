@@ -1,14 +1,34 @@
 import torch.nn as nn
 import torch
 import numpy as np
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 class RNNModel(nn.Module):
-    def __init__(self, input_size: int, units: int, output_size: int, num_layers: int = 2):
+    def __init__(self, input_size: int, units: int, output_size: int, num_layers: int = 2, initial_cond_size: int = None):
+        """
+        RNN model for predicting neural activity from stimulation input.
+        
+        Parameters
+        ----------
+        input_size : int
+            Number of input features (e.g., electrodes)
+        units : int
+            Hidden state size
+        output_size : int
+            Number of output neurons to predict (TARGET_NEURONS)
+        num_layers : int
+            Number of GRU layers
+        initial_cond_size : int, optional
+            Size of initial condition input (FILTER_NEURONS). If None, defaults to output_size.
+            This allows using more neurons for initial state than for prediction targets.
+        """
         super(RNNModel, self).__init__()
         self.num_layers = num_layers
         self.units = units
-        self.initial_state_projection = nn.Linear(output_size, units)  # activity_initial -> hidden for layer 0
+        # Use initial_cond_size if provided, otherwise default to output_size
+        self.initial_cond_size = initial_cond_size if initial_cond_size is not None else output_size
+        self.initial_state_projection = nn.Linear(self.initial_cond_size, units)  # activity_initial -> hidden for layer 0
         self.rnn = nn.GRU(input_size, units, 
                           num_layers=num_layers,
                           batch_first=True,
@@ -16,15 +36,13 @@ class RNNModel(nn.Module):
                           bidirectional=False,
                           )  # returns (batch, seq, hidden)
         self.dense = nn.Sequential(
-            nn.Linear(units, 2 * units),
-            nn.GELU(),
-            nn.Linear(2 * units, output_size)
+            nn.Linear(units, output_size)
         )  # maps hidden -> ROI outputs with nonlinearity
 
     def forward(self, inp):
         # inp is a tuple: (inputs, activity_initial)
         # inputs: Tensor shape (batch, seq_len, input_size)
-        # activity_initial: Tensor shape (batch, output_size)
+        # activity_initial: Tensor shape (batch, initial_cond_size) - uses all FILTER_NEURONS
         inputs, activity_initial = inp
 
         # Ensure tensors and device alignment
@@ -63,7 +81,7 @@ class SeqDataset(Dataset):
     
     Can be initialized from arrays or from a DataFrame with snippet columns.
     """
-    def __init__(self, activity_init_conds=None, stims=None, activity=None, df=None):
+    def __init__(self, activity_init_conds=None, stims=None, activity=None, df=None, target_indices=None):
         """
         Initialize from arrays OR from a DataFrame.
         
@@ -78,7 +96,12 @@ class SeqDataset(Dataset):
         df : pd.DataFrame, optional
             DataFrame with columns: initial_condition, stim_snippet, activity_snippet, valid
             If provided, arrays are extracted from the DataFrame.
+        target_indices : list of int, optional
+            Indices of neurons to use as targets (columns in activity_snippet).
+            If None, all neurons are used as targets. Initial conditions always use all neurons.
         """
+        self.target_indices = target_indices
+        
         if df is not None:
             # Initialize from DataFrame
             valid_df = df[df['valid']].copy()
@@ -88,9 +111,15 @@ class SeqDataset(Dataset):
             self.X = torch.tensor(
                 np.stack(valid_df['stim_snippet'].values), dtype=torch.float32
             )
-            self.Y = torch.tensor(
+            # Full activity for reference (used for initial conditions dimension)
+            full_activity = torch.tensor(
                 np.stack(valid_df['activity_snippet'].values), dtype=torch.float32
             )
+            # Subset to target neurons if specified
+            if target_indices is not None:
+                self.Y = full_activity[:, :, target_indices]
+            else:
+                self.Y = full_activity
             # Store metadata for reference
             self.metadata = valid_df.drop(
                 columns=['initial_condition', 'stim_snippet', 'activity_snippet', 'valid']
@@ -99,7 +128,12 @@ class SeqDataset(Dataset):
             # Initialize from arrays
             self.initial_conds = torch.tensor(activity_init_conds, dtype=torch.float32)
             self.X = torch.tensor(stims, dtype=torch.float32)
-            self.Y = torch.tensor(activity, dtype=torch.float32)
+            full_activity = torch.tensor(activity, dtype=torch.float32)
+            # Subset to target neurons if specified
+            if target_indices is not None:
+                self.Y = full_activity[:, :, target_indices]
+            else:
+                self.Y = full_activity
             self.metadata = None
             
     def __len__(self):
@@ -117,3 +151,54 @@ class SeqDataset(Dataset):
             return self.metadata.iloc[idx].to_dict()
         return None
 
+
+
+class WeightedMAELoss(nn.Module):
+    def __init__(self, stim_weight=5.0, window=15, decay='none', linear_end=0.2, exp_tau=5.0):
+        """
+        Weighted MAE loss that applies higher weight to frames around stimulation.
+        
+        Parameters
+        ----------
+        stim_weight : float
+            Multiplier for frames around stim (e.g., 5x weight)
+        window : int
+            Number of frames after stim to weight higher
+        decay : str
+            'none' (flat), 'linear', or 'exp' for weight decay after stim
+        linear_end : float
+            End value for linear decay (start=1.0, end=linear_end). Default 0.2.
+        exp_tau : float
+            Time constant for exponential decay: exp(-t/tau). Default 5.0 frames.
+        """
+        super().__init__()
+        self.stim_weight = stim_weight
+        self.window = window
+        self.decay = decay
+        self.linear_end = linear_end
+        self.exp_tau = exp_tau
+    
+    def forward(self, pred, target, stim_input):
+        batch, seq_len, n_out = pred.shape
+        device = pred.device
+        
+        # Detect stim at each timestep (any electrode with current > 0)
+        stim_any = (stim_input.sum(dim=-1) > 0).float()  # (batch, seq_len)
+        
+        # Create convolution kernel to spread weight forward from stim times
+        kernel = torch.ones(1, 1, self.window, device=device)
+        if self.decay == 'linear':
+            kernel = torch.linspace(1, self.linear_end, self.window, device=device).view(1, 1, -1)
+        elif self.decay == 'exp':
+            kernel = torch.exp(-torch.arange(self.window, device=device).float() / self.exp_tau).view(1, 1, -1)
+        
+        # Convolve to spread weights forward from stim times
+        stim_padded = torch.nn.functional.pad(stim_any.unsqueeze(1), (0, self.window - 1))  # pad right
+        weight_boost = torch.nn.functional.conv1d(stim_padded, kernel).squeeze(1)  # (batch, seq_len)
+        
+        # Combine: base weight 1 + boost where stim occurred
+        weights = 1.0 + (self.stim_weight - 1.0) * (weight_boost > 0).float()
+        weights = weights.unsqueeze(-1)  # (batch, seq_len, 1)
+        
+        loss = (weights * torch.abs(pred - target)).mean()
+        return loss

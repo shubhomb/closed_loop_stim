@@ -1,0 +1,22 @@
+2026-01-06 12:20:39,461 - INFO - Starting hyperparameter search: rnn_hpsearch
+2026-01-06 12:20:39,461 - INFO - Output directory: hp_tuning_results/rnn_hpsearch_20260106_122039
+2026-01-06 12:20:39,461 - INFO - Args: Namespace(n_trials=50, timeout=3600, study_name='rnn_hpsearch', resume=False, max_epochs=30, patience=5, seed=42, use_amp=True, holdout_trials=[7], filter_configs=None, filter_neurons=None, snippet_overlap=False, output_dir='hp_tuning_results')
+2026-01-06 12:20:39,477 - INFO - Using device: mps
+2026-01-06 12:20:39,477 - INFO - Loading data...
+2026-01-06 12:20:39,671 - INFO - Data loaded: dfof shape=(3, 15600, 110), trials_df size=744
+2026-01-06 13:22:04,389 - INFO - 
+============================================================
+2026-01-06 13:22:04,389 - INFO - HYPERPARAMETER SEARCH COMPLETE
+2026-01-06 13:22:04,390 - INFO - ============================================================
+2026-01-06 13:22:04,391 - INFO - 
+Best trial: 15
+2026-01-06 13:22:04,391 - INFO - Best validation loss: 0.024082
+2026-01-06 13:22:04,391 - INFO - Best hyperparameters:
+2026-01-06 13:22:04,391 - INFO -   units: 84
+2026-01-06 13:22:04,391 - INFO -   num_layers: 2
+2026-01-06 13:22:04,391 - INFO -   lr: 0.0001338284207033829
+2026-01-06 13:22:04,391 - INFO -   batch_size: 1
+2026-01-06 13:22:04,391 - INFO -   weight_decay: 0.02104294281386745
+2026-01-06 13:22:04,391 - INFO -   loss_type: mse
+2026-01-06 13:22:04,391 - INFO -   snippet_length: 80
+2026-01-06 13:22:04,783 - WARNING - Install plotly for visualizations: pip install plotly

@@ -1,0 +1,130 @@
+2026-01-06 10:29:04,592 INFO: Logging started. Output file: rnn_training/20260106_102902/console.log
+2026-01-06 10:29:04,593 INFO: Seed: 42
+2026-01-06 10:29:05,068 INFO: Initial conds fshape: (915, 110)
+2026-01-06 10:29:05,068 INFO: Activity snippets shape: (915, 50, 110)
+2026-01-06 10:29:05,068 INFO: Stim snippets shape: (915, 50, 10)
+2026-01-06 10:29:05,069 INFO: Snippet overlap: False
+2026-01-06 10:29:05,625 INFO: Snippets DataFrame shape: (24, 18)
+2026-01-06 10:29:05,625 INFO: Valid snippets: 24
+2026-01-06 10:29:05,626 INFO: Snippets with stim at t=0: 24
+2026-01-06 10:29:05,629 INFO: Trial holdout [7]: train=17, val=4, test=3
+2026-01-06 10:29:05,630 INFO: Holdout start times per session: {np.int64(0): 1, np.int64(1): 1, np.int64(2): 1}
+2026-01-06 10:29:05,632 INFO: Removed 0 train snippets near holdout start times
+2026-01-06 10:29:05,633 INFO: Removed 0 val snippets near holdout start times
+2026-01-06 10:29:05,633 INFO: === Split Summary (trial) after removing overlaps ===
+2026-01-06 10:29:05,634 INFO: Train: 17 samples
+2026-01-06 10:29:05,634 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-06 10:29:05,635 INFO:   First configs with stim_at_t0: [np.int64(27)]
+2026-01-06 10:29:05,636 INFO: Val: 4 samples
+2026-01-06 10:29:05,636 INFO: Test: 3 samples
+2026-01-06 10:29:05,637 INFO:   Sessions: [np.int64(0), np.int64(1), np.int64(2)]
+2026-01-06 10:29:06,156 INFO: Batch size: 1
+2026-01-06 10:29:06,157 INFO: Split strategy: trial
+2026-01-06 10:29:06,160 INFO: Dataset sizes -> train: 17, val: 4, test: 3
+2026-01-06 10:29:06,161 INFO: Train input size: 10
+2026-01-06 10:29:06,161 INFO: Train output size: 110
+2026-01-06 10:29:06,161 INFO: Hidden state size: 32
+2026-01-06 10:29:06,162 INFO: Number of GRU layers: 1
+2026-01-06 10:29:06,170 INFO: Model architecture:
+RNNModel(
+  (initial_state_projection): Linear(in_features=110, out_features=32, bias=True)
+  (rnn): GRU(10, 32, batch_first=True)
+  (dense): Sequential(
+    (0): Linear(in_features=32, out_features=110, bias=True)
+  )
+)
+2026-01-06 10:29:06,171 INFO: Learning rate 0.001
+2026-01-06 10:29:06,172 INFO: Optimizer: Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    decoupled_weight_decay: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0
+)
+2026-01-06 10:29:06,172 INFO: Loss type: mse
+2026-01-06 10:29:06,173 INFO: Regularization coefficient: 0
+2026-01-06 10:29:10,079 INFO: Epoch 1 Train loss: 0.029257507282583153
+2026-01-06 10:29:10,125 INFO: Epoch 1 Validation loss: 0.020395412342622876
+2026-01-06 10:29:10,129 INFO:   Saved best model with val loss 0.020395 to rnn_training/20260106_102902/best_model.pth
+2026-01-06 10:29:13,050 INFO: Epoch 2 Train loss: 0.02298435218193952
+2026-01-06 10:29:13,098 INFO: Epoch 2 Validation loss: 0.016457911347970366
+2026-01-06 10:29:13,102 INFO:   Saved best model with val loss 0.016458 to rnn_training/20260106_102902/best_model.pth
+2026-01-06 10:29:15,658 INFO: Epoch 3 Train loss: 0.02040471903541509
+2026-01-06 10:29:15,767 INFO: Epoch 3 Validation loss: 0.01534971036016941
+2026-01-06 10:29:15,776 INFO:   Saved best model with val loss 0.015350 to rnn_training/20260106_102902/best_model.pth
+2026-01-06 10:29:18,549 INFO: Epoch 4 Train loss: 0.01987754350856823
+2026-01-06 10:29:18,596 INFO: Epoch 4 Validation loss: 0.015171595849096775
+2026-01-06 10:29:18,600 INFO:   Saved best model with val loss 0.015172 to rnn_training/20260106_102902/best_model.pth
+2026-01-06 10:29:21,886 INFO: Epoch 5 Train loss: 0.0196148730978808
+2026-01-06 10:29:21,938 INFO: Epoch 5 Validation loss: 0.015059837838634849
+2026-01-06 10:29:21,943 INFO:   Saved best model with val loss 0.015060 to rnn_training/20260106_102902/best_model.pth
+2026-01-06 10:29:24,810 INFO: Epoch 6 Train loss: 0.019525441532845005
+2026-01-06 10:29:24,859 INFO: Epoch 6 Validation loss: 0.015131794614717364
+2026-01-06 10:29:27,476 INFO: Epoch 7 Train loss: 0.019486303687753045
+2026-01-06 10:29:27,591 INFO: Epoch 7 Validation loss: 0.015078895026817918
+2026-01-06 10:29:30,063 INFO: Epoch 8 Train loss: 0.01957292706869981
+2026-01-06 10:29:30,110 INFO: Epoch 8 Validation loss: 0.015264032408595085
+2026-01-06 10:29:32,890 INFO: Epoch 9 Train loss: 0.019603192176231566
+2026-01-06 10:29:32,940 INFO: Epoch 9 Validation loss: 0.015127201797440648
+2026-01-06 10:29:35,443 INFO: Epoch 10 Train loss: 0.0195164627614705
+2026-01-06 10:29:35,543 INFO: Epoch 10 Validation loss: 0.015235949074849486
+2026-01-06 10:29:38,117 INFO: Epoch 11 Train loss: 0.01971153969712117
+2026-01-06 10:29:38,166 INFO: Epoch 11 Validation loss: 0.0154503567609936
+2026-01-06 10:29:40,683 INFO: Epoch 12 Train loss: 0.019645265084417426
+2026-01-06 10:29:40,730 INFO: Epoch 12 Validation loss: 0.015368866501376033
+2026-01-06 10:29:43,309 INFO: Epoch 13 Train loss: 0.019696083111578926
+2026-01-06 10:29:43,438 INFO: Epoch 13 Validation loss: 0.015171156032010913
+2026-01-06 10:29:46,023 INFO: Epoch 14 Train loss: 0.01968505304745015
+2026-01-06 10:29:46,072 INFO: Epoch 14 Validation loss: 0.015339889097958803
+2026-01-06 10:29:48,537 INFO: Epoch 15 Train loss: 0.019510971574003205
+2026-01-06 10:29:48,585 INFO: Epoch 15 Validation loss: 0.015079426113516092
+2026-01-06 10:29:51,099 INFO: Epoch 16 Train loss: 0.01949485854300506
+2026-01-06 10:29:51,213 INFO: Epoch 16 Validation loss: 0.015241316054016352
+2026-01-06 10:29:53,822 INFO: Epoch 17 Train loss: 0.019388192661983127
+2026-01-06 10:29:53,868 INFO: Epoch 17 Validation loss: 0.015015522250905633
+2026-01-06 10:29:53,873 INFO:   Saved best model with val loss 0.015016 to rnn_training/20260106_102902/best_model.pth
+2026-01-06 10:29:56,512 INFO: Epoch 18 Train loss: 0.019573278588188046
+2026-01-06 10:29:56,595 INFO: Epoch 18 Validation loss: 0.015403654193505645
+2026-01-06 10:29:59,107 INFO: Epoch 19 Train loss: 0.01946887401316096
+2026-01-06 10:29:59,220 INFO: Epoch 19 Validation loss: 0.015256780665367842
+2026-01-06 10:30:01,862 INFO: Epoch 20 Train loss: 0.01938362088163986
+2026-01-06 10:30:01,911 INFO: Epoch 20 Validation loss: 0.015238453866913915
+2026-01-06 10:30:04,614 INFO: Epoch 21 Train loss: 0.019290862878894106
+2026-01-06 10:30:04,726 INFO: Epoch 21 Validation loss: 0.01503128232434392
+2026-01-06 10:30:07,609 INFO: Epoch 22 Train loss: 0.019168109413893783
+2026-01-06 10:30:07,659 INFO: Epoch 22 Validation loss: 0.014878421556204557
+2026-01-06 10:30:07,663 INFO:   Saved best model with val loss 0.014878 to rnn_training/20260106_102902/best_model.pth
+2026-01-06 10:30:10,293 INFO: Epoch 23 Train loss: 0.01914612261359306
+2026-01-06 10:30:10,381 INFO: Epoch 23 Validation loss: 0.01506907632574439
+2026-01-06 10:30:13,162 INFO: Epoch 24 Train loss: 0.01927251396152903
+2026-01-06 10:30:13,211 INFO: Epoch 24 Validation loss: 0.015263130189850926
+2026-01-06 10:30:15,958 INFO: Epoch 25 Train loss: 0.01919379983754719
+2026-01-06 10:30:16,064 INFO: Epoch 25 Validation loss: 0.015131489606574178
+2026-01-06 10:30:18,879 INFO: Epoch 26 Train loss: 0.019372854381799698
+2026-01-06 10:30:18,929 INFO: Epoch 26 Validation loss: 0.015283334068953991
+2026-01-06 10:30:21,552 INFO: Epoch 27 Train loss: 0.019249620847404003
+2026-01-06 10:30:21,616 INFO: Epoch 27 Validation loss: 0.015388187719509006
+2026-01-06 10:30:24,323 INFO: Epoch 28 Train loss: 0.01921341009438038
+2026-01-06 10:30:24,441 INFO: Epoch 28 Validation loss: 0.015158677473664284
+2026-01-06 10:30:26,954 INFO: Epoch 29 Train loss: 0.0189764241085333
+2026-01-06 10:30:27,003 INFO: Epoch 29 Validation loss: 0.014942368026822805
+2026-01-06 10:30:29,481 INFO: Epoch 30 Train loss: 0.018900810932631
+2026-01-06 10:30:29,592 INFO: Epoch 30 Validation loss: 0.015116099268198013
+2026-01-06 10:30:29,955 INFO: Test Loss: 0.022693
+2026-01-06 10:31:37,924 INFO: Test Loss: 0.022693
+2026-01-06 10:32:10,304 INFO: Config 27 has 24 matching snippets (stim at t=0), neurons: [31, 44, 78]
+2026-01-06 10:33:16,185 INFO: Number of epochs 30
+2026-01-06 10:33:16,374 INFO: configs shape: (3, 110, 31)
+2026-01-06 10:33:16,375 INFO: roi_used shape: (512, 512)
+2026-01-06 10:33:16,375 INFO: times shape: (3, 8, 31)
+2026-01-06 10:33:16,375 INFO: dfof shape: (3, 15600, 110)
+2026-01-06 10:33:16,831 INFO: Total trials before filtering: 744
+2026-01-06 10:33:16,832 INFO: Filtered to configs [27]: 24 trials remaining
+2026-01-06 10:33:16,833 INFO: Final trials_df size: 24
