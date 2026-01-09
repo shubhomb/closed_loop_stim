@@ -3,6 +3,7 @@ import sys
 import datetime
 import logging
 import random
+import pandas as pd
 
 
 import numpy as np
@@ -35,131 +36,7 @@ def set_seed(seed: int = 42) -> None:
     os.environ["PYTHONHASHSEED"] = str(seed)
     print(f"Random seed set as {seed}")
 
-def plot_stim_ticks(stim_times, session_ids=None, tick_width=3,
-                    cmap_name='Reds', figsize=(15, 5),
-                    out_path=None, invert_y=True):
-    """
-    stim_times: ndarray, shape (n_sessions, n_times, n_electrodes)
-    session_ids: list of session indices to plot (default: all)
-    """
 
-    n_sessions, n_times, n_electrodes = stim_times.shape
-
-    if session_ids is None:
-        session_ids = list(range(n_sessions))
-
-    cmap = cm.get_cmap(cmap_name)
-
-    # global amplitude range (ignore zeros)
-    global_max = np.max(stim_times)
-    print(f'Global max amplitude across sessions: {global_max}')
-    print("Unique current values:",
-          np.unique(stim_times[stim_times > 0]))
-
-    norm = colors.Normalize(
-        vmin=0.5,
-        vmax=max(1.0, float(global_max))
-    )
-
-    f, axes = plt.subplots(
-        1, len(session_ids),
-        figsize=figsize,
-        squeeze=False
-    )
-
-    for ax, sid in zip(axes[0], session_ids):
-        data = stim_times[sid]  # (n_times, n_electrodes)
-
-        for elec in range(n_electrodes):
-            stim_idx = np.nonzero(data[:, elec])[0]
-            if stim_idx.size == 0:
-                continue
-
-            amps = data[stim_idx, elec]
-            for t, a in zip(stim_idx, amps):
-                ax.vlines(
-                    x=t,
-                    ymin=elec - 0.5,
-                    ymax=elec + 0.5,
-                    color=cmap(norm(a)),
-                    linewidth=1,
-                    alpha=0.9
-                )
-
-        ax.set_xlim(-0.5, n_times - 0.5)
-        ax.set_ylim(-0.5, n_electrodes - 0.5)
-        if invert_y:
-            ax.invert_yaxis()
-
-        ax.set_yticks(np.arange(n_electrodes))
-        ax.set_yticklabels(np.arange(1, n_electrodes + 1))
-        ax.set_xlabel('Time (samples)')
-        ax.set_ylabel('Electrode')
-
-        n_stims = int((data > 0).sum())
-        ax.set_title(f'Session {sid + 1}, n_stims={n_stims}')
-
-    # shared colorbar
-    sm = cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    f.colorbar(
-        sm,
-        ax=axes.ravel().tolist(),
-        label='Current Amplitude',
-        fraction=0.02,
-        pad=0.02
-    )
-
-    if out_path is not None:
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        plt.savefig(out_path, bbox_inches='tight')
-
-    plt.show()
-
-def plot_activity_per_session(activity, session_ids=None,
-                              figsize=(15, 5), out_path=None):
-    """
-    activity: ndarray, shape (n_sessions, n_times, n_rois)
-    """
-
-    n_sessions, n_times, n_rois = activity.shape
-
-    if session_ids is None:
-        session_ids = list(range(n_sessions))
-
-    f, axes = plt.subplots(
-        1, len(session_ids),
-        figsize=figsize,
-        squeeze=False
-    )
-
-    for ax, sid in zip(axes[0], session_ids):
-        data = activity[sid]  # (n_times, n_rois)
-
-        im = ax.imshow(
-            data.T,
-            aspect='auto',
-            cmap='Blues',
-            origin='lower'
-        )
-
-        ax.set_title(f'Session {sid + 1}')
-        ax.set_xlabel('Time (samples)')
-        ax.set_ylabel('ROI')
-
-        ax.set_yticks(
-            np.arange(0, n_rois, 10),
-            labels=np.arange(1, n_rois + 1, 10)
-        )
-
-        ax.grid(False)
-        f.colorbar(im, ax=ax, label='Activity (dF/F)')
-
-    if out_path is not None:
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        plt.savefig(out_path, bbox_inches='tight')
-
-    plt.show()
 
 def make_snippets(activity, stim_times_sess, length, overlap=True, aligned=False):
     '''
@@ -184,8 +61,9 @@ def make_snippets(activity, stim_times_sess, length, overlap=True, aligned=False
         # overlapping snippets of size snippet_length
         if overlap:
             num_snippets = activity_from_session.shape[0] - length + 1
+            print (num_snippets)
             for i in range(num_snippets):
-                if i == 0: # TODO: How to deal with initial condition at start of series?
+                if i == 0: # for first timepoint, assume initial condition is identical to first activity frame 
                     initial_conditions.append(activity_from_session[0])
                 else:
                     initial_conditions.append(activity_from_session[i-1])
@@ -246,13 +124,11 @@ def make_snippets_df(trials_df, activity, length, overlap=True, stride=1, n_elec
         - initial_condition, activity_snippet, stim_snippet: data arrays
         - valid: bool
     """
-    import pandas as pd
-    
     # Build a lookup from (session, stim_time) -> trial metadata
     # stim_time = trial_start_time + STIM_DELAY, so this is the actual time when stim occurs
     stim_lookup = {}
     for _, row in trials_df.iterrows():
-        if row['is_stim']:  # Only add actual stim trials
+        if row['is_stim'] or row['config'] == 31:  # Only add actual stim trials
             key = (row['session'], row['stim_time'])
             stim_lookup[key] = {
                 'config': row['config'],
@@ -272,7 +148,6 @@ def make_snippets_df(trials_df, activity, length, overlap=True, stride=1, n_elec
         all_stim_times_in_snippet = []
         
         snippet_end = snippet_start + length
-        
         for t_abs in range(snippet_start, snippet_end):
             key = (session, t_abs)
             if key in stim_lookup:
@@ -280,8 +155,11 @@ def make_snippets_df(trials_df, activity, length, overlap=True, stride=1, n_elec
                 t_rel = t_abs - snippet_start
                 electrode = info['electrode']
                 current = info['current']
-                
-                stim_snippet[t_rel, electrode] = current
+                if electrode is not None:
+                    stim_snippet[t_rel, int(electrode)] = current
+                else: # config 31
+                    stim_snippet[t_rel, :] = 0  # no stimulation
+
                 all_configs.append(info['config'])
                 all_electrodes.append(electrode)
                 all_currents.append(current)
@@ -291,7 +169,6 @@ def make_snippets_df(trials_df, activity, length, overlap=True, stride=1, n_elec
         return stim_snippet, all_configs, all_electrodes, all_currents, all_trials, all_stim_times_in_snippet
     
     results = []
-    
     if overlap:
         # Create overlapping snippets from entire timeseries
         for session in range(activity.shape[0]):
@@ -306,7 +183,6 @@ def make_snippets_df(trials_df, activity, length, overlap=True, stride=1, n_elec
                 
                 # Get activity snippet
                 activity_snippet = activity[session][i:i + length, :]
-                
                 # Build stim snippet from trials_df
                 stim_snippet, all_configs, all_electrodes, all_currents, all_trials, all_stim_times = \
                     build_stim_snippet(session, i, length)
@@ -322,11 +198,11 @@ def make_snippets_df(trials_df, activity, length, overlap=True, stride=1, n_elec
                     first_trial = all_trials[first_idx]
                     first_stim_time = all_stim_times[first_idx]
                 else:
-                    first_config = 0
-                    first_electrode = -1
+                    first_config = np.nan
+                    first_electrode = np.nan
                     first_current = 0
-                    first_trial = -1
-                    first_stim_time = -1
+                    first_trial = np.nan
+                    first_stim_time = np.nan
                 
                 results.append({
                     'session': session,
@@ -393,14 +269,12 @@ def make_snippets_df(trials_df, activity, length, overlap=True, stride=1, n_elec
             
             # Get activity snippet
             activity_snippet = activity[session][start_time:start_time + length, :]
-            
             # Build stim snippet from trials_df
             stim_snippet, all_configs, all_electrodes, all_currents, all_trials, all_stim_times = \
                 build_stim_snippet(session, start_time, length)
-            
             # The primary stim for this snippet (from this trial's row)
-            stim_time_rel = stim_time - start_time
-            
+            if row['is_stim']: 
+                stim_time_rel = stim_time - start_time
             # Determine first stim info (might be from this trial or another)
             has_stim = len(all_configs) > 0
             if has_stim:
@@ -412,11 +286,11 @@ def make_snippets_df(trials_df, activity, length, overlap=True, stride=1, n_elec
             results.append({
                 'session': session,
                 'snippet_start': start_time,
-                'first_config': row['config'] if row['is_stim'] else (all_configs[0] if has_stim else 0),
-                'first_electrode': row['electrode'] if row['is_stim'] else (all_electrodes[0] if has_stim else -1),
+                'first_config': row['config'] if row['is_stim'] else (all_configs[0] if has_stim else 31),
+                'first_electrode': row['electrode'] if row['is_stim'] else (all_electrodes[0] if has_stim else np.nan),
                 'first_current': row['current'] if row['is_stim'] else (all_currents[0] if has_stim else 0),
                 'first_trial': row['trial'],
-                'first_stim_time': stim_time_rel if row['is_stim'] else first_stim_time,
+                'first_stim_time': stim_time_rel if row['is_stim'] else np.nan,
                 'all_configs': all_configs,
                 'all_electrodes': all_electrodes,
                 'all_currents': all_currents,
@@ -741,4 +615,347 @@ def setup_logging(dir_name='rnn_training', level=logging.INFO):
 
     logging.info(f'Logging started. Output file: {log_path}')
     return log_path
+
+
+def debug_stim_alignment(start_offset, stim_delay, snippet_length, snippet_overlap, trials_df, train_df):
+    # Debug: Check stim alignment
+    print("=== DEBUG: Checking stim alignment ===")
+    print(f"START_OFFSET = {start_offset}")
+    print(f"STIM_DELAY = {stim_delay}")
+    print(f"SNIPPET_LENGTH = {snippet_length}")
+    print(f"SNIPPET_OVERLAP = {snippet_overlap}")
+
+    # Check first trial - stim_time should be trial_start_time + STIM_DELAY
+    first_trial = trials_df.iloc[0]
+    print (first_trial)
+    print(f"\nFirst trial: session={first_trial['session']}, config={first_trial['config']}")
+    print(f"  trial_start_time = {first_trial['trial_start_time']}")
+    print(f"  stim_time = {first_trial['stim_time']} (should be trial_start_time + STIM_DELAY)")
+    print(f"  start_time = {first_trial['start_time']} (snippet starts here)")
+    print(f"  Expected stim at snippet frame: {first_trial['stim_time'] - first_trial['start_time']}")
+
+    # Check first snippet in train_df
+    print(f"\n--- First train snippet from _df ---")
+    first_snippet = train_df.iloc[0]
+    print (first_snippet)
+    print(f"  snippet_start = {first_snippet['snippet_start']}")
+    print(f"  first_config = {first_snippet['first_config']}")
+    print(f"  first_stim_time = {first_snippet['first_stim_time']} (relative to snippet)")
+    print(f"  stim_snippet sum = {first_snippet['stim_snippet'].sum()}")
+    nonzero_stim = np.nonzero(first_snippet['stim_snippet'])
+    if len(nonzero_stim[0]) > 0:
+        print(f"  Stim events in snippet:")
+        for t, e in zip(nonzero_stim[0], nonzero_stim[1]):
+            print(f"    t={t}: electrode {e}, current {first_snippet['stim_snippet'][t, e]:.0f}")
+    else:
+        print("  NO STIM in snippet!")
+
+def create_split_dfs(
+    split_strategy,
+    valid_df,
+    trials_df,
+    sessions,
+    snippet_length,
+    val_size=0.2,
+    test_size=None,
+    seed=None,
+    holdout_sessions=None,
+    holdout_trials=None,
+    holdout_configs=None,
+    holdout_electrodes=None,
+    holdout_currents=None,
+    ):
+    '''
+    Split the dataframe into train, val, and test by the splitting strategy. Note that if multiple trials belong to a snippet, the 
+    first one is used to determine the split. 
+    
+    :param split_strategy: Description
+    :param valid_df: Description
+    :param trials_df: Description
+    :param sessions: Description
+    :param snippet_length: Description
+    :param val_size: must be specified for all splits 
+    :param test_size: only relevant if split_strategy == 'random'
+    :param seed: specify random seed
+    :param holdout_sessions: if split_strategy == 'session', which session are test
+    :param holdout_trials: if split_strategy == 'trial', which trials from all sessions are test
+    :param holdout_configs: if split_strategy == 'config', which configs from all sessions are test
+    :param holdout_electrodes: Descripif split_strategy == 'electrode', which electrodes from all sessions are testtion
+    :param holdout_currents: if split_strategy == 'current', which currents from all sessions are test
+    '''
+    holdout_sessions = holdout_sessions or []
+    holdout_trials = holdout_trials or []
+    holdout_configs = holdout_configs or []
+    holdout_electrodes = holdout_electrodes or []
+    holdout_currents = holdout_currents or []
+
+
+    if split_strategy == 'random':
+        remaining_df, test_df = train_test_split(valid_df, test_size=test_size, random_state=seed)
+    elif split_strategy == 'session':
+        test_df = valid_df[valid_df['session'].isin(holdout_sessions)]
+        remaining_df = valid_df[~valid_df['session'].isin(holdout_sessions)]
+    elif split_strategy == 'trial':
+        test_df = valid_df[valid_df['first_trial'].isin(holdout_trials)]
+        remaining_df = valid_df[~valid_df['first_trial'].isin(holdout_trials)]
+    elif split_strategy == 'config':
+        test_df = valid_df[valid_df['first_config'].isin(holdout_configs)]
+        remaining_df = valid_df[~valid_df['first_config'].isin(holdout_configs)]
+    elif split_strategy == 'electrode':
+        test_df = valid_df[valid_df['first_electrode'].isin(holdout_electrodes)]
+        remaining_df = valid_df[~valid_df['first_electrode'].isin(holdout_electrodes)]
+    elif split_strategy == 'current':
+        test_df = valid_df[valid_df['first_current'].isin(holdout_currents)]
+        remaining_df = valid_df[~valid_df['first_current'].isin(holdout_currents)]
+    else:
+        raise ValueError(f"Unknown split strategy: {split_strategy}")
+    
+    # Remove snippets that temporally overlap with test frames (important if overlap set to True)
+    overlapping_with_test = find_overlapping_snippets(remaining_df, test_df, snippet_length)
+    logging.info(f"Removing {len(overlapping_with_test)} additional snippets that overlap with test frames")
+    train_val_df = remaining_df.drop(index=list(overlapping_with_test))
+    train_df, val_df = train_test_split(train_val_df, test_size=val_size, random_state=seed)
+
+    logging.info(f"=== Split Summary ({split_strategy}) ===")
+    logging.info(f"Train: {len(train_df)} samples ({100*len(train_df)/len(valid_df):.1f}%)")
+    logging.info(f"  Sessions: {sorted(train_df['session'].unique())}")
+    logging.info(f"Val: {len(val_df)} samples ({100*len(val_df)/len(valid_df):.1f}%)")
+    logging.info(f"Test: {len(test_df)} samples ({100*len(test_df)/len(valid_df):.1f}%)")
+    logging.info(f"  Sessions: {sorted(test_df['session'].unique())}")
+    return train_df, val_df, test_df
+
+# Helper function to find snippets near specific stim times
+def get_stim_times_for_holdout(trials_df, holdout_values, holdout_column, sessions):
+    """Get stim times for holdout trials/configs/etc, grouped by session"""
+    holdout_stims = trials_df[trials_df[holdout_column].isin(holdout_values)]
+    stim_times_by_session = {}
+    for session in sessions:
+        # Use stim_time (actual stim_time) for temporal matching
+        session_stims = holdout_stims[holdout_stims['session'] == session]['stim_time'].values
+        stim_times_by_session[session] = set(session_stims)
+    return stim_times_by_session
+
+def find_snippets_near_stim_times(source_df, stim_times_by_session, snippet_length):
+    """
+    Find indices in source_df whose frames overlap with or are within snippet_length of stim times.
+    A snippet [start, start+L) is matched if any of its frames overlaps with the window around a stim time.
+    """
+    matching_indices = set()
+    
+    for idx, row in source_df.iterrows():
+        session = row['session']
+        snippet_start = row['snippet_start']
+        snippet_end = snippet_start + snippet_length
+        
+        if session not in stim_times_by_session:
+            continue
+            
+        # Check if this snippet's time window overlaps with any holdout stim time window
+        for stim_time in stim_times_by_session[session]:
+            # Stim window is [stim_time - L, stim_time + L)
+            # Snippet window is [snippet_start, snippet_end)
+            # They overlap if: snippet_start < stim_time + L AND snippet_end > stim_time - L
+            if snippet_start < stim_time + snippet_length and snippet_end > stim_time - snippet_length:
+                matching_indices.add(idx)
+                break
+        
+    return matching_indices
+
+def find_overlapping_snippets(source_df, test_df, snippet_length):
+    """
+    Find indices in source_df that share ANY frames with test_df snippets.
+    This ensures complete temporal separation between train/val and test.
+    
+    A snippet overlaps if any of its frames (including initial condition at snippet_start-1)
+    overlaps with any test snippet frames (including their initial conditions).
+    """
+    overlapping_indices = set()
+    
+    # Build set of frames used by test snippets (including initial condition frame)
+    test_frames_by_session = {}
+    for _, row in test_df.iterrows():
+        session = row['session']
+        if session not in test_frames_by_session:
+            test_frames_by_session[session] = set()
+        # Include all frames in snippet AND the initial condition frame (snippet_start - 1)
+        start = row['snippet_start']
+        init_cond_frame = max(0, start - 1)
+        test_frames_by_session[session].update(range(init_cond_frame, start + snippet_length))
+    
+    for idx, row in source_df.iterrows():
+        session = row['session']
+        if session not in test_frames_by_session:
+            continue
+        
+        snippet_start = row['snippet_start']
+        init_cond_frame = max(0, snippet_start - 1)
+        # Check if any frame in this snippet (including init cond) overlaps with test frames
+        snippet_frames = set(range(init_cond_frame, snippet_start + snippet_length))
+        if snippet_frames & test_frames_by_session[session]:
+            overlapping_indices.add(idx)
+    
+    return overlapping_indices
+
+
+def make_trials_df(trial_times, n_trials=8, n_sessions=3, n_configs=31, start_offset=0, stim_delay=10):
+
+    # START_OFFSET: how many frames before trial_start_time the snippet should begin
+    # If START_OFFSET=0, snippet starts at trial_start_time
+    # If START_OFFSET=10, snippet starts 10 frames BEFORE trial_start_time
+    # If START_OFFSET=-5, snippet starts 5 frames AFTER trial_start_time
+    START_OFFSET = start_offset  # frames before trial_start_time that snippet begins
+
+    # STIM_DELAY: how many frames after trial_start_time the stimulation occurs
+    # If STIM_DELAY=0, stim occurs at trial_start_time
+    # If STIM_DELAY=10, stim occurs 10 frames after trial_start_time
+    STIM_DELAY = stim_delay  # frames after trial_start_time when stim occurs
+
+    logging.info(f"Creating trials DataFrame with START_OFFSET={START_OFFSET} (snippet starts {START_OFFSET} frames before trial_start_time)")
+    logging.info(f"Creating trials DataFrame with STIM_DELAY={STIM_DELAY} (stim occurs {STIM_DELAY} frames after trial_start_time)")
+
+    rows = []
+    for session in range(n_sessions):
+        # Add stimulation trials (configs 1-30)
+        for config in range(1, n_configs):
+            electrode = (config - 1) // 3
+            current = (config - 1) % 3 + 3  # 3, 4, or 5
+            for trial in range(8):
+                # trial_start_time: when the trial begins (from times array)
+                trial_start_time = int(trial_times[session][trial, config - 1])
+                # stim_time: when stim occurs (STIM_DELAY frames after trial_start_time)
+                stim_time = trial_start_time + STIM_DELAY
+                # start_time: when snippet starts (START_OFFSET frames before trial_start_time)
+                start_time = max(trial_start_time - START_OFFSET, 0)
+                rows.append({
+                    'session': session,
+                    'trial': trial,
+                    'config': config,
+                    'electrode': electrode,
+                    'current': current,
+                    'trial_start_time': trial_start_time,  # when trial begins
+                    'stim_time': stim_time,  # when stim occurs
+                    'start_time': int(start_time),  # snippet start time
+                    'is_stim': True
+                })
+        
+        # Add no-stim trials (last config)
+        for trial in range(n_trials):
+            trial_start_time = int(trial_times[session][trial, n_configs - 1])  # config 31 is index 30
+            stim_time = np.nan  # no stim
+            start_time = max(trial_start_time - START_OFFSET, 0)
+            rows.append({
+                'session': session,
+                'trial': trial,
+                'config': n_configs - 1,
+                'electrode': np.nan,  # no electrode for no-stim
+                'current': 0,
+                'trial_start_time': trial_start_time,
+                'stim_time': stim_time,
+                'start_time': int(start_time),
+                'is_stim': False
+            })
+
+    trials_df = pd.DataFrame(rows)
+    return trials_df
+    logging.info(f"Final trials_df size: {len(trials_df)}")
+
+
+def filter_trials (trials_df, filter_configs=None, filter_electrodes=None,filter_currents=None, filter_trials=None, filter_sessions=None):
+    '''
+    Docstring for filter_trials
+    
+    :param trials_df: Description
+    :param filter_configs: Description
+    :param filter_electrodes: Description
+    :param filter_currents: Description
+    :param filter_trials: Description
+    :param filter_sessions: Description
+    '''
+    if filter_sessions is not None:
+        # Keep no-stim trials (current=0) and trials with matching currents
+        trials_df = trials_df[(trials_df['session'].isin(filter_sessions))]
+        logging.info(f"Filtered to sessions {filter_sessions}: {len(trials_df)} trials remaining")
+
+    # Apply trials  filter
+    if filter_trials is not None:
+        # Keep no-stim trials (current=0) and trials with matching currents
+        trials_df = trials_df[(trials_df['trial'].isin(filter_trials))]
+        logging.info(f"Filtered to currents {filter_trials}: {len(trials_df)} trials remaining")
+
+
+    # Apply config filter
+    if filter_configs is not None:
+        trials_df = trials_df[trials_df['config'].isin(filter_configs)]
+        logging.info(f"Filtered to configs {filter_configs}: {len(trials_df)} trials remaining")
+
+    # Apply electrode filter  
+    if filter_electrodes is not None:
+        # Keep no-stim trials (electrode=-1) and trials with matching electrodes
+        trials_df = trials_df[(trials_df['electrode'].isin(filter_electrodes))]
+        logging.info(f"Filtered to electrodes {FILTER_ELECfilter_electrodesTRODES}: {len(trials_df)} trials remaining")
+
+    # Apply current filter
+    if filter_currents is not None:
+        # Keep no-stim trials (current=0) and trials with matching currents
+        trials_df = trials_df[(trials_df['current'].isin(filter_currents))]
+        logging.info(f"Filtered to currents {filter_currents}: {len(trials_df)} trials remaining")
+
+    return trials_df
+
+def get_model_error(model, loader, criterion, device, LOSS_TYPE):
+    test_running = 0.0
+    with torch.no_grad():
+        for (inputs, activity_initial), targets in loader:
+            inputs = inputs.to(device)
+            activity_initial = activity_initial.to(device)
+            targets = targets.to(device)
+            outputs = model((inputs, activity_initial))
+            # Use weighted loss if available, else standard loss
+            if LOSS_TYPE == 'weighted_mae':
+                loss = criterion(outputs, targets, inputs)
+            else:
+                loss = criterion(outputs, targets)
+            test_running += loss.item() * inputs.size(0)
+
+    test_loss = test_running / len(test_loader.dataset)
+    return test_loss
+
+
+def get_model_error(model, loader, criterion, device, LOSS_TYPE):
+    output_loss = 0.0
+    with torch.no_grad():
+        for (inputs, activity_initial), targets in loader:
+            inputs = inputs.to(device)
+            activity_initial = activity_initial.to(device)
+            targets = targets.to(device)
+            outputs = model((inputs, activity_initial))
+            # Use weighted loss if available, else standard loss
+            if LOSS_TYPE == 'weighted_mae':
+                loss = criterion(outputs, targets, inputs)
+            else:
+                loss = criterion(outputs, targets)
+            output_loss += loss.item() * inputs.size(0)
+    test_loss = output_loss / len(loader.dataset)
+    return test_loss
+
+def get_inputs_outputs_targets(model, loader, device):
+        all_inputs = []
+        all_initconds = []
+        all_targets = []
+        all_outputs = []
+        with torch.no_grad():
+            for (inputs, activity_initial), targets in loader:
+                inputs = inputs.to(device)
+                activity_initial = activity_initial.to(device)
+                targets = targets.to(device)
+                outputs = model((inputs, activity_initial))
+                all_inputs.append(inputs.cpu().numpy())
+                all_initconds.append(activity_initial.cpu().numpy())
+                all_targets.append(targets.cpu().numpy())
+                all_outputs.append(outputs.cpu().numpy())
+        all_inputs = np.concatenate(all_inputs, axis=0)
+        all_initconds = np.concatenate(all_initconds, axis=0)
+        all_targets = np.concatenate(all_targets, axis=0)
+        all_outputs = np.concatenate(all_outputs, axis=0)
+        return all_inputs, all_initconds, all_targets, all_outputs
 
