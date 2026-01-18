@@ -35,3 +35,7 @@ Experiment notes from YL
 Idea: pre-stim effect has no effect on post-stim. So stimulation should drive it to target region regardless of initial condition. 
 There are 10 single-channels + 10C2 pairs of channels plus 3 modes = 145 combinations. A Poisson spike count is theorized to choose
 how many patterns, but the configurations themselves are uniformally sampled. 
+
+The Poisson process decides how many configurations (145 possible) are chosen at each of the 10 steps. 
+So for each step, 10 Poisson random numbers are generated from the same distro. 
+
