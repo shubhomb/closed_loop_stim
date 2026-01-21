@@ -195,7 +195,7 @@ end
 
 period = 0; % Options: 1 (Session 1), 2 (Session 2), 0 (Both Combined)
 preWindowIter  = 0;
-postWindowIter = 5;
+postWindowIter = 2;
 
 % Pure Color & Alpha Definitions
 pureRed  = [1.0, 0.0, 0.0];
@@ -335,6 +335,7 @@ for ch = recordedChannels
         % Draw 4 violins (one per mask)
         for sp = 1:4
             v = spikeValuesByMask{sp};
+            v = v(isfinite(v));   % removes NaN and Inf
             if isempty(v), continue; end
             
             y = binCenters;
