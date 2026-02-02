@@ -1,0 +1,67 @@
+2026-01-29 16:35:07,239 - INFO - ==================================================
+2026-01-29 16:35:07,239 - INFO - Experiment run directory: results/binned_2026-01-29_16-35-07
+2026-01-29 16:35:07,239 - INFO - Inference mode: False
+2026-01-29 16:35:07,240 - INFO - Random seed: 42
+2026-01-29 16:35:07,240 - INFO - ==================================================
+2026-01-29 16:35:07,241 - INFO - Total trials: 5000
+2026-01-29 16:35:07,256 - INFO - Oracle trials: 1000 (50 patterns × 10 trials)
+2026-01-29 16:35:07,256 - INFO - Sample trials: 4000
+2026-01-29 16:35:07,258 - INFO - Train: 3400, Val: 600, Test: 1000
+2026-01-29 16:35:07,259 - INFO - Dataset config: bin_size=10ms, n_input_bins=1, n_output_bins=2, output_offset=0
+2026-01-29 16:35:23,306 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-29 16:35:23,308 - INFO -   bin_size_ms=10, n_input_bins=1, n_output_bins=2
+2026-01-29 16:35:23,309 - INFO -   output_offset=0, total_bins per trial=200
+2026-01-29 16:35:23,309 - INFO -   Valid start positions per trial: 0 to 198
+2026-01-29 16:35:23,309 - INFO -   Total samples: 676600 (3400 trials × 199 positions)
+2026-01-29 16:35:38,424 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-29 16:35:38,425 - INFO -   bin_size_ms=10, n_input_bins=1, n_output_bins=2
+2026-01-29 16:35:38,425 - INFO -   output_offset=0, total_bins per trial=200
+2026-01-29 16:35:38,426 - INFO -   Valid start positions per trial: 0 to 198
+2026-01-29 16:35:38,426 - INFO -   Total samples: 119400 (600 trials × 199 positions)
+2026-01-29 16:35:53,524 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-29 16:35:53,527 - INFO -   bin_size_ms=10, n_input_bins=1, n_output_bins=2
+2026-01-29 16:35:53,527 - INFO -   output_offset=0, total_bins per trial=200
+2026-01-29 16:35:53,527 - INFO -   Valid start positions per trial: 0 to 198
+2026-01-29 16:35:53,528 - INFO -   Total samples: 199000 (1000 trials × 199 positions)
+2026-01-29 16:35:53,529 - INFO - Train samples: 676600, Val samples: 119400, Test samples: 199000
+2026-01-29 16:35:53,530 - INFO - Train batches: 2643, Val batches: 467, Test batches: 778
+2026-01-29 16:35:53,530 - INFO - Number of stimulation channels: 42
+2026-01-29 16:35:53,531 - INFO - Number of recorded neurons: 63
+2026-01-29 16:35:53,542 - INFO - Sample X shape: torch.Size([42, 1]) (n_channels, n_input_bins)
+2026-01-29 16:35:53,542 - INFO - Sample Y shape: torch.Size([63, 2]) (n_neurons, n_output_bins)
+2026-01-29 16:35:53,616 - INFO - Using Apple Silicon MPS acceleration
+2026-01-29 16:35:53,616 - INFO - PyTorch version: 2.10.0.dev20251124
+2026-01-29 16:35:53,617 - INFO - Device: mps
+2026-01-29 16:35:53,618 - INFO - Saved experiment config to results/binned_2026-01-29_16-35-07/config.json
+2026-01-29 16:36:31,047 - INFO - Model: StimToSpikeMLP
+2026-01-29 16:36:31,047 - INFO -   Embedding: 5 categories -> 16-dim vectors
+2026-01-29 16:36:31,048 - INFO -   Hidden layers: [256, 128]
+2026-01-29 16:36:31,048 - INFO -   Dropout: 0.2
+2026-01-29 16:36:31,048 - INFO -   Total parameters: 221,518
+2026-01-29 16:36:31,048 - INFO -   Trainable parameters: 221,518
+2026-01-29 16:36:31,737 - INFO - Input shape: torch.Size([256, 42, 1]), dtype: torch.int64
+2026-01-29 16:36:31,738 - INFO - Output shape: torch.Size([256, 63, 2])
+2026-01-29 16:36:31,738 - INFO - Target shape: torch.Size([256, 63, 2])
+2026-01-29 16:36:31,739 - INFO - ✓ Output and target shapes match!
+2026-01-29 16:36:39,337 - INFO - Sample model outputs (first batch):
+2026-01-29 16:36:39,339 - INFO - Sample 0 target (neuron 0, all output bins): [0. 0.]
+2026-01-29 16:36:39,340 - INFO - Sample 1 target (neuron 0, all output bins): [0. 0.]
+2026-01-29 16:36:39,345 - INFO - Sample 0 model output (neuron 0, all output bins): [-0.09027226  0.07483998]
+2026-01-29 16:36:39,346 - INFO - Sample 1 model output (neuron 0, all output bins): [-0.13170692  0.09487525]
+2026-01-29 16:36:49,237 - INFO - Starting training...
+2026-01-29 16:36:49,237 - INFO - ==================================================
+2026-01-29 16:41:16,300 - INFO - Model: StimToSpikeMLP
+2026-01-29 16:41:16,301 - INFO -   Embedding: 5 categories -> 8-dim vectors
+2026-01-29 16:41:16,301 - INFO -   Hidden layers: [64, 32]
+2026-01-29 16:41:16,302 - INFO -   Dropout: 0.2
+2026-01-29 16:41:16,302 - INFO -   Total parameters: 27,846
+2026-01-29 16:41:16,303 - INFO -   Trainable parameters: 27,846
+2026-01-29 16:41:16,370 - INFO - Input shape: torch.Size([256, 42, 1]), dtype: torch.int64
+2026-01-29 16:41:16,371 - INFO - Output shape: torch.Size([256, 63, 2])
+2026-01-29 16:41:16,372 - INFO - Target shape: torch.Size([256, 63, 2])
+2026-01-29 16:41:16,372 - INFO - ✓ Output and target shapes match!
+2026-01-29 16:41:17,938 - INFO - Sample model outputs (first batch):
+2026-01-29 16:41:17,939 - INFO - Sample 0 target (neuron 0, all output bins): [0. 0.]
+2026-01-29 16:41:17,939 - INFO - Sample 1 target (neuron 0, all output bins): [0. 0.]
+2026-01-29 16:41:17,944 - INFO - Sample 0 model output (neuron 0, all output bins): [-0.34647417  0.17322823]
+2026-01-29 16:41:17,945 - INFO - Sample 1 model output (neuron 0, all output bins): [-0.33352757  0.32532275]

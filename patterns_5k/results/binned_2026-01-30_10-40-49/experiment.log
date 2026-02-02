@@ -1,0 +1,398 @@
+2026-01-30 10:40:49,580 - INFO - ==================================================
+2026-01-30 10:40:49,581 - INFO - Experiment run directory: results/binned_2026-01-30_10-40-49
+2026-01-30 10:40:49,581 - INFO - Inference mode: False
+2026-01-30 10:40:49,581 - INFO - Random seed: 42
+2026-01-30 10:40:49,582 - INFO - ==================================================
+2026-01-30 10:40:49,583 - INFO - Total trials: 5000
+2026-01-30 10:40:49,594 - INFO - Oracle trials: 1000 (50 patterns × 10 trials)
+2026-01-30 10:40:49,594 - INFO - Sample trials: 4000
+2026-01-30 10:40:49,596 - INFO - Train: 3400, Val: 600, Test: 1000
+2026-01-30 10:40:49,597 - INFO - Dataset config: bin_size=50ms, n_input_bins=1, n_output_bins=1, output_offset=0
+2026-01-30 10:41:05,323 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-30 10:41:05,327 - INFO -   bin_size_ms=50, n_input_bins=1, n_output_bins=1
+2026-01-30 10:41:05,327 - INFO -   output_offset=0, total_bins per trial=20
+2026-01-30 10:41:05,327 - INFO -   Valid start positions per trial: 0 to 19
+2026-01-30 10:41:05,328 - INFO -   Total samples: 68000 (3400 trials × 20 positions)
+2026-01-30 10:41:20,119 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-30 10:41:20,120 - INFO -   bin_size_ms=50, n_input_bins=1, n_output_bins=1
+2026-01-30 10:41:20,120 - INFO -   output_offset=0, total_bins per trial=20
+2026-01-30 10:41:20,121 - INFO -   Valid start positions per trial: 0 to 19
+2026-01-30 10:41:20,121 - INFO -   Total samples: 12000 (600 trials × 20 positions)
+2026-01-30 10:41:35,308 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-30 10:41:35,313 - INFO -   bin_size_ms=50, n_input_bins=1, n_output_bins=1
+2026-01-30 10:41:35,314 - INFO -   output_offset=0, total_bins per trial=20
+2026-01-30 10:41:35,314 - INFO -   Valid start positions per trial: 0 to 19
+2026-01-30 10:41:35,314 - INFO -   Total samples: 20000 (1000 trials × 20 positions)
+2026-01-30 10:41:35,316 - INFO - Train samples: 68000, Val samples: 12000, Test samples: 20000
+2026-01-30 10:41:35,317 - INFO - Train batches: 266, Val batches: 47, Test batches: 79
+2026-01-30 10:41:35,317 - INFO - Number of stimulation channels: 42
+2026-01-30 10:41:35,317 - INFO - Number of recorded neurons: 63
+2026-01-30 10:41:35,320 - INFO - Sample X shape: torch.Size([42, 1]) (n_channels, n_input_bins)
+2026-01-30 10:41:35,321 - INFO - Sample Y shape: torch.Size([63, 1]) (n_neurons, n_output_bins)
+2026-01-30 10:41:35,361 - INFO - Using Apple Silicon MPS acceleration
+2026-01-30 10:41:35,362 - INFO - PyTorch version: 2.10.0.dev20251124
+2026-01-30 10:41:35,362 - INFO - Device: mps
+2026-01-30 10:41:35,363 - INFO - Saved experiment config to results/binned_2026-01-30_10-40-49/config.json
+2026-01-30 10:41:36,534 - INFO - Saved spike distribution plot (counts mode) to results/binned_2026-01-30_10-40-49/train_spike_distribution_counts.png
+2026-01-30 10:41:37,406 - INFO - Saved spike distribution plot (binary mode) to results/binned_2026-01-30_10-40-49/train_spike_distribution_binary.png
+2026-01-30 10:41:37,926 - INFO - Initializing output layer bias to: -4.9163 (matches mean rate 0.0073)
+2026-01-30 10:41:37,939 - INFO - Model: StimToSpikeMLP
+2026-01-30 10:41:37,939 - INFO -   Embedding: 5 categories -> 8-dim vectors
+2026-01-30 10:41:37,940 - INFO -   Hidden layers: [64, 32]
+2026-01-30 10:41:37,940 - INFO -   Dropout: 0.2
+2026-01-30 10:41:37,940 - INFO -   Total parameters: 25,767
+2026-01-30 10:41:37,941 - INFO -   Trainable parameters: 25,767
+2026-01-30 10:41:38,141 - INFO - Input shape: torch.Size([256, 42, 1]), dtype: torch.int64
+2026-01-30 10:41:38,141 - INFO - Output shape: torch.Size([256, 63, 1])
+2026-01-30 10:41:38,142 - INFO - Target shape: torch.Size([256, 63, 1])
+2026-01-30 10:41:38,142 - INFO - ✓ Output and target shapes match!
+2026-01-30 10:41:38,171 - INFO - Sample model outputs (first batch):
+2026-01-30 10:41:38,173 - INFO - Sample 0 target (neuron 4, all output bins): [0.]
+2026-01-30 10:41:38,174 - INFO - Sample 1 target (neuron 4, all output bins): [0.]
+2026-01-30 10:41:38,175 - INFO - Sample 0 model output (neuron 4, all output bins): [-4.9203725]
+2026-01-30 10:41:38,175 - INFO - Sample 1 model output (neuron 4, all output bins): [-4.9129]
+2026-01-30 10:41:52,682 - INFO - Starting training...
+2026-01-30 10:41:52,682 - INFO - ==================================================
+2026-01-30 10:42:05,950 - INFO - Epoch   1/50 | Train Loss: 0.042385 | Val Loss: 0.042010 | LR: 1.00e-03
+2026-01-30 10:42:05,956 - INFO - Saved best model to results/binned_2026-01-30_10-40-49/best_stim_spike_model.pt
+2026-01-30 10:42:18,532 - INFO - Epoch   2/50 | Train Loss: 0.042296 | Val Loss: 0.041986 | LR: 1.00e-03
+2026-01-30 10:42:18,536 - INFO - Saved best model to results/binned_2026-01-30_10-40-49/best_stim_spike_model.pt
+2026-01-30 10:42:30,969 - INFO - Epoch   3/50 | Train Loss: 0.042274 | Val Loss: 0.041986 | LR: 1.00e-03
+2026-01-30 10:42:43,419 - INFO - Epoch   4/50 | Train Loss: 0.042276 | Val Loss: 0.041987 | LR: 1.00e-03
+2026-01-30 10:42:55,972 - INFO - Epoch   5/50 | Train Loss: 0.042274 | Val Loss: 0.041983 | LR: 1.00e-03
+2026-01-30 10:42:55,976 - INFO - Saved best model to results/binned_2026-01-30_10-40-49/best_stim_spike_model.pt
+2026-01-30 10:43:08,405 - INFO - Epoch   6/50 | Train Loss: 0.042264 | Val Loss: 0.041990 | LR: 1.00e-03
+2026-01-30 10:43:20,878 - INFO - Epoch   7/50 | Train Loss: 0.042252 | Val Loss: 0.041979 | LR: 1.00e-03
+2026-01-30 10:43:20,882 - INFO - Saved best model to results/binned_2026-01-30_10-40-49/best_stim_spike_model.pt
+2026-01-30 10:43:33,371 - INFO - Epoch   8/50 | Train Loss: 0.042256 | Val Loss: 0.041992 | LR: 1.00e-03
+2026-01-30 10:43:46,195 - INFO - Epoch   9/50 | Train Loss: 0.042248 | Val Loss: 0.041982 | LR: 1.00e-03
+2026-01-30 10:43:58,696 - INFO - Epoch  10/50 | Train Loss: 0.042247 | Val Loss: 0.041990 | LR: 1.00e-03
+2026-01-30 10:44:11,192 - INFO - Epoch  11/50 | Train Loss: 0.042241 | Val Loss: 0.042049 | LR: 1.00e-03
+2026-01-30 10:44:23,672 - INFO - Epoch  12/50 | Train Loss: 0.042245 | Val Loss: 0.041989 | LR: 1.00e-03
+2026-01-30 10:44:36,306 - INFO - Epoch  13/50 | Train Loss: 0.042239 | Val Loss: 0.041994 | LR: 5.00e-04
+2026-01-30 10:44:48,874 - INFO - Epoch  14/50 | Train Loss: 0.042220 | Val Loss: 0.041988 | LR: 5.00e-04
+2026-01-30 10:45:01,272 - INFO - Epoch  15/50 | Train Loss: 0.042212 | Val Loss: 0.041995 | LR: 5.00e-04
+2026-01-30 10:45:13,679 - INFO - Epoch  16/50 | Train Loss: 0.042208 | Val Loss: 0.041994 | LR: 5.00e-04
+2026-01-30 10:45:26,279 - INFO - Epoch  17/50 | Train Loss: 0.042204 | Val Loss: 0.041984 | LR: 5.00e-04
+2026-01-30 10:45:26,279 - INFO - Early stopping at epoch 17
+2026-01-30 10:45:26,280 - INFO - ==================================================
+2026-01-30 10:45:26,281 - INFO - Training complete! Best validation loss: 0.041979
+2026-01-30 10:45:26,282 - INFO - Saved training history to results/binned_2026-01-30_10-40-49/training_history.json
+2026-01-30 10:45:27,281 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9817, p=1.26e-45
+2026-01-30 10:46:03,740 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9817, p=1.26e-45
+2026-01-30 10:48:12,728 - INFO - Found 50 oracle patterns
+2026-01-30 10:59:06,729 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9817, p=1.26e-45
+2026-01-30 11:00:00,291 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9817, p=1.26e-45
+2026-01-30 11:00:04,873 - INFO - Found 50 oracle patterns
+2026-01-30 11:04:37,201 - INFO - Found 50 oracle patterns
+2026-01-30 11:04:37,202 - INFO - Using bin_size=50ms, n_input_bins=1, n_output_bins=1, output_offset=0
+2026-01-30 11:04:37,203 - INFO - Total bins: 20, Valid input positions: 0 to 19
+2026-01-30 11:04:37,643 - INFO - Saved pattern 4033 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4033/trial_00_timing_0.jpg
+2026-01-30 11:04:44,142 - INFO - Completed pattern 4033 (1/50)
+2026-01-30 11:04:44,466 - INFO - Saved pattern 4017 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4017/trial_00_timing_1.jpg
+2026-01-30 11:04:50,954 - INFO - Completed pattern 4017 (2/50)
+2026-01-30 11:04:51,291 - INFO - Saved pattern 4028 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4028/trial_00_timing_2.jpg
+2026-01-30 11:04:57,781 - INFO - Completed pattern 4028 (3/50)
+2026-01-30 11:04:58,111 - INFO - Saved pattern 4003 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4003/trial_00_timing_4.jpg
+2026-01-30 11:05:04,908 - INFO - Completed pattern 4003 (4/50)
+2026-01-30 11:05:05,244 - INFO - Saved pattern 4025 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4025/trial_00_timing_9.jpg
+2026-01-30 11:05:12,107 - INFO - Completed pattern 4025 (5/50)
+2026-01-30 11:05:12,493 - INFO - Saved pattern 4004 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4004/trial_00_timing_18.jpg
+2026-01-30 11:05:18,834 - INFO - Completed pattern 4004 (6/50)
+2026-01-30 11:05:19,167 - INFO - Saved pattern 4040 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4040/trial_00_timing_38.jpg
+2026-01-30 11:05:25,896 - INFO - Completed pattern 4040 (7/50)
+2026-01-30 11:05:26,244 - INFO - Saved pattern 4038 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4038/trial_00_timing_54.jpg
+2026-01-30 11:05:32,383 - INFO - Completed pattern 4038 (8/50)
+2026-01-30 11:05:32,724 - INFO - Saved pattern 4022 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4022/trial_00_timing_59.jpg
+2026-01-30 11:05:39,816 - INFO - Completed pattern 4022 (9/50)
+2026-01-30 11:05:40,332 - INFO - Saved pattern 4034 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4034/trial_00_timing_70.jpg
+2026-01-30 11:05:47,049 - INFO - Completed pattern 4034 (10/50)
+2026-01-30 11:05:47,384 - INFO - Saved pattern 4030 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4030/trial_00_timing_73.jpg
+2026-01-30 11:05:54,523 - INFO - Completed pattern 4030 (11/50)
+2026-01-30 11:05:54,858 - INFO - Saved pattern 4031 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4031/trial_00_timing_74.jpg
+2026-01-30 11:06:00,975 - INFO - Completed pattern 4031 (12/50)
+2026-01-30 11:06:01,311 - INFO - Saved pattern 4005 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4005/trial_00_timing_77.jpg
+2026-01-30 11:06:07,539 - INFO - Completed pattern 4005 (13/50)
+2026-01-30 11:06:07,867 - INFO - Saved pattern 4010 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4010/trial_00_timing_93.jpg
+2026-01-30 11:06:15,131 - INFO - Completed pattern 4010 (14/50)
+2026-01-30 11:06:15,458 - INFO - Saved pattern 4039 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4039/trial_00_timing_107.jpg
+2026-01-30 11:06:21,544 - INFO - Completed pattern 4039 (15/50)
+2026-01-30 11:06:21,872 - INFO - Saved pattern 4002 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4002/trial_00_timing_113.jpg
+2026-01-30 11:06:27,979 - INFO - Completed pattern 4002 (16/50)
+2026-01-30 11:06:28,303 - INFO - Saved pattern 4026 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4026/trial_00_timing_119.jpg
+2026-01-30 11:06:35,470 - INFO - Completed pattern 4026 (17/50)
+2026-01-30 11:06:35,963 - INFO - Saved pattern 4047 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4047/trial_00_timing_139.jpg
+2026-01-30 11:06:42,039 - INFO - Completed pattern 4047 (18/50)
+2026-01-30 11:06:42,366 - INFO - Saved pattern 4036 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4036/trial_00_timing_140.jpg
+2026-01-30 11:06:48,467 - INFO - Completed pattern 4036 (19/50)
+2026-01-30 11:06:48,791 - INFO - Saved pattern 4020 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4020/trial_00_timing_144.jpg
+2026-01-30 11:06:54,841 - INFO - Completed pattern 4020 (20/50)
+2026-01-30 11:06:55,248 - INFO - Saved pattern 4049 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4049/trial_00_timing_145.jpg
+2026-01-30 11:07:01,280 - INFO - Completed pattern 4049 (21/50)
+2026-01-30 11:07:01,606 - INFO - Saved pattern 4029 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4029/trial_00_timing_146.jpg
+2026-01-30 11:07:09,058 - INFO - Completed pattern 4029 (22/50)
+2026-01-30 11:07:09,391 - INFO - Saved pattern 4044 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4044/trial_00_timing_152.jpg
+2026-01-30 11:07:15,436 - INFO - Completed pattern 4044 (23/50)
+2026-01-30 11:07:15,761 - INFO - Saved pattern 4012 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4012/trial_00_timing_154.jpg
+2026-01-30 11:07:21,789 - INFO - Completed pattern 4012 (24/50)
+2026-01-30 11:07:22,123 - INFO - Saved pattern 4037 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4037/trial_00_timing_162.jpg
+2026-01-30 11:07:28,371 - INFO - Completed pattern 4037 (25/50)
+2026-01-30 11:07:28,699 - INFO - Saved pattern 4045 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4045/trial_00_timing_164.jpg
+2026-01-30 11:07:34,738 - INFO - Completed pattern 4045 (26/50)
+2026-01-30 11:07:35,059 - INFO - Saved pattern 4014 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4014/trial_00_timing_186.jpg
+2026-01-30 11:07:43,183 - INFO - Completed pattern 4014 (27/50)
+2026-01-30 11:07:43,519 - INFO - Saved pattern 4015 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4015/trial_00_timing_195.jpg
+2026-01-30 11:07:49,705 - INFO - Completed pattern 4015 (28/50)
+2026-01-30 11:07:50,036 - INFO - Saved pattern 4023 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4023/trial_00_timing_199.jpg
+2026-01-30 11:07:56,183 - INFO - Completed pattern 4023 (29/50)
+2026-01-30 11:07:56,515 - INFO - Saved pattern 4048 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4048/trial_00_timing_205.jpg
+2026-01-30 11:08:02,657 - INFO - Completed pattern 4048 (30/50)
+2026-01-30 11:08:02,984 - INFO - Saved pattern 4011 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4011/trial_00_timing_213.jpg
+2026-01-30 11:08:09,100 - INFO - Completed pattern 4011 (31/50)
+2026-01-30 11:08:09,429 - INFO - Saved pattern 4019 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4019/trial_00_timing_248.jpg
+2026-01-30 11:08:15,652 - INFO - Completed pattern 4019 (32/50)
+2026-01-30 11:08:15,990 - INFO - Saved pattern 4050 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4050/trial_00_timing_272.jpg
+2026-01-30 11:08:22,200 - INFO - Completed pattern 4050 (33/50)
+2026-01-30 11:08:22,534 - INFO - Saved pattern 4018 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4018/trial_00_timing_282.jpg
+2026-01-30 11:08:31,011 - INFO - Completed pattern 4018 (34/50)
+2026-01-30 11:08:31,356 - INFO - Saved pattern 4001 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4001/trial_00_timing_306.jpg
+2026-01-30 11:08:37,805 - INFO - Completed pattern 4001 (35/50)
+2026-01-30 11:08:38,140 - INFO - Saved pattern 4032 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4032/trial_00_timing_322.jpg
+2026-01-30 11:08:44,290 - INFO - Completed pattern 4032 (36/50)
+2026-01-30 11:08:44,628 - INFO - Saved pattern 4021 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4021/trial_00_timing_328.jpg
+2026-01-30 11:08:50,848 - INFO - Completed pattern 4021 (37/50)
+2026-01-30 11:08:51,185 - INFO - Saved pattern 4046 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4046/trial_00_timing_336.jpg
+2026-01-30 11:08:57,288 - INFO - Completed pattern 4046 (38/50)
+2026-01-30 11:08:57,621 - INFO - Saved pattern 4006 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4006/trial_00_timing_340.jpg
+2026-01-30 11:09:03,809 - INFO - Completed pattern 4006 (39/50)
+2026-01-30 11:09:04,139 - INFO - Saved pattern 4013 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4013/trial_00_timing_356.jpg
+2026-01-30 11:09:10,338 - INFO - Completed pattern 4013 (40/50)
+2026-01-30 11:09:10,668 - INFO - Saved pattern 4027 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4027/trial_00_timing_386.jpg
+2026-01-30 11:09:16,730 - INFO - Completed pattern 4027 (41/50)
+2026-01-30 11:09:17,055 - INFO - Saved pattern 4016 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4016/trial_00_timing_397.jpg
+2026-01-30 11:09:25,938 - INFO - Completed pattern 4016 (42/50)
+2026-01-30 11:09:26,272 - INFO - Saved pattern 4043 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4043/trial_00_timing_474.jpg
+2026-01-30 11:09:32,344 - INFO - Completed pattern 4043 (43/50)
+2026-01-30 11:09:32,672 - INFO - Saved pattern 4041 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4041/trial_00_timing_496.jpg
+2026-01-30 11:09:39,007 - INFO - Completed pattern 4041 (44/50)
+2026-01-30 11:09:39,338 - INFO - Saved pattern 4008 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4008/trial_00_timing_521.jpg
+2026-01-30 11:09:45,467 - INFO - Completed pattern 4008 (45/50)
+2026-01-30 11:09:45,797 - INFO - Saved pattern 4007 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4007/trial_00_timing_543.jpg
+2026-01-30 11:09:52,438 - INFO - Completed pattern 4007 (46/50)
+2026-01-30 11:09:52,804 - INFO - Saved pattern 4042 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4042/trial_00_timing_553.jpg
+2026-01-30 11:09:59,826 - INFO - Completed pattern 4042 (47/50)
+2026-01-30 11:10:00,163 - INFO - Saved pattern 4009 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4009/trial_00_timing_584.jpg
+2026-01-30 11:10:07,165 - INFO - Completed pattern 4009 (48/50)
+2026-01-30 11:10:07,503 - INFO - Saved pattern 4024 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4024/trial_00_timing_673.jpg
+2026-01-30 11:10:13,692 - INFO - Completed pattern 4024 (49/50)
+2026-01-30 11:10:14,024 - INFO - Saved pattern 4035 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4035/trial_00_timing_776.jpg
+2026-01-30 11:10:20,283 - INFO - Completed pattern 4035 (50/50)
+2026-01-30 11:10:20,285 - INFO - Saved all oracle pattern figures to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern
+2026-01-30 11:18:53,773 - INFO - Found 50 oracle patterns
+2026-01-30 11:18:53,774 - INFO - Using bin_size=50ms, n_input_bins=1, n_output_bins=1, output_offset=0
+2026-01-30 11:18:53,775 - INFO - Total bins: 20, Valid input positions: 0 to 19
+2026-01-30 11:18:54,131 - INFO - Saved pattern 4033 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4033/trial_00_timing_0.jpg
+2026-01-30 11:19:00,561 - INFO - Completed pattern 4033 (1/50)
+2026-01-30 11:19:00,931 - INFO - Saved pattern 4017 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4017/trial_00_timing_1.jpg
+2026-01-30 11:19:07,445 - INFO - Completed pattern 4017 (2/50)
+2026-01-30 11:19:07,801 - INFO - Saved pattern 4028 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4028/trial_00_timing_2.jpg
+2026-01-30 11:19:23,049 - INFO - Completed pattern 4028 (3/50)
+2026-01-30 11:19:23,383 - INFO - Saved pattern 4003 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4003/trial_00_timing_4.jpg
+2026-01-30 11:19:30,074 - INFO - Completed pattern 4003 (4/50)
+2026-01-30 11:19:30,410 - INFO - Saved pattern 4025 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4025/trial_00_timing_9.jpg
+2026-01-30 11:19:37,191 - INFO - Completed pattern 4025 (5/50)
+2026-01-30 11:19:37,523 - INFO - Saved pattern 4004 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4004/trial_00_timing_18.jpg
+2026-01-30 11:19:44,181 - INFO - Completed pattern 4004 (6/50)
+2026-01-30 11:19:44,512 - INFO - Saved pattern 4040 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4040/trial_00_timing_38.jpg
+2026-01-30 11:19:50,657 - INFO - Completed pattern 4040 (7/50)
+2026-01-30 11:19:50,986 - INFO - Saved pattern 4038 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4038/trial_00_timing_54.jpg
+2026-01-30 11:19:57,555 - INFO - Completed pattern 4038 (8/50)
+2026-01-30 11:19:57,882 - INFO - Saved pattern 4022 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4022/trial_00_timing_59.jpg
+2026-01-30 11:20:03,988 - INFO - Completed pattern 4022 (9/50)
+2026-01-30 11:20:04,322 - INFO - Saved pattern 4034 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4034/trial_00_timing_70.jpg
+2026-01-30 11:20:11,036 - INFO - Completed pattern 4034 (10/50)
+2026-01-30 11:20:11,370 - INFO - Saved pattern 4030 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4030/trial_00_timing_73.jpg
+2026-01-30 11:20:17,572 - INFO - Completed pattern 4030 (11/50)
+2026-01-30 11:20:17,901 - INFO - Saved pattern 4031 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4031/trial_00_timing_74.jpg
+2026-01-30 11:20:24,130 - INFO - Completed pattern 4031 (12/50)
+2026-01-30 11:20:24,462 - INFO - Saved pattern 4005 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4005/trial_00_timing_77.jpg
+2026-01-30 11:20:31,291 - INFO - Completed pattern 4005 (13/50)
+2026-01-30 11:20:31,622 - INFO - Saved pattern 4010 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4010/trial_00_timing_93.jpg
+2026-01-30 11:20:37,930 - INFO - Completed pattern 4010 (14/50)
+2026-01-30 11:20:38,268 - INFO - Saved pattern 4039 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4039/trial_00_timing_107.jpg
+2026-01-30 11:20:44,585 - INFO - Completed pattern 4039 (15/50)
+2026-01-30 11:20:44,919 - INFO - Saved pattern 4002 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4002/trial_00_timing_113.jpg
+2026-01-30 11:20:52,015 - INFO - Completed pattern 4002 (16/50)
+2026-01-30 11:20:52,350 - INFO - Saved pattern 4026 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4026/trial_00_timing_119.jpg
+2026-01-30 11:20:58,503 - INFO - Completed pattern 4026 (17/50)
+2026-01-30 11:20:58,834 - INFO - Saved pattern 4047 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4047/trial_00_timing_139.jpg
+2026-01-30 11:21:04,994 - INFO - Completed pattern 4047 (18/50)
+2026-01-30 11:21:05,322 - INFO - Saved pattern 4036 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4036/trial_00_timing_140.jpg
+2026-01-30 11:21:11,475 - INFO - Completed pattern 4036 (19/50)
+2026-01-30 11:21:11,842 - INFO - Saved pattern 4020 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4020/trial_00_timing_144.jpg
+2026-01-30 11:21:19,171 - INFO - Completed pattern 4020 (20/50)
+2026-01-30 11:21:19,504 - INFO - Saved pattern 4049 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4049/trial_00_timing_145.jpg
+2026-01-30 11:21:25,687 - INFO - Completed pattern 4049 (21/50)
+2026-01-30 11:21:26,024 - INFO - Saved pattern 4029 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4029/trial_00_timing_146.jpg
+2026-01-30 11:21:32,472 - INFO - Completed pattern 4029 (22/50)
+2026-01-30 11:21:32,811 - INFO - Saved pattern 4044 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4044/trial_00_timing_152.jpg
+2026-01-30 11:21:39,166 - INFO - Completed pattern 4044 (23/50)
+2026-01-30 11:21:39,499 - INFO - Saved pattern 4012 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4012/trial_00_timing_154.jpg
+2026-01-30 11:21:45,769 - INFO - Completed pattern 4012 (24/50)
+2026-01-30 11:21:46,104 - INFO - Saved pattern 4037 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4037/trial_00_timing_162.jpg
+2026-01-30 11:21:53,794 - INFO - Completed pattern 4037 (25/50)
+2026-01-30 11:21:54,131 - INFO - Saved pattern 4045 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4045/trial_00_timing_164.jpg
+2026-01-30 11:22:00,323 - INFO - Completed pattern 4045 (26/50)
+2026-01-30 11:22:00,655 - INFO - Saved pattern 4014 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4014/trial_00_timing_186.jpg
+2026-01-30 11:22:06,810 - INFO - Completed pattern 4014 (27/50)
+2026-01-30 11:22:07,139 - INFO - Saved pattern 4015 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4015/trial_00_timing_195.jpg
+2026-01-30 11:22:13,242 - INFO - Completed pattern 4015 (28/50)
+2026-01-30 11:22:13,576 - INFO - Saved pattern 4023 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4023/trial_00_timing_199.jpg
+2026-01-30 11:22:19,823 - INFO - Completed pattern 4023 (29/50)
+2026-01-30 11:22:20,156 - INFO - Saved pattern 4048 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4048/trial_00_timing_205.jpg
+2026-01-30 11:22:26,291 - INFO - Completed pattern 4048 (30/50)
+2026-01-30 11:22:26,633 - INFO - Saved pattern 4011 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4011/trial_00_timing_213.jpg
+2026-01-30 11:22:34,409 - INFO - Completed pattern 4011 (31/50)
+2026-01-30 11:22:34,747 - INFO - Saved pattern 4019 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4019/trial_00_timing_248.jpg
+2026-01-30 11:22:41,254 - INFO - Completed pattern 4019 (32/50)
+2026-01-30 11:22:41,596 - INFO - Saved pattern 4050 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4050/trial_00_timing_272.jpg
+2026-01-30 11:22:47,854 - INFO - Completed pattern 4050 (33/50)
+2026-01-30 11:22:48,182 - INFO - Saved pattern 4018 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4018/trial_00_timing_282.jpg
+2026-01-30 11:22:54,452 - INFO - Completed pattern 4018 (34/50)
+2026-01-30 11:22:54,781 - INFO - Saved pattern 4001 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4001/trial_00_timing_306.jpg
+2026-01-30 11:23:00,959 - INFO - Completed pattern 4001 (35/50)
+2026-01-30 11:23:01,293 - INFO - Saved pattern 4032 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4032/trial_00_timing_322.jpg
+2026-01-30 11:23:07,471 - INFO - Completed pattern 4032 (36/50)
+2026-01-30 11:23:07,805 - INFO - Saved pattern 4021 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4021/trial_00_timing_328.jpg
+2026-01-30 11:23:14,153 - INFO - Completed pattern 4021 (37/50)
+2026-01-30 11:23:14,505 - INFO - Saved pattern 4046 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4046/trial_00_timing_336.jpg
+2026-01-30 11:23:20,968 - INFO - Completed pattern 4046 (38/50)
+2026-01-30 11:23:21,298 - INFO - Saved pattern 4006 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4006/trial_00_timing_340.jpg
+2026-01-30 11:23:30,235 - INFO - Completed pattern 4006 (39/50)
+2026-01-30 11:23:30,577 - INFO - Saved pattern 4013 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4013/trial_00_timing_356.jpg
+2026-01-30 11:23:36,994 - INFO - Completed pattern 4013 (40/50)
+2026-01-30 11:23:37,328 - INFO - Saved pattern 4027 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4027/trial_00_timing_386.jpg
+2026-01-30 11:23:43,627 - INFO - Completed pattern 4027 (41/50)
+2026-01-30 11:23:43,959 - INFO - Saved pattern 4016 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4016/trial_00_timing_397.jpg
+2026-01-30 11:23:50,213 - INFO - Completed pattern 4016 (42/50)
+2026-01-30 11:23:50,557 - INFO - Saved pattern 4043 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4043/trial_00_timing_474.jpg
+2026-01-30 11:23:56,819 - INFO - Completed pattern 4043 (43/50)
+2026-01-30 11:23:57,176 - INFO - Saved pattern 4041 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4041/trial_00_timing_496.jpg
+2026-01-30 11:24:03,530 - INFO - Completed pattern 4041 (44/50)
+2026-01-30 11:24:03,860 - INFO - Saved pattern 4008 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4008/trial_00_timing_521.jpg
+2026-01-30 11:24:10,015 - INFO - Completed pattern 4008 (45/50)
+2026-01-30 11:24:10,378 - INFO - Saved pattern 4007 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4007/trial_00_timing_543.jpg
+2026-01-30 11:24:16,687 - INFO - Completed pattern 4007 (46/50)
+2026-01-30 11:24:17,016 - INFO - Saved pattern 4042 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4042/trial_00_timing_553.jpg
+2026-01-30 11:24:23,255 - INFO - Completed pattern 4042 (47/50)
+2026-01-30 11:24:23,598 - INFO - Saved pattern 4009 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4009/trial_00_timing_584.jpg
+2026-01-30 11:24:29,900 - INFO - Completed pattern 4009 (48/50)
+2026-01-30 11:24:30,232 - INFO - Saved pattern 4024 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4024/trial_00_timing_673.jpg
+2026-01-30 11:24:39,998 - INFO - Completed pattern 4024 (49/50)
+2026-01-30 11:24:40,343 - INFO - Saved pattern 4035 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4035/trial_00_timing_776.jpg
+2026-01-30 11:24:46,610 - INFO - Completed pattern 4035 (50/50)
+2026-01-30 11:24:46,611 - INFO - Saved all oracle pattern figures to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern
+2026-01-30 11:33:12,556 - INFO - Found 50 oracle patterns
+2026-01-30 11:33:12,557 - INFO - Using bin_size=50ms, n_input_bins=1, n_output_bins=1, output_offset=0
+2026-01-30 11:33:12,558 - INFO - Total bins: 20, Valid input positions: 0 to 19
+2026-01-30 11:33:12,918 - INFO - Saved pattern 4033 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4033/trial_00_timing_0.jpg
+2026-01-30 11:33:19,567 - INFO - Completed pattern 4033 (1/50)
+2026-01-30 11:33:19,905 - INFO - Saved pattern 4017 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4017/trial_00_timing_1.jpg
+2026-01-30 11:33:26,090 - INFO - Completed pattern 4017 (2/50)
+2026-01-30 11:33:26,436 - INFO - Saved pattern 4028 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4028/trial_00_timing_2.jpg
+2026-01-30 11:33:32,838 - INFO - Completed pattern 4028 (3/50)
+2026-01-30 11:33:33,194 - INFO - Saved pattern 4003 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4003/trial_00_timing_4.jpg
+2026-01-30 11:33:40,334 - INFO - Completed pattern 4003 (4/50)
+2026-01-30 11:33:40,676 - INFO - Saved pattern 4025 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4025/trial_00_timing_9.jpg
+2026-01-30 11:33:46,926 - INFO - Completed pattern 4025 (5/50)
+2026-01-30 11:33:47,266 - INFO - Saved pattern 4004 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4004/trial_00_timing_18.jpg
+2026-01-30 11:33:53,668 - INFO - Completed pattern 4004 (6/50)
+2026-01-30 11:33:54,009 - INFO - Saved pattern 4040 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4040/trial_00_timing_38.jpg
+2026-01-30 11:34:00,184 - INFO - Completed pattern 4040 (7/50)
+2026-01-30 11:34:00,522 - INFO - Saved pattern 4038 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4038/trial_00_timing_54.jpg
+2026-01-30 11:34:06,799 - INFO - Completed pattern 4038 (8/50)
+2026-01-30 11:34:07,134 - INFO - Saved pattern 4022 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4022/trial_00_timing_59.jpg
+2026-01-30 11:34:13,641 - INFO - Completed pattern 4022 (9/50)
+2026-01-30 11:34:14,005 - INFO - Saved pattern 4034 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4034/trial_00_timing_70.jpg
+2026-01-30 11:34:21,121 - INFO - Completed pattern 4034 (10/50)
+2026-01-30 11:34:21,483 - INFO - Saved pattern 4030 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4030/trial_00_timing_73.jpg
+2026-01-30 11:34:40,705 - INFO - Completed pattern 4030 (11/50)
+2026-01-30 11:34:41,047 - INFO - Saved pattern 4031 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4031/trial_00_timing_74.jpg
+2026-01-30 11:34:47,225 - INFO - Completed pattern 4031 (12/50)
+2026-01-30 11:34:47,562 - INFO - Saved pattern 4005 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4005/trial_00_timing_77.jpg
+2026-01-30 11:34:53,944 - INFO - Completed pattern 4005 (13/50)
+2026-01-30 11:34:54,307 - INFO - Saved pattern 4010 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4010/trial_00_timing_93.jpg
+2026-01-30 11:35:01,825 - INFO - Completed pattern 4010 (14/50)
+2026-01-30 11:35:02,157 - INFO - Saved pattern 4039 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4039/trial_00_timing_107.jpg
+2026-01-30 11:35:08,350 - INFO - Completed pattern 4039 (15/50)
+2026-01-30 11:35:08,683 - INFO - Saved pattern 4002 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4002/trial_00_timing_113.jpg
+2026-01-30 11:35:14,832 - INFO - Completed pattern 4002 (16/50)
+2026-01-30 11:35:15,163 - INFO - Saved pattern 4026 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4026/trial_00_timing_119.jpg
+2026-01-30 11:35:22,366 - INFO - Completed pattern 4026 (17/50)
+2026-01-30 11:35:22,694 - INFO - Saved pattern 4047 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4047/trial_00_timing_139.jpg
+2026-01-30 11:35:29,217 - INFO - Completed pattern 4047 (18/50)
+2026-01-30 11:35:29,547 - INFO - Saved pattern 4036 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4036/trial_00_timing_140.jpg
+2026-01-30 11:35:35,726 - INFO - Completed pattern 4036 (19/50)
+2026-01-30 11:35:36,062 - INFO - Saved pattern 4020 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4020/trial_00_timing_144.jpg
+2026-01-30 11:35:42,319 - INFO - Completed pattern 4020 (20/50)
+2026-01-30 11:35:42,653 - INFO - Saved pattern 4049 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4049/trial_00_timing_145.jpg
+2026-01-30 11:35:48,851 - INFO - Completed pattern 4049 (21/50)
+2026-01-30 11:35:49,181 - INFO - Saved pattern 4029 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4029/trial_00_timing_146.jpg
+2026-01-30 11:35:56,714 - INFO - Completed pattern 4029 (22/50)
+2026-01-30 11:35:57,058 - INFO - Saved pattern 4044 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4044/trial_00_timing_152.jpg
+2026-01-30 11:36:03,226 - INFO - Completed pattern 4044 (23/50)
+2026-01-30 11:36:03,562 - INFO - Saved pattern 4012 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4012/trial_00_timing_154.jpg
+2026-01-30 11:36:09,729 - INFO - Completed pattern 4012 (24/50)
+2026-01-30 11:36:10,063 - INFO - Saved pattern 4037 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4037/trial_00_timing_162.jpg
+2026-01-30 11:36:16,221 - INFO - Completed pattern 4037 (25/50)
+2026-01-30 11:36:16,558 - INFO - Saved pattern 4045 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4045/trial_00_timing_164.jpg
+2026-01-30 11:36:22,750 - INFO - Completed pattern 4045 (26/50)
+2026-01-30 11:36:23,081 - INFO - Saved pattern 4014 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4014/trial_00_timing_186.jpg
+2026-01-30 11:36:30,649 - INFO - Completed pattern 4014 (27/50)
+2026-01-30 11:36:30,978 - INFO - Saved pattern 4015 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4015/trial_00_timing_195.jpg
+2026-01-30 11:36:37,268 - INFO - Completed pattern 4015 (28/50)
+2026-01-30 11:36:37,698 - INFO - Saved pattern 4023 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4023/trial_00_timing_199.jpg
+2026-01-30 11:36:43,885 - INFO - Completed pattern 4023 (29/50)
+2026-01-30 11:36:44,216 - INFO - Saved pattern 4048 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4048/trial_00_timing_205.jpg
+2026-01-30 11:36:50,351 - INFO - Completed pattern 4048 (30/50)
+2026-01-30 11:36:50,686 - INFO - Saved pattern 4011 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4011/trial_00_timing_213.jpg
+2026-01-30 11:36:56,864 - INFO - Completed pattern 4011 (31/50)
+2026-01-30 11:36:57,193 - INFO - Saved pattern 4019 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4019/trial_00_timing_248.jpg
+2026-01-30 11:37:03,397 - INFO - Completed pattern 4019 (32/50)
+2026-01-30 11:37:03,732 - INFO - Saved pattern 4050 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4050/trial_00_timing_272.jpg
+2026-01-30 11:37:10,014 - INFO - Completed pattern 4050 (33/50)
+2026-01-30 11:37:10,349 - INFO - Saved pattern 4018 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4018/trial_00_timing_282.jpg
+2026-01-30 11:37:18,795 - INFO - Completed pattern 4018 (34/50)
+2026-01-30 11:37:19,127 - INFO - Saved pattern 4001 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4001/trial_00_timing_306.jpg
+2026-01-30 11:37:25,381 - INFO - Completed pattern 4001 (35/50)
+2026-01-30 11:37:25,717 - INFO - Saved pattern 4032 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4032/trial_00_timing_322.jpg
+2026-01-30 11:37:31,923 - INFO - Completed pattern 4032 (36/50)
+2026-01-30 11:37:32,255 - INFO - Saved pattern 4021 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4021/trial_00_timing_328.jpg
+2026-01-30 11:37:38,587 - INFO - Completed pattern 4021 (37/50)
+2026-01-30 11:37:38,912 - INFO - Saved pattern 4046 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4046/trial_00_timing_336.jpg
+2026-01-30 11:37:45,093 - INFO - Completed pattern 4046 (38/50)
+2026-01-30 11:37:45,423 - INFO - Saved pattern 4006 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4006/trial_00_timing_340.jpg
+2026-01-30 11:37:51,637 - INFO - Completed pattern 4006 (39/50)
+2026-01-30 11:37:51,971 - INFO - Saved pattern 4013 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4013/trial_00_timing_356.jpg
+2026-01-30 11:37:58,170 - INFO - Completed pattern 4013 (40/50)
+2026-01-30 11:37:58,501 - INFO - Saved pattern 4027 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4027/trial_00_timing_386.jpg
+2026-01-30 11:38:04,726 - INFO - Completed pattern 4027 (41/50)
+2026-01-30 11:38:05,062 - INFO - Saved pattern 4016 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4016/trial_00_timing_397.jpg
+2026-01-30 11:38:14,060 - INFO - Completed pattern 4016 (42/50)
+2026-01-30 11:38:14,401 - INFO - Saved pattern 4043 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4043/trial_00_timing_474.jpg
+2026-01-30 11:38:20,700 - INFO - Completed pattern 4043 (43/50)
+2026-01-30 11:38:21,051 - INFO - Saved pattern 4041 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4041/trial_00_timing_496.jpg
+2026-01-30 11:38:27,495 - INFO - Completed pattern 4041 (44/50)
+2026-01-30 11:38:27,846 - INFO - Saved pattern 4008 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4008/trial_00_timing_521.jpg
+2026-01-30 11:38:34,253 - INFO - Completed pattern 4008 (45/50)
+2026-01-30 11:38:34,590 - INFO - Saved pattern 4007 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4007/trial_00_timing_543.jpg
+2026-01-30 11:38:40,930 - INFO - Completed pattern 4007 (46/50)
+2026-01-30 11:38:41,267 - INFO - Saved pattern 4042 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4042/trial_00_timing_553.jpg
+2026-01-30 11:38:47,542 - INFO - Completed pattern 4042 (47/50)
+2026-01-30 11:38:47,872 - INFO - Saved pattern 4009 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4009/trial_00_timing_584.jpg
+2026-01-30 11:38:54,096 - INFO - Completed pattern 4009 (48/50)
+2026-01-30 11:38:54,431 - INFO - Saved pattern 4024 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4024/trial_00_timing_673.jpg
+2026-01-30 11:39:00,643 - INFO - Completed pattern 4024 (49/50)
+2026-01-30 11:39:00,977 - INFO - Saved pattern 4035 trial 0 figure to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern/pattern_4035/trial_00_timing_776.jpg
+2026-01-30 11:39:07,154 - INFO - Completed pattern 4035 (50/50)
+2026-01-30 11:39:07,154 - INFO - Saved all oracle pattern figures to results/binned_2026-01-30_10-40-49/oracle_trials_by_pattern

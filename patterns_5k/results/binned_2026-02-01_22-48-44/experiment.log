@@ -1,0 +1,129 @@
+2026-02-01 22:48:44,292 - INFO - ==================================================
+2026-02-01 22:48:44,293 - INFO - Experiment run directory: results/binned_2026-02-01_22-48-44
+2026-02-01 22:48:44,293 - INFO - Config file: config.yaml (copied to results/binned_2026-02-01_22-48-44/config.yaml)
+2026-02-01 22:48:44,293 - INFO - Inference mode: False
+2026-02-01 22:48:44,294 - INFO - Random seed: 42
+2026-02-01 22:48:44,294 - INFO - ==================================================
+2026-02-01 22:48:44,294 - INFO - Total trials: 5000
+2026-02-01 22:48:44,305 - INFO - Oracle trials: 1000 (50 patterns × 10 trials)
+2026-02-01 22:48:44,305 - INFO - Sample trials: 4000
+2026-02-01 22:48:44,307 - INFO - Train: 3400, Val: 600, Test: 1000
+2026-02-01 22:48:44,307 - INFO - Dataset config: bin_size=10ms, n_input_bins=1, n_output_bins=6, output_offset=0
+2026-02-01 22:49:00,279 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-01 22:49:00,288 - INFO -   bin_size_ms=10, n_input_bins=1, n_output_bins=6
+2026-02-01 22:49:00,293 - INFO -   output_offset=0, total_bins per trial=60
+2026-02-01 22:49:00,295 - INFO -   Valid start positions per trial: 0 to 54
+2026-02-01 22:49:00,296 - INFO -   Total samples: 187000 (3400 trials × 55 positions)
+2026-02-01 22:49:15,348 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-01 22:49:15,349 - INFO -   bin_size_ms=10, n_input_bins=1, n_output_bins=6
+2026-02-01 22:49:15,349 - INFO -   output_offset=0, total_bins per trial=60
+2026-02-01 22:49:15,349 - INFO -   Valid start positions per trial: 0 to 54
+2026-02-01 22:49:15,350 - INFO -   Total samples: 33000 (600 trials × 55 positions)
+2026-02-01 22:49:30,396 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-01 22:49:30,397 - INFO -   bin_size_ms=10, n_input_bins=1, n_output_bins=6
+2026-02-01 22:49:30,398 - INFO -   output_offset=0, total_bins per trial=60
+2026-02-01 22:49:30,398 - INFO -   Valid start positions per trial: 0 to 54
+2026-02-01 22:49:30,398 - INFO -   Total samples: 55000 (1000 trials × 55 positions)
+2026-02-01 22:49:30,401 - INFO - Train samples: 187000, Val samples: 33000, Test samples: 55000
+2026-02-01 22:49:30,402 - INFO - Train batches: 1461, Val batches: 258, Test batches: 430
+2026-02-01 22:49:30,402 - INFO - Number of stimulation channels: 42
+2026-02-01 22:49:30,402 - INFO - Number of recorded neurons: 63
+2026-02-01 22:49:30,404 - INFO - Sample X shape: torch.Size([42, 1]) (n_channels, n_input_bins)
+2026-02-01 22:49:30,404 - INFO - Sample Y shape: torch.Size([63, 6]) (n_neurons, n_output_bins)
+2026-02-01 22:49:30,432 - INFO - Using Apple Silicon MPS acceleration
+2026-02-01 22:49:30,432 - INFO - PyTorch version: 2.10.0.dev20251124
+2026-02-01 22:49:30,433 - INFO - Device: mps
+2026-02-01 22:49:30,434 - INFO - Saved experiment config to results/binned_2026-02-01_22-48-44/config.json
+2026-02-01 22:49:36,500 - INFO - Saved spike distribution plot (counts mode) to results/binned_2026-02-01_22-48-44/train_spike_distribution_counts.png
+2026-02-01 22:49:41,542 - INFO - Saved spike distribution plot (binary mode) to results/binned_2026-02-01_22-48-44/train_spike_distribution_binary.png
+2026-02-01 22:49:42,377 - INFO - Model: CNN
+2026-02-01 22:49:42,377 - INFO -   Embedding: 5 categories -> 32-dim vectors
+2026-02-01 22:49:42,377 - INFO -   Hidden layers: [64, 128]
+2026-02-01 22:49:42,377 - INFO -   Dropout: 0.2
+2026-02-01 22:49:42,378 - INFO -   Total parameters: 127,450
+2026-02-01 22:49:42,378 - INFO -   Trainable parameters: 127,450
+2026-02-01 22:49:42,665 - INFO - Input shape: torch.Size([128, 42, 1]), dtype: torch.int64
+2026-02-01 22:49:42,666 - INFO - Output shape: torch.Size([128, 63, 6])
+2026-02-01 22:49:42,666 - INFO - Target shape: torch.Size([128, 63, 6])
+2026-02-01 22:49:42,667 - INFO - ✓ Output and target shapes match!
+2026-02-01 22:49:42,667 - INFO - Sample model outputs (first batch):
+2026-02-01 22:49:42,667 - INFO - Sample 0 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0.]
+2026-02-01 22:49:42,668 - INFO - Sample 1 target (neuron 4, all output bins): [0. 0. 0. 1. 0. 1.]
+2026-02-01 22:49:42,668 - INFO - Sample 2 target (neuron 4, all output bins): [0. 0. 0. 0. 1. 0.]
+2026-02-01 22:49:42,669 - INFO - Sample 3 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0.]
+2026-02-01 22:49:42,669 - INFO - Sample 4 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0.]
+2026-02-01 22:49:42,671 - INFO - Sample 0 model output (neuron 4, all output bins): [-13.807062 -13.808193 -13.819645 -13.805852 -13.789199 -13.811905]
+2026-02-01 22:49:42,672 - INFO - Sample 1 model output (neuron 4, all output bins): [-13.822181  -13.816903  -13.819075  -13.8001375 -13.797405  -13.821817 ]
+2026-02-01 22:49:42,672 - INFO - Sample 2 model output (neuron 4, all output bins): [-13.819534  -13.813949  -13.81966   -13.7960005 -13.795659  -13.805651 ]
+2026-02-01 22:49:42,673 - INFO - Sample 3 model output (neuron 4, all output bins): [-13.806526 -13.824194 -13.81168  -13.814497 -13.795763 -13.826536]
+2026-02-01 22:49:42,673 - INFO - Sample 4 model output (neuron 4, all output bins): [-13.798621  -13.799445  -13.8248205 -13.816069  -13.774489  -13.818872 ]
+2026-02-01 22:49:43,427 - INFO - Starting training...
+2026-02-01 22:49:43,427 - INFO - ==================================================
+2026-02-01 22:50:28,604 - INFO - Epoch   1/50 | Train Loss: 1.026199 | Val Loss: 0.899577 | Val Corr: 0.243495 | LR: 1.00e-03
+2026-02-01 22:50:28,614 - INFO - Saved best model to results/binned_2026-02-01_22-48-44/best_stim_spike_model.pt
+2026-02-01 22:51:13,102 - INFO - Epoch   2/50 | Train Loss: 0.942557 | Val Loss: 0.910840 | Val Corr: 0.246205 | LR: 1.00e-03
+2026-02-01 22:51:13,114 - INFO - Saved best model to results/binned_2026-02-01_22-48-44/best_stim_spike_model.pt
+2026-02-01 22:51:57,667 - INFO - Epoch   3/50 | Train Loss: 0.939147 | Val Loss: 0.894283 | Val Corr: 0.244014 | LR: 1.00e-03
+2026-02-01 22:52:42,301 - INFO - Epoch   4/50 | Train Loss: 0.935970 | Val Loss: 0.886539 | Val Corr: 0.245709 | LR: 1.00e-03
+2026-02-01 22:53:27,664 - INFO - Epoch   5/50 | Train Loss: 0.933776 | Val Loss: 0.907356 | Val Corr: 0.240227 | LR: 1.00e-03
+2026-02-01 22:54:12,765 - INFO - Epoch   6/50 | Train Loss: 0.930621 | Val Loss: 0.896643 | Val Corr: 0.244268 | LR: 1.00e-03
+2026-02-01 22:54:57,720 - INFO - Epoch   7/50 | Train Loss: 0.929401 | Val Loss: 0.886434 | Val Corr: 0.244632 | LR: 1.00e-03
+2026-02-01 22:55:42,338 - INFO - Epoch   8/50 | Train Loss: 0.926582 | Val Loss: 0.893168 | Val Corr: 0.246758 | LR: 1.00e-03
+2026-02-01 22:55:42,348 - INFO - Saved best model to results/binned_2026-02-01_22-48-44/best_stim_spike_model.pt
+2026-02-01 22:56:27,525 - INFO - Epoch   9/50 | Train Loss: 0.924732 | Val Loss: 0.912448 | Val Corr: 0.248064 | LR: 1.00e-03
+2026-02-01 22:56:27,538 - INFO - Saved best model to results/binned_2026-02-01_22-48-44/best_stim_spike_model.pt
+2026-02-01 22:57:12,256 - INFO - Epoch  10/50 | Train Loss: 0.921259 | Val Loss: 0.912996 | Val Corr: 0.237609 | LR: 1.00e-03
+2026-02-01 22:57:55,364 - INFO - Epoch  11/50 | Train Loss: 0.909960 | Val Loss: 1.076557 | Val Corr: 0.164703 | LR: 1.00e-03
+2026-02-01 22:58:40,625 - INFO - Epoch  12/50 | Train Loss: 0.896253 | Val Loss: 1.175059 | Val Corr: 0.196235 | LR: 1.00e-03
+2026-02-01 22:59:25,735 - INFO - Epoch  13/50 | Train Loss: 0.891075 | Val Loss: 1.217758 | Val Corr: 0.223349 | LR: 5.00e-04
+2026-02-01 23:00:11,030 - INFO - Epoch  14/50 | Train Loss: 0.887269 | Val Loss: 1.286153 | Val Corr: 0.226621 | LR: 5.00e-04
+2026-02-01 23:00:56,312 - INFO - Epoch  15/50 | Train Loss: 0.886356 | Val Loss: 1.280029 | Val Corr: 0.231301 | LR: 5.00e-04
+2026-02-01 23:01:41,545 - INFO - Epoch  16/50 | Train Loss: 0.886455 | Val Loss: 1.278803 | Val Corr: 0.228461 | LR: 5.00e-04
+2026-02-01 23:02:26,992 - INFO - Epoch  17/50 | Train Loss: 0.885653 | Val Loss: 1.254039 | Val Corr: 0.231812 | LR: 5.00e-04
+2026-02-01 23:03:12,281 - INFO - Epoch  18/50 | Train Loss: 0.885728 | Val Loss: 1.268783 | Val Corr: 0.231361 | LR: 5.00e-04
+2026-02-01 23:03:57,491 - INFO - Epoch  19/50 | Train Loss: 0.884859 | Val Loss: 1.279290 | Val Corr: 0.233117 | LR: 2.50e-04
+2026-02-01 23:03:57,493 - INFO - Early stopping at epoch 19
+2026-02-01 23:03:57,493 - INFO - ==================================================
+2026-02-01 23:03:57,493 - INFO - Training complete! Best validation correlation: 0.248064
+2026-02-01 23:03:57,494 - INFO - Saved training history to results/binned_2026-02-01_22-48-44/training_history.json
+2026-02-01 23:04:02,029 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9772, p=8.82e-43
+2026-02-01 23:04:03,498 - INFO - Pattern selectivity summary:
+2026-02-01 23:04:03,498 - INFO -   Mean correlation across neurons: 0.2112
+2026-02-01 23:04:03,499 - INFO -   Median correlation: 0.2473
+2026-02-01 23:04:03,499 - INFO -   Neurons with r > 0.5: 3 / 63
+2026-02-01 23:04:03,500 - INFO -   Neurons with r > 0.3: 20 / 63
+2026-02-01 23:04:03,631 - INFO - 
+Pattern selectivity summary:
+2026-02-01 23:04:03,631 - INFO -   Mean correlation across neurons: 0.2112
+2026-02-01 23:04:03,632 - INFO -   Median correlation: 0.2473
+2026-02-01 23:04:03,632 - INFO -   Neurons with r > 0.5: 3 / 63
+2026-02-01 23:04:03,632 - INFO -   Neurons with r > 0.3: 20 / 63
+2026-02-01 23:04:03,655 - INFO - Sample model outputs (first batch):
+2026-02-01 23:04:03,655 - INFO - Sample 0 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0.]
+2026-02-01 23:04:03,656 - INFO - Sample 0 model output (neuron 4, all output bins): [-13.800918 -13.813359 -13.817111 -13.811809 -13.79969  -13.801059]
+2026-02-01 23:04:04,447 - INFO - Found 50 oracle patterns
+2026-02-01 23:04:04,448 - INFO - Using bin_size=10ms, n_input_bins=1, n_output_bins=6, output_offset=0
+2026-02-01 23:04:04,448 - INFO - Total bins: 60, Valid input positions: 0 to 54
+2026-02-01 23:04:04,792 - INFO - Saved pattern 4033 trial 0 figure to results/binned_2026-02-01_22-48-44/oracle_trials_by_pattern/pattern_4033/trial_00_timing_0.jpg
+2026-02-01 23:04:10,879 - INFO - Completed pattern 4033 (1/50)
+2026-02-01 23:04:11,201 - INFO - Saved pattern 4017 trial 0 figure to results/binned_2026-02-01_22-48-44/oracle_trials_by_pattern/pattern_4017/trial_00_timing_1.jpg
+2026-02-01 23:04:17,387 - INFO - Completed pattern 4017 (2/50)
+2026-02-01 23:04:17,704 - INFO - Saved pattern 4028 trial 0 figure to results/binned_2026-02-01_22-48-44/oracle_trials_by_pattern/pattern_4028/trial_00_timing_2.jpg
+2026-02-01 23:04:23,759 - INFO - Completed pattern 4028 (3/50)
+2026-02-01 23:04:23,759 - INFO - Pattern limit of 3 reached, stopping.
+2026-02-01 23:04:23,760 - INFO - Saved all oracle pattern figures to results/binned_2026-02-01_22-48-44/oracle_trials_by_pattern
+2026-02-01 23:04:23,792 - INFO - Input shape: torch.Size([128, 42, 1]), dtype: torch.int64
+2026-02-01 23:04:23,792 - INFO - Output shape: torch.Size([128, 63, 6])
+2026-02-01 23:04:23,793 - INFO - Target shape: torch.Size([128, 63, 6])
+2026-02-01 23:04:23,793 - INFO - ✓ Output and target shapes match!
+2026-02-01 23:04:23,793 - INFO - Sample model outputs (first batch):
+2026-02-01 23:04:23,794 - INFO - Sample 0 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0.]
+2026-02-01 23:04:23,794 - INFO - Sample 1 target (neuron 4, all output bins): [0. 0. 2. 0. 0. 0.]
+2026-02-01 23:04:23,795 - INFO - Sample 2 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0.]
+2026-02-01 23:04:23,795 - INFO - Sample 3 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0.]
+2026-02-01 23:04:23,795 - INFO - Sample 4 target (neuron 4, all output bins): [0. 1. 0. 0. 0. 0.]
+2026-02-01 23:04:23,796 - INFO - Sample 0 model output (neuron 4, all output bins): [0.06276287 0.08141685 0.08747791 0.08451574 0.08550464 0.09686025]
+2026-02-01 23:04:23,797 - INFO - Sample 1 model output (neuron 4, all output bins): [0.0571378  0.07271371 0.08212893 0.07811457 0.08394156 0.0917954 ]
+2026-02-01 23:04:23,797 - INFO - Sample 2 model output (neuron 4, all output bins): [0.06158645 0.07982505 0.08621513 0.08409268 0.08640659 0.09589244]
+2026-02-01 23:04:23,798 - INFO - Sample 3 model output (neuron 4, all output bins): [0.05842198 0.07502325 0.07727456 0.07655725 0.06953235 0.08160093]
+2026-02-01 23:04:23,798 - INFO - Sample 4 model output (neuron 4, all output bins): [0.05505626 0.07206168 0.07298605 0.07326382 0.06642401 0.07737286]

@@ -1,0 +1,138 @@
+2026-01-30 12:33:37,859 - INFO - ==================================================
+2026-01-30 12:33:37,860 - INFO - Experiment run directory: results/binned_2026-01-30_12-33-37
+2026-01-30 12:33:37,860 - INFO - Inference mode: False
+2026-01-30 12:33:37,860 - INFO - Random seed: 42
+2026-01-30 12:33:37,861 - INFO - ==================================================
+2026-01-30 12:33:37,862 - INFO - Total trials: 5000
+2026-01-30 12:33:37,875 - INFO - Oracle trials: 1000 (50 patterns × 10 trials)
+2026-01-30 12:33:37,875 - INFO - Sample trials: 4000
+2026-01-30 12:33:37,876 - INFO - Train: 3400, Val: 600, Test: 1000
+2026-01-30 12:33:37,876 - INFO - Dataset config: bin_size=60ms, n_input_bins=1, n_output_bins=1, output_offset=0
+2026-01-30 12:33:53,528 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-30 12:33:53,534 - INFO -   bin_size_ms=60, n_input_bins=1, n_output_bins=1
+2026-01-30 12:33:53,534 - INFO -   output_offset=0, total_bins per trial=10
+2026-01-30 12:33:53,535 - INFO -   Valid start positions per trial: 0 to 9
+2026-01-30 12:33:53,535 - INFO -   Total samples: 34000 (3400 trials × 10 positions)
+2026-01-30 12:34:08,553 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-30 12:34:08,554 - INFO -   bin_size_ms=60, n_input_bins=1, n_output_bins=1
+2026-01-30 12:34:08,554 - INFO -   output_offset=0, total_bins per trial=10
+2026-01-30 12:34:08,554 - INFO -   Valid start positions per trial: 0 to 9
+2026-01-30 12:34:08,554 - INFO -   Total samples: 6000 (600 trials × 10 positions)
+2026-01-30 12:34:23,425 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-30 12:34:23,426 - INFO -   bin_size_ms=60, n_input_bins=1, n_output_bins=1
+2026-01-30 12:34:23,427 - INFO -   output_offset=0, total_bins per trial=10
+2026-01-30 12:34:23,427 - INFO -   Valid start positions per trial: 0 to 9
+2026-01-30 12:34:23,427 - INFO -   Total samples: 10000 (1000 trials × 10 positions)
+2026-01-30 12:34:23,429 - INFO - Train samples: 34000, Val samples: 6000, Test samples: 10000
+2026-01-30 12:34:23,429 - INFO - Train batches: 133, Val batches: 24, Test batches: 40
+2026-01-30 12:34:23,430 - INFO - Number of stimulation channels: 42
+2026-01-30 12:34:23,430 - INFO - Number of recorded neurons: 63
+2026-01-30 12:34:23,431 - INFO - Sample X shape: torch.Size([42, 1]) (n_channels, n_input_bins)
+2026-01-30 12:34:23,431 - INFO - Sample Y shape: torch.Size([63, 1]) (n_neurons, n_output_bins)
+2026-01-30 12:34:23,455 - INFO - Using Apple Silicon MPS acceleration
+2026-01-30 12:34:23,455 - INFO - PyTorch version: 2.10.0.dev20251124
+2026-01-30 12:34:23,456 - INFO - Device: mps
+2026-01-30 12:34:23,457 - INFO - Saved experiment config to results/binned_2026-01-30_12-33-37/config.json
+2026-01-30 12:34:24,171 - INFO - Saved spike distribution plot (counts mode) to results/binned_2026-01-30_12-33-37/train_spike_distribution_counts.png
+2026-01-30 12:34:24,747 - INFO - Saved spike distribution plot (binary mode) to results/binned_2026-01-30_12-33-37/train_spike_distribution_binary.png
+2026-01-30 12:34:25,168 - INFO - Initializing output layer bias to: -4.7246 (matches mean rate 0.0089)
+2026-01-30 12:34:25,176 - INFO - Model: StimToSpikeMLP
+2026-01-30 12:34:25,176 - INFO -   Embedding: 5 categories -> 8-dim vectors
+2026-01-30 12:34:25,176 - INFO -   Hidden layers: [128, 64]
+2026-01-30 12:34:25,177 - INFO -   Dropout: 0.2
+2026-01-30 12:34:25,177 - INFO -   Total parameters: 55,527
+2026-01-30 12:34:25,178 - INFO -   Trainable parameters: 55,527
+2026-01-30 12:34:25,270 - INFO - Input shape: torch.Size([256, 42, 1]), dtype: torch.int64
+2026-01-30 12:34:25,270 - INFO - Output shape: torch.Size([256, 63, 1])
+2026-01-30 12:34:25,270 - INFO - Target shape: torch.Size([256, 63, 1])
+2026-01-30 12:34:25,271 - INFO - ✓ Output and target shapes match!
+2026-01-30 12:34:25,297 - INFO - Sample model outputs (first batch):
+2026-01-30 12:34:25,298 - INFO - Sample 0 target (neuron 4, all output bins): [0.]
+2026-01-30 12:34:25,298 - INFO - Sample 1 target (neuron 4, all output bins): [0.]
+2026-01-30 12:34:25,300 - INFO - Sample 0 model output (neuron 4, all output bins): [-4.7351737]
+2026-01-30 12:34:25,300 - INFO - Sample 1 model output (neuron 4, all output bins): [-4.7305374]
+2026-01-30 12:34:35,817 - INFO - Starting training...
+2026-01-30 12:34:35,818 - INFO - ==================================================
+2026-01-30 12:34:42,727 - INFO - Epoch   1/50 | Train Loss: 0.049702 | Val Loss: 0.049486 | LR: 1.00e-03
+2026-01-30 12:34:42,733 - INFO - Saved best model to results/binned_2026-01-30_12-33-37/best_stim_spike_model.pt
+2026-01-30 12:34:49,124 - INFO - Epoch   2/50 | Train Loss: 0.049560 | Val Loss: 0.049481 | LR: 1.00e-03
+2026-01-30 12:34:49,127 - INFO - Saved best model to results/binned_2026-01-30_12-33-37/best_stim_spike_model.pt
+2026-01-30 12:34:55,516 - INFO - Epoch   3/50 | Train Loss: 0.049541 | Val Loss: 0.049500 | LR: 1.00e-03
+2026-01-30 12:35:01,827 - INFO - Epoch   4/50 | Train Loss: 0.049526 | Val Loss: 0.049469 | LR: 1.00e-03
+2026-01-30 12:35:01,832 - INFO - Saved best model to results/binned_2026-01-30_12-33-37/best_stim_spike_model.pt
+2026-01-30 12:35:08,231 - INFO - Epoch   5/50 | Train Loss: 0.049521 | Val Loss: 0.049463 | LR: 1.00e-03
+2026-01-30 12:35:08,235 - INFO - Saved best model to results/binned_2026-01-30_12-33-37/best_stim_spike_model.pt
+2026-01-30 12:35:14,773 - INFO - Epoch   6/50 | Train Loss: 0.049525 | Val Loss: 0.049478 | LR: 1.00e-03
+2026-01-30 12:35:21,225 - INFO - Epoch   7/50 | Train Loss: 0.049528 | Val Loss: 0.049472 | LR: 1.00e-03
+2026-01-30 12:35:27,644 - INFO - Epoch   8/50 | Train Loss: 0.049518 | Val Loss: 0.049484 | LR: 1.00e-03
+2026-01-30 12:35:34,027 - INFO - Epoch   9/50 | Train Loss: 0.049506 | Val Loss: 0.049472 | LR: 1.00e-03
+2026-01-30 12:35:40,638 - INFO - Epoch  10/50 | Train Loss: 0.049511 | Val Loss: 0.049514 | LR: 1.00e-03
+2026-01-30 12:35:47,362 - INFO - Epoch  11/50 | Train Loss: 0.049504 | Val Loss: 0.049499 | LR: 5.00e-04
+2026-01-30 12:35:53,784 - INFO - Epoch  12/50 | Train Loss: 0.049476 | Val Loss: 0.049463 | LR: 5.00e-04
+2026-01-30 12:35:53,789 - INFO - Saved best model to results/binned_2026-01-30_12-33-37/best_stim_spike_model.pt
+2026-01-30 12:36:00,322 - INFO - Epoch  13/50 | Train Loss: 0.049476 | Val Loss: 0.049469 | LR: 5.00e-04
+2026-01-30 12:36:06,898 - INFO - Epoch  14/50 | Train Loss: 0.049483 | Val Loss: 0.049457 | LR: 5.00e-04
+2026-01-30 12:36:06,903 - INFO - Saved best model to results/binned_2026-01-30_12-33-37/best_stim_spike_model.pt
+2026-01-30 12:36:13,546 - INFO - Epoch  15/50 | Train Loss: 0.049467 | Val Loss: 0.049471 | LR: 5.00e-04
+2026-01-30 12:36:20,068 - INFO - Epoch  16/50 | Train Loss: 0.049460 | Val Loss: 0.049461 | LR: 5.00e-04
+2026-01-30 12:36:26,482 - INFO - Epoch  17/50 | Train Loss: 0.049467 | Val Loss: 0.049460 | LR: 5.00e-04
+2026-01-30 12:36:32,990 - INFO - Epoch  18/50 | Train Loss: 0.049462 | Val Loss: 0.049480 | LR: 5.00e-04
+2026-01-30 12:36:39,629 - INFO - Epoch  19/50 | Train Loss: 0.049462 | Val Loss: 0.049480 | LR: 5.00e-04
+2026-01-30 12:36:46,474 - INFO - Epoch  20/50 | Train Loss: 0.049466 | Val Loss: 0.049472 | LR: 2.50e-04
+2026-01-30 12:36:52,974 - INFO - Epoch  21/50 | Train Loss: 0.049442 | Val Loss: 0.049462 | LR: 2.50e-04
+2026-01-30 12:36:59,414 - INFO - Epoch  22/50 | Train Loss: 0.049438 | Val Loss: 0.049467 | LR: 2.50e-04
+2026-01-30 12:37:06,038 - INFO - Epoch  23/50 | Train Loss: 0.049430 | Val Loss: 0.049466 | LR: 2.50e-04
+2026-01-30 12:37:12,546 - INFO - Epoch  24/50 | Train Loss: 0.049427 | Val Loss: 0.049473 | LR: 2.50e-04
+2026-01-30 12:37:12,547 - INFO - Early stopping at epoch 24
+2026-01-30 12:37:12,547 - INFO - ==================================================
+2026-01-30 12:37:12,548 - INFO - Training complete! Best validation loss: 0.049457
+2026-01-30 12:37:12,549 - INFO - Saved training history to results/binned_2026-01-30_12-33-37/training_history.json
+2026-01-30 12:37:13,281 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9722, p=3.59e-40
+2026-01-30 12:37:14,281 - INFO - Found 50 oracle patterns
+2026-01-30 12:37:14,282 - INFO - Using bin_size=60ms, n_input_bins=1, n_output_bins=1, output_offset=0
+2026-01-30 12:37:14,282 - INFO - Total bins: 10, Valid input positions: 0 to 9
+2026-01-30 12:37:14,855 - INFO - Saved pattern 4033 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4033/trial_00_timing_0.jpg
+2026-01-30 12:37:21,261 - INFO - Completed pattern 4033 (1/50)
+2026-01-30 12:37:21,726 - INFO - Saved pattern 4017 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4017/trial_00_timing_1.jpg
+2026-01-30 12:37:28,106 - INFO - Completed pattern 4017 (2/50)
+2026-01-30 12:37:28,438 - INFO - Saved pattern 4028 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4028/trial_00_timing_2.jpg
+2026-01-30 12:37:34,805 - INFO - Completed pattern 4028 (3/50)
+2026-01-30 12:37:35,146 - INFO - Saved pattern 4003 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4003/trial_00_timing_4.jpg
+2026-01-30 12:37:41,602 - INFO - Completed pattern 4003 (4/50)
+2026-01-30 12:37:41,938 - INFO - Saved pattern 4025 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4025/trial_00_timing_9.jpg
+2026-01-30 12:37:48,502 - INFO - Completed pattern 4025 (5/50)
+2026-01-30 12:37:48,837 - INFO - Saved pattern 4004 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4004/trial_00_timing_18.jpg
+2026-01-30 12:37:55,548 - INFO - Completed pattern 4004 (6/50)
+2026-01-30 12:37:55,909 - INFO - Saved pattern 4040 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4040/trial_00_timing_38.jpg
+2026-01-30 12:38:02,501 - INFO - Completed pattern 4040 (7/50)
+2026-01-30 12:38:02,871 - INFO - Saved pattern 4038 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4038/trial_00_timing_54.jpg
+2026-01-30 12:38:09,671 - INFO - Completed pattern 4038 (8/50)
+2026-01-30 12:38:10,001 - INFO - Saved pattern 4022 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4022/trial_00_timing_59.jpg
+2026-01-30 12:38:16,238 - INFO - Completed pattern 4022 (9/50)
+2026-01-30 12:38:16,567 - INFO - Saved pattern 4034 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4034/trial_00_timing_70.jpg
+2026-01-30 12:38:23,560 - INFO - Completed pattern 4034 (10/50)
+2026-01-30 12:38:23,916 - INFO - Saved pattern 4030 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4030/trial_00_timing_73.jpg
+2026-01-30 12:38:30,266 - INFO - Completed pattern 4030 (11/50)
+2026-01-30 12:38:30,592 - INFO - Saved pattern 4031 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4031/trial_00_timing_74.jpg
+2026-01-30 12:38:37,368 - INFO - Completed pattern 4031 (12/50)
+2026-01-30 12:38:37,703 - INFO - Saved pattern 4005 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4005/trial_00_timing_77.jpg
+2026-01-30 12:38:43,844 - INFO - Completed pattern 4005 (13/50)
+2026-01-30 12:38:44,331 - INFO - Saved pattern 4010 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4010/trial_00_timing_93.jpg
+2026-01-30 12:38:50,521 - INFO - Completed pattern 4010 (14/50)
+2026-01-30 12:38:50,845 - INFO - Saved pattern 4039 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4039/trial_00_timing_107.jpg
+2026-01-30 12:38:57,856 - INFO - Completed pattern 4039 (15/50)
+2026-01-30 12:38:58,186 - INFO - Saved pattern 4002 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4002/trial_00_timing_113.jpg
+2026-01-30 12:39:04,297 - INFO - Completed pattern 4002 (16/50)
+2026-01-30 12:39:04,633 - INFO - Saved pattern 4026 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4026/trial_00_timing_119.jpg
+2026-01-30 12:39:10,774 - INFO - Completed pattern 4026 (17/50)
+2026-01-30 12:39:11,101 - INFO - Saved pattern 4047 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4047/trial_00_timing_139.jpg
+2026-01-30 12:39:17,621 - INFO - Completed pattern 4047 (18/50)
+2026-01-30 12:39:17,960 - INFO - Saved pattern 4036 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4036/trial_00_timing_140.jpg
+2026-01-30 12:39:25,778 - INFO - Completed pattern 4036 (19/50)
+2026-01-30 12:39:26,160 - INFO - Saved pattern 4020 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4020/trial_00_timing_144.jpg
+2026-01-30 12:39:32,393 - INFO - Completed pattern 4020 (20/50)
+2026-01-30 12:39:32,723 - INFO - Saved pattern 4049 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4049/trial_00_timing_145.jpg
+2026-01-30 12:39:38,844 - INFO - Completed pattern 4049 (21/50)
+2026-01-30 12:39:39,172 - INFO - Saved pattern 4029 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4029/trial_00_timing_146.jpg
+2026-01-30 12:39:45,439 - INFO - Completed pattern 4029 (22/50)
+2026-01-30 12:39:45,774 - INFO - Saved pattern 4044 trial 0 figure to results/binned_2026-01-30_12-33-37/oracle_trials_by_pattern/pattern_4044/trial_00_timing_152.jpg

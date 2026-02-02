@@ -1,0 +1,110 @@
+2026-01-29 16:42:17,338 - INFO - ==================================================
+2026-01-29 16:42:17,339 - INFO - Experiment run directory: results/binned_2026-01-29_16-42-17
+2026-01-29 16:42:17,340 - INFO - Inference mode: False
+2026-01-29 16:42:17,341 - INFO - Random seed: 42
+2026-01-29 16:42:17,341 - INFO - ==================================================
+2026-01-29 16:42:17,342 - INFO - Total trials: 5000
+2026-01-29 16:42:17,355 - INFO - Oracle trials: 1000 (50 patterns × 10 trials)
+2026-01-29 16:42:17,356 - INFO - Sample trials: 4000
+2026-01-29 16:42:17,358 - INFO - Train: 3400, Val: 600, Test: 1000
+2026-01-29 16:42:17,358 - INFO - Dataset config: bin_size=50ms, n_input_bins=1, n_output_bins=1, output_offset=0
+2026-01-29 16:42:33,428 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-29 16:42:33,432 - INFO -   bin_size_ms=50, n_input_bins=1, n_output_bins=1
+2026-01-29 16:42:33,432 - INFO -   output_offset=0, total_bins per trial=40
+2026-01-29 16:42:33,433 - INFO -   Valid start positions per trial: 0 to 39
+2026-01-29 16:42:33,433 - INFO -   Total samples: 136000 (3400 trials × 40 positions)
+2026-01-29 16:42:48,805 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-29 16:42:48,806 - INFO -   bin_size_ms=50, n_input_bins=1, n_output_bins=1
+2026-01-29 16:42:48,806 - INFO -   output_offset=0, total_bins per trial=40
+2026-01-29 16:42:48,806 - INFO -   Valid start positions per trial: 0 to 39
+2026-01-29 16:42:48,807 - INFO -   Total samples: 24000 (600 trials × 40 positions)
+2026-01-29 16:43:04,031 - INFO - BinnedStimSpikeDataset initialized:
+2026-01-29 16:43:04,032 - INFO -   bin_size_ms=50, n_input_bins=1, n_output_bins=1
+2026-01-29 16:43:04,032 - INFO -   output_offset=0, total_bins per trial=40
+2026-01-29 16:43:04,032 - INFO -   Valid start positions per trial: 0 to 39
+2026-01-29 16:43:04,033 - INFO -   Total samples: 40000 (1000 trials × 40 positions)
+2026-01-29 16:43:04,047 - INFO - Train samples: 136000, Val samples: 24000, Test samples: 40000
+2026-01-29 16:43:04,048 - INFO - Train batches: 532, Val batches: 94, Test batches: 157
+2026-01-29 16:43:04,049 - INFO - Number of stimulation channels: 42
+2026-01-29 16:43:04,049 - INFO - Number of recorded neurons: 63
+2026-01-29 16:43:04,050 - INFO - Sample X shape: torch.Size([42, 1]) (n_channels, n_input_bins)
+2026-01-29 16:43:04,050 - INFO - Sample Y shape: torch.Size([63, 1]) (n_neurons, n_output_bins)
+2026-01-29 16:43:04,051 - INFO - Using Apple Silicon MPS acceleration
+2026-01-29 16:43:04,051 - INFO - PyTorch version: 2.10.0.dev20251124
+2026-01-29 16:43:04,051 - INFO - Device: mps
+2026-01-29 16:43:04,053 - INFO - Saved experiment config to results/binned_2026-01-29_16-42-17/config.json
+2026-01-29 16:43:04,169 - INFO - Model: StimToSpikeMLP
+2026-01-29 16:43:04,169 - INFO -   Embedding: 5 categories -> 8-dim vectors
+2026-01-29 16:43:04,170 - INFO -   Hidden layers: [64, 32]
+2026-01-29 16:43:04,170 - INFO -   Dropout: 0.2
+2026-01-29 16:43:04,171 - INFO -   Total parameters: 25,767
+2026-01-29 16:43:04,171 - INFO -   Trainable parameters: 25,767
+2026-01-29 16:43:04,223 - INFO - Input shape: torch.Size([256, 42, 1]), dtype: torch.int64
+2026-01-29 16:43:04,223 - INFO - Output shape: torch.Size([256, 63, 1])
+2026-01-29 16:43:04,223 - INFO - Target shape: torch.Size([256, 63, 1])
+2026-01-29 16:43:04,224 - INFO - ✓ Output and target shapes match!
+2026-01-29 16:43:04,252 - INFO - Sample model outputs (first batch):
+2026-01-29 16:43:04,252 - INFO - Sample 0 target (neuron 0, all output bins): [0.]
+2026-01-29 16:43:04,253 - INFO - Sample 1 target (neuron 0, all output bins): [0.]
+2026-01-29 16:43:04,255 - INFO - Sample 0 model output (neuron 0, all output bins): [0.22327211]
+2026-01-29 16:43:04,255 - INFO - Sample 1 model output (neuron 0, all output bins): [0.22330418]
+2026-01-29 16:43:45,593 - INFO - Model: StimToSpikeMLP
+2026-01-29 16:43:45,594 - INFO -   Embedding: 5 categories -> 8-dim vectors
+2026-01-29 16:43:45,594 - INFO -   Hidden layers: [64, 32]
+2026-01-29 16:43:45,594 - INFO -   Dropout: 0.2
+2026-01-29 16:43:45,595 - INFO -   Total parameters: 25,767
+2026-01-29 16:43:45,595 - INFO -   Trainable parameters: 25,767
+2026-01-29 16:43:45,605 - INFO - Input shape: torch.Size([256, 42, 1]), dtype: torch.int64
+2026-01-29 16:43:45,605 - INFO - Output shape: torch.Size([256, 63, 1])
+2026-01-29 16:43:45,605 - INFO - Target shape: torch.Size([256, 63, 1])
+2026-01-29 16:43:45,606 - INFO - ✓ Output and target shapes match!
+2026-01-29 16:43:47,677 - INFO - Sample model outputs (first batch):
+2026-01-29 16:43:47,678 - INFO - Sample 0 target (neuron 0, all output bins): [0.]
+2026-01-29 16:43:47,679 - INFO - Sample 1 target (neuron 0, all output bins): [0.]
+2026-01-29 16:43:47,684 - INFO - Sample 0 model output (neuron 0, all output bins): [0.01689371]
+2026-01-29 16:43:47,685 - INFO - Sample 1 model output (neuron 0, all output bins): [0.00373833]
+2026-01-29 16:44:05,665 - INFO - Sample model outputs (first batch):
+2026-01-29 16:44:05,666 - INFO - Sample 0 target (neuron 1, all output bins): [0.]
+2026-01-29 16:44:05,667 - INFO - Sample 1 target (neuron 1, all output bins): [0.]
+2026-01-29 16:44:05,668 - INFO - Sample 0 model output (neuron 1, all output bins): [-0.18398386]
+2026-01-29 16:44:05,669 - INFO - Sample 1 model output (neuron 1, all output bins): [-0.19848382]
+2026-01-29 16:44:22,389 - INFO - Sample model outputs (first batch):
+2026-01-29 16:44:22,390 - INFO - Sample 0 target (neuron 3, all output bins): [0.]
+2026-01-29 16:44:22,390 - INFO - Sample 1 target (neuron 3, all output bins): [0.]
+2026-01-29 16:44:22,392 - INFO - Sample 0 model output (neuron 3, all output bins): [-2.4691224e-05]
+2026-01-29 16:44:22,393 - INFO - Sample 1 model output (neuron 3, all output bins): [0.0052763]
+2026-01-29 16:44:33,335 - INFO - Sample model outputs (first batch):
+2026-01-29 16:44:33,337 - INFO - Sample 0 target (neuron 4, all output bins): [0.]
+2026-01-29 16:44:33,337 - INFO - Sample 1 target (neuron 4, all output bins): [0.]
+2026-01-29 16:44:33,339 - INFO - Sample 0 model output (neuron 4, all output bins): [0.21101448]
+2026-01-29 16:44:33,339 - INFO - Sample 1 model output (neuron 4, all output bins): [0.13561694]
+2026-01-29 16:45:03,978 - INFO - Sample model outputs (first batch):
+2026-01-29 16:45:03,979 - INFO - Sample 0 target (neuron 4, all output bins): [0.]
+2026-01-29 16:45:03,980 - INFO - Sample 1 target (neuron 4, all output bins): [0.]
+2026-01-29 16:45:03,982 - INFO - Sample 0 model output (neuron 4, all output bins): [0.21101448]
+2026-01-29 16:45:03,982 - INFO - Sample 1 model output (neuron 4, all output bins): [0.13561694]
+2026-01-29 16:45:12,085 - INFO - Sample model outputs (first batch):
+2026-01-29 16:45:12,086 - INFO - Sample 0 target (neuron 4, all output bins): [0.]
+2026-01-29 16:45:12,089 - INFO - Sample 1 target (neuron 4, all output bins): [0.]
+2026-01-29 16:45:12,090 - INFO - Sample 0 model output (neuron 4, all output bins): [0.21101448]
+2026-01-29 16:45:12,091 - INFO - Sample 1 model output (neuron 4, all output bins): [0.13561694]
+2026-01-29 16:45:25,883 - INFO - Sample model outputs (first batch):
+2026-01-29 16:45:25,884 - INFO - Sample 0 target (neuron 4, all output bins): [0.]
+2026-01-29 16:45:25,885 - INFO - Sample 1 target (neuron 4, all output bins): [0.]
+2026-01-29 16:45:25,887 - INFO - Sample 0 model output (neuron 4, all output bins): [0.21101448]
+2026-01-29 16:45:25,887 - INFO - Sample 1 model output (neuron 4, all output bins): [0.13561694]
+2026-01-29 16:45:31,407 - INFO - Sample model outputs (first batch):
+2026-01-29 16:45:31,408 - INFO - Sample 0 target (neuron 4, all output bins): [0.]
+2026-01-29 16:45:31,408 - INFO - Sample 1 target (neuron 4, all output bins): [0.]
+2026-01-29 16:45:31,410 - INFO - Sample 0 model output (neuron 4, all output bins): [0.21101448]
+2026-01-29 16:45:31,469 - INFO - Sample 1 model output (neuron 4, all output bins): [0.13561694]
+2026-01-29 16:46:12,818 - INFO - Sample model outputs (first batch):
+2026-01-29 16:46:12,819 - INFO - Sample 0 target (neuron 4, all output bins): [0.]
+2026-01-29 16:46:12,820 - INFO - Sample 1 target (neuron 4, all output bins): [0.]
+2026-01-29 16:46:12,821 - INFO - Sample 0 model output (neuron 4, all output bins): [0.21101448]
+2026-01-29 16:46:12,822 - INFO - Sample 1 model output (neuron 4, all output bins): [0.13561694]
+2026-01-29 16:46:12,822 - INFO - Spike count sums per sample in batch:
+2026-01-29 16:46:12,823 - INFO - Sample 0 target total spikes: 0.0
+2026-01-29 16:46:12,895 - INFO - Sample 0 model output total spikes: 2.160256862640381
+2026-01-29 16:46:12,896 - INFO - Sample 1 target total spikes: 0.0
+2026-01-29 16:46:12,897 - INFO - Sample 1 model output total spikes: 1.7634358406066895

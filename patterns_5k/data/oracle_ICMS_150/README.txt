@@ -27,3 +27,6 @@ Contains a NumPy Array of void192. Useful FIELDS within it are "sample_index" an
 【Recommendations】
 For this dataset, we suggest remove neuron with id of : [19, 104, 201, 211, 300, 310, 311, 312]
 These neurons, while having a reasonable waveform shapes, showed extremely high firing rate (>200Hz) during stimulation, which is unlikely to happen given the refractory period of a neuron. There are two possibilities: first, they're multi-neuron unit, not single neuron. Second, they're actually artifacts. We leave the choice to you to decide.
+
+
+First 30 seconds are baseline. 
