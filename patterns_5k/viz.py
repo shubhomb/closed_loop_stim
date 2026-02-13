@@ -1,3 +1,4 @@
+from matplotlib import colors
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 from scipy.stats import pearsonr
 from io import BytesIO
+import pandas as pd
 from PIL import Image
 from utils import bin_spike_response
 
@@ -38,9 +40,8 @@ def plot_spike_bin_distribution(dataset, mode='counts', max_count=None, figsize=
     # Collect all spike counts from targets
     all_counts = []
     for timing_idx in dataset.trial_indices:
-        spikes = dataset.spike_responses_binned[timing_idx]
-        max_start = dataset.total_bins - dataset.output_offset - dataset.n_output_bins
-        for t in range(max_start + 1):
+        spikes = dataset.spike_responses_binned[timing_idx] # will be binned at dataset output_bin_ms
+        for t in range(dataset.n_output_bins + 1):
             out_start = t + dataset.output_offset
             y = spikes[:, out_start : out_start + dataset.n_output_bins]
             all_counts.extend(y.flatten().tolist())
@@ -68,7 +69,7 @@ def plot_spike_bin_distribution(dataset, mode='counts', max_count=None, figsize=
                     color=['steelblue', 'coral'], edgecolor='black', alpha=0.7)
         axes[0].set_xlabel('Spike Bin Category')
         axes[0].set_ylabel('Frequency')
-        axes[0].set_title(f'Binary Spike Distribution\n(bin_size={dataset.bin_size}ms, n_output_bins={dataset.n_output_bins})')
+        axes[0].set_title(f'Binary Spike Distribution\n(bin_size={dataset.output_bin_size}ms, n_output_bins={dataset.n_output_bins})')
         axes[0].set_yscale('log')
         axes[0].grid(True, alpha=0.3, axis='y')
         
@@ -92,7 +93,7 @@ def plot_spike_bin_distribution(dataset, mode='counts', max_count=None, figsize=
         axes[0].hist(counts_clipped, bins=bins, edgecolor='black', alpha=0.7, color='steelblue')
         axes[0].set_xlabel('Spike Count per Bin')
         axes[0].set_ylabel('Frequency')
-        axes[0].set_title(f'Distribution of Spike Counts\n(bin_size={dataset.bin_size}ms, n_output_bins={dataset.n_output_bins})')
+        axes[0].set_title(f'Distribution of Spike Counts\n(bin_size={dataset.output_bin_size}ms, n_output_bins={dataset.n_output_bins})')
         axes[0].set_xticks(range(0, max_count + 1))
         if max_count < max_observed:
             axes[0].set_xticklabels([str(i) for i in range(max_count)] + [f'{max_count}+'])
@@ -150,7 +151,7 @@ def plot_spike_bin_distribution(dataset, mode='counts', max_count=None, figsize=
     axes[2].bar(x, neuron_means, yerr=neuron_sem, alpha=0.7, color='coral', 
                 capsize=2, error_kw={'elinewidth': 1, 'capthick': 1})
     axes[2].set_xlabel('Neuron Index')
-    axes[2].set_ylabel(f'Mean Spikes per {dataset.bin_size}ms Bin')
+    axes[2].set_ylabel(f'Mean Spikes per {dataset.output_bin_size}ms Bin')
     axes[2].set_title(f'Average Spike Rate per Neuron (± SEM, n={len(dataset.trial_indices)} trials)')
     axes[2].grid(True, alpha=0.3)
     
@@ -231,7 +232,7 @@ def plot_test_prediction_comparison(all_preds, all_targets, savepath=None, logge
     return fig, axes, corr, pval
 
 
-def analyze_pattern_responses_by_pattern_name(model, dataset, device):
+def analyze_pattern_responses_by_pattern_name(model, dataset, device, use_init_state=False):
     """
     Analyze model predictions grouped by actual pattern identity (pattern_name).
     
@@ -239,6 +240,7 @@ def analyze_pattern_responses_by_pattern_name(model, dataset, device):
         model: PyTorch model
         dataset: BinnedStimSpikeDataset instance
         device: torch device
+        use_init_state: If True, pass initial_spikes to model forward
     
     Returns:
         pattern_names: list of unique pattern names
@@ -272,10 +274,20 @@ def analyze_pattern_responses_by_pattern_name(model, dataset, device):
     sample_idx = 0
     
     with torch.no_grad():
-        for batch_x, batch_y in loader:
-            batch_x = batch_x.to(device)
-            # Get predictions (convert log rates to rates)
-            preds = torch.exp(model(batch_x)).cpu().numpy()  # (batch, n_neurons, n_output_bins)
+        for batch in loader:
+            if use_init_state and len(batch) == 3:
+                batch_x, batch_y, batch_init = batch
+                batch_x, batch_init = batch_x.to(device), batch_init.to(device)
+                # Get predictions (convert log rates to rates)
+                if hasattr(model, 'forward') and 'initial_spikes' in model.forward.__code__.co_varnames:
+                    preds = torch.exp(model(batch_x, initial_spikes=batch_init)).cpu().numpy()
+                else:
+                    preds = torch.exp(model(batch_x)).cpu().numpy()
+            else:
+                batch_x, batch_y = batch[:2]
+                batch_x = batch_x.to(device)
+                # Get predictions (convert log rates to rates)
+                preds = torch.exp(model(batch_x)).cpu().numpy()  # (batch, n_neurons, n_output_bins)
             targets = batch_y.numpy()  # (batch, n_neurons, n_output_bins)
             
             # Average across output bins
@@ -402,8 +414,9 @@ def plot_pattern_selectivity(pattern_names, pat_true, pat_pred, savepath=None, l
 
 
 def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_responses, pattern_polarities,
-                                   bin_size, n_input_bins, n_output_bins, output_offset, max_time_ms,
-                                   n_neurons, device, out_base, logger=None, pattern_limit=None):
+                                   output_bin_size_ms, n_input_bins, n_output_bins, output_offset, max_time_ms,
+                                   n_neurons, device, out_base, input_bin_size_ms=None, logger=None, pattern_limit=None,
+                                   use_init_state=False, n_initial_state_bins=None, history=0):
     """
     Generate per-pattern visualizations for oracle trials.
     
@@ -413,15 +426,30 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
         pattern_df: DataFrame with pattern info
         spike_responses: dict mapping timing_idx -> spike response arrays (in ms, 1ms resolution)
         pattern_polarities: dict mapping pattern_name -> polarity arrays
-        bin_size: temporal resolution in ms
+        bin_size: OUTPUT temporal resolution in ms (for spike visualization)
         n_input_bins, n_output_bins, output_offset: dataset config
         max_time_ms: maximum time to consider in ms
         n_neurons: number of neurons
         device: torch device
         out_base: output directory
+        input_bin_size_ms: INPUT temporal resolution in ms (for stim). If None, uses test_dataset.input_bin_size
         logger: Optional logger instance
+        use_init_state: Whether to use initial state for RNN models
+        n_initial_state_bins: Number of initial state bins (for plotting). If None, gets from test_dataset.
+        history: Number of output bins to lag and concatenate as spike history input (for Pillow models). Default 0 (no history).
     """
     os.makedirs(out_base, exist_ok=True)
+    
+    # Get input bin size from dataset if not provided
+    if input_bin_size_ms is None:
+        input_bin_size_ms = test_dataset.input_bin_size
+    
+    # Get n_initial_state_bins from dataset if not provided
+    if n_initial_state_bins is None:
+        n_initial_state_bins = getattr(test_dataset, 'n_initial_state_bins', 1)
+    
+    # Calculate the time offset for initial state bins (negative time before 0)
+    init_state_time_ms = n_initial_state_bins * output_bin_size_ms if use_init_state else 0
     
     # spike_responses are in 1ms resolution, so use bin_size and max_time_ms directly
     
@@ -431,7 +459,7 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
     
     if logger:
         logger.info(f"Found {len(oracle_patterns)} oracle patterns")
-        logger.info(f"Using bin_size={bin_size}ms, n_input_bins={n_input_bins}, n_output_bins={n_output_bins}, output_offset={output_offset}")
+        logger.info(f"Using input_bin_size={input_bin_size_ms}ms, output_bin_size={output_bin_size_ms}ms, n_input_bins={n_input_bins}, n_output_bins={n_output_bins}, output_offset={output_offset}")
     
     
     def compute_avg_spikes_across_trials(timing_indices, spike_responses_dict, bin_size_ms, max_time_ms):
@@ -449,17 +477,20 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
     
         return spike_sum / n_trials
     
-    # Calculate number of target bins we can predict
-    total_bins = max_time_ms // bin_size
-    max_start_for_output = total_bins - output_offset - n_output_bins
-    max_start_for_input = total_bins - n_input_bins
+    # Calculate number of bins at each resolution
+    total_input_bins = max_time_ms // input_bin_size_ms   # e.g., 600 // 10 = 60
+    total_output_bins = max_time_ms // output_bin_size_ms          # e.g., 600 // 60 = 10
+    
+    # Valid starting positions (using input resolution for indexing stim)
+    max_start_for_output = total_output_bins - output_offset - n_output_bins
+    max_start_for_input = total_input_bins - n_input_bins
     max_valid_start = min(max_start_for_output, max_start_for_input)
     
     if logger:
-        logger.info(f"Total bins: {total_bins}, Valid input positions: 0 to {max_valid_start}")
+        logger.info(f"Total input bins: {total_input_bins}, Total output bins: {total_output_bins}")
+        logger.info(f"Valid input positions: 0 to {max_valid_start}")
     
     # Process each oracle pattern
-    print ("oracle patterns: ", oracle_patterns)
     for p_idx, pattern_name in enumerate(oracle_patterns):        # Go through each oracle pattern
         if pattern_limit is not None and p_idx >= pattern_limit:
             if logger:
@@ -477,94 +508,275 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
         
         # Get polarity data for this pattern - extend to max_time_ms
         polarity_600 = pattern_polarities[pattern_name]  # (n_channels, 600)
-        polarity_plot = np.zeros((polarity_600.shape[0], max_time_ms))
-        polarity_plot[:, :min(600, max_time_ms)] = polarity_600[:, :min(600, max_time_ms)]
+        polarity_base = np.zeros((polarity_600.shape[0], max_time_ms))
+        polarity_base[:, :min(600, max_time_ms)] = polarity_600[:, :min(600, max_time_ms)]
+
+        # Make the polarity plot last for 10 bins (added w shifted versions)
+        polarity_plot = np.zeros_like(polarity_base)
+        for shift in range(10):
+            if shift == 0:
+                polarity_plot += polarity_base
+            else:
+                polarity_plot[:, shift:] += polarity_base[:, :-shift]
         
         for trial_idx in range(len(timing_list)):
             timing_idx = timing_list[trial_idx]
             
             # Actual spike response - binned (spike_responses are in 1ms resolution)
-            actual_response_binned = bin_spike_response(spike_responses[timing_idx], bin_size, max_time_ms, remainder="append")
+            actual_response_binned = bin_spike_response(spike_responses[timing_idx], output_bin_size_ms, max_time_ms, remainder="append")
             
             # Average spikes across other trials
             other_trial_indices = [t for t in timing_list if t != timing_idx]
             avg_other_trials = compute_avg_spikes_across_trials(
-                other_trial_indices, spike_responses, bin_size, max_time_ms
+                other_trial_indices, spike_responses, output_bin_size_ms, max_time_ms
             )
             
+            # For RNN models with init_state, get actual spikes for the init_state period
+            # This will be used to prepend to the actual and average plots
+            actual_init_state_for_plot = None
+            avg_init_state_for_plot = None
+            
             # Build model predictions bin-by-bin
-            pred_array = np.full((n_neurons, total_bins), 0, dtype=np.float32)
+            # pred_array is at OUTPUT resolution (e.g., 60ms bins)
+            pred_array = np.full((n_neurons, total_output_bins), 0, dtype=np.float32)
             
             model.eval()
             with torch.no_grad():
-                batch_inputs = []
-                target_bin_indices = []
-                
-                for t in range(max_valid_start + 1):
-                    x = stim_binned[:, t : t + n_input_bins]
-                    batch_inputs.append(x)
-                    target_bin_indices.append(t + output_offset)
-                
-                batch_x = torch.tensor(np.array(batch_inputs), dtype=torch.long).to(device)
-                preds = model(batch_x).cpu().numpy()
-                
-                for i, target_bin in enumerate(target_bin_indices):
-                    pred_array[:, target_bin] = preds[i, :, 0]
+                # Handle init_state for RNN models with autoregressive extension
+                if use_init_state and hasattr(model, 'forward') and 'initial_spikes' in model.forward.__code__.co_varnames:
+                    # Get init_state from test_dataset if available
+                    n_init_bins = getattr(test_dataset, 'n_initial_state_bins', 1)
+                    
+                    if hasattr(test_dataset, 'init_state') and test_dataset.init_state:
+                        # Get the previous trial's last bins as init_state
+                        prev_idx = timing_idx - 1
+                        if prev_idx in test_dataset.spike_responses_binned:
+                            init_state = test_dataset.spike_responses_binned[prev_idx][:, -n_init_bins:]
+                        else:
+                            init_state = np.zeros((n_neurons, n_init_bins), dtype=np.float32)
+                    else:
+                        init_state = np.zeros((n_neurons, n_init_bins), dtype=np.float32)
+                    
+                    # Store the initial init_state for plotting (before autoregressive updates)
+                    init_state_for_plot = init_state.copy()
+                    
+                    # Get actual spike init_state for this trial (from previous trial's last bins)
+                    actual_init_state_for_plot = init_state.copy()
+                    
+                    # Compute average init_state across other trials
+                    avg_init_state = np.zeros((n_neurons, n_init_bins), dtype=np.float32)
+                    valid_other_count = 0
+                    for other_idx in other_trial_indices:
+                        other_prev_idx = other_idx - 1
+                        if other_prev_idx in test_dataset.spike_responses_binned:
+                            avg_init_state += test_dataset.spike_responses_binned[other_prev_idx][:, -n_init_bins:]
+                            valid_other_count += 1
+                    if valid_other_count > 0:
+                        avg_init_state /= valid_other_count
+                    avg_init_state_for_plot = avg_init_state
+                    
+                    # Autoregressive prediction: extend timeseries using model's own output
+                    # Calculate how many windows we need to cover max_time_ms
+                    bins_per_output = n_input_bins // n_output_bins  # e.g., 60 / 10 = 6
+                    current_init_state = init_state.copy()
+                    
+                    # Slide through the timeseries, making predictions and using output as next init_state
+                    current_output_start = 0
+                    window_idx = 0
+                    
+                    while current_output_start < total_output_bins:
+                        # Calculate input window start in input resolution
+                        input_start = window_idx * n_input_bins
+                        input_end = input_start + n_input_bins
+                        
+                        # Check if we have enough input data (use actual stim shape, not total_input_bins)
+                        actual_stim_bins = stim_binned.shape[1]
+                        if input_start >= actual_stim_bins:
+                            # No more stim data available, use zeros
+                            x = np.zeros((stim_binned.shape[0], n_input_bins), dtype=np.float32)
+                        elif input_end > actual_stim_bins:
+                            # Partial stim data available, pad with zeros
+                            x = np.zeros((stim_binned.shape[0], n_input_bins), dtype=np.float32)
+                            available = actual_stim_bins - input_start
+                            x[:, :available] = stim_binned[:, input_start:actual_stim_bins]
+                        else:
+                            x = stim_binned[:, input_start:input_end]
+                        batch_x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)                        
+                        batch_init = torch.tensor(current_init_state, dtype=torch.float32).unsqueeze(0).to(device)
+                        
+                        preds = model(batch_x, initial_spikes=batch_init).cpu().numpy()  # (1, n_neurons, n_output_bins)
+                        preds_rates = np.exp(preds[0])  # Convert log to rates
+                        
+                        # Place predictions in the output array
+                        for o in range(n_output_bins):
+                            target_bin = current_output_start + o
+                            if target_bin < total_output_bins:
+                                pred_array[:, target_bin] = preds_rates[:, o]
+                        
+                        # Use the last n_init_bins of predicted spike rates as next init_state
+                        if n_init_bins <= n_output_bins:
+                            current_init_state = preds_rates[:, -n_init_bins:]
+                        else:
+                            # If n_init_bins > n_output_bins, we need to keep some history
+                            new_init = np.zeros((n_neurons, n_init_bins), dtype=np.float32)
+                            new_init[:, :-n_output_bins] = current_init_state[:, n_output_bins:]
+                            new_init[:, -n_output_bins:] = preds_rates
+                            current_init_state = new_init
+                        
+                        current_output_start += n_output_bins
+                        window_idx += 1
+                    
+                    # pred_array already contains rates (not log rates)
+                    pred_rates = pred_array
+                else:
+                    # Non-RNN models: no separate init_state tensor
+                    init_state_for_plot = None
+                    
+                    if history > 0:
+                        # Pillow/history model: slide through the trial autoregressively,
+                        # concatenating lagged spike history to stim input at each step.
+                        # Use actual spikes (teacher-forced) as the history source.
+                        actual_spikes_binned = bin_spike_response(
+                            spike_responses[timing_idx], output_bin_size_ms, max_time_ms, remainder="append"
+                        )  # (n_neurons, total_output_bins)
+                        
+                        # Accumulate predictions and counts for averaging overlapping windows
+                        pred_sum = np.zeros((n_neurons, total_output_bins), dtype=np.float32)
+                        pred_counts = np.zeros(total_output_bins, dtype=np.float32)
+                        
+                        for t in range(max_valid_start + 1):
+                            # Stim input: (n_channels, n_input_bins)
+                            stim_end = t + n_input_bins
+                            actual_stim_bins = stim_binned.shape[1]
+                            if stim_end <= actual_stim_bins:
+                                x_stim = stim_binned[:, t:stim_end].copy()
+                            else:
+                                x_stim = np.zeros((stim_binned.shape[0], n_input_bins), dtype=np.float32)
+                                available = max(0, actual_stim_bins - t)
+                                if available > 0:
+                                    x_stim[:, :available] = stim_binned[:, t:t + available]
+                            
+                            # Spike history: shift actual spikes by `history` bins
+                            y_history = np.zeros((n_neurons, x_stim.shape[1]), dtype=np.float32)
+                            out_start = t + output_offset
+                            y_slice = actual_spikes_binned[:, out_start:out_start + n_output_bins]
+                            if y_slice.shape[1] == n_output_bins and y_slice.shape[1] > history:
+                                y_history[:, history:history + y_slice.shape[1] - history] = y_slice[:, :-history]
+                            
+                            # Concatenate stim + spike history along channel dim
+                            x_combined = np.concatenate([x_stim.astype(np.float32), y_history], axis=0)
+                            batch_x = torch.tensor(x_combined, dtype=torch.float32).unsqueeze(0).to(device)
+                            preds = model(batch_x).cpu().numpy()
+                            
+                            for o in range(n_output_bins):
+                                target_bin = t + output_offset + o
+                                if target_bin < total_output_bins:
+                                    pred_sum[:, target_bin] += preds[0, :, o]
+                                    pred_counts[target_bin] += 1
+                        
+                        # Average predictions for bins covered by multiple windows
+                        mask = pred_counts > 0
+                        pred_array[:, mask] = pred_sum[:, mask] / pred_counts[mask]
+                    else:
+                        # Simple non-history model: single forward pass
+                        x = stim_binned[:, :n_input_bins]  # (n_channels, n_input_bins)
+                        batch_x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)
+                        preds = model(batch_x).cpu().numpy()  # (1, n_neurons, n_output_bins)
+                        
+                        # preds[0] has shape (n_neurons, n_output_bins)
+                        # Place predictions at the appropriate output bins
+                        for o in range(n_output_bins):
+                            target_bin = output_offset + o
+                            if target_bin < total_output_bins:
+                                pred_array[:, target_bin] = preds[0, :, o]
+                    
+                    # Convert log predictions to rates
+                    pred_rates = np.exp(pred_array)
             
-            # Convert log predictions to rates
-            pred_rates = np.exp(pred_array)
-            
-            # Fixed colormap range: 0-7, values >7 saturate to same color
+            # Dynamic vmax calculation – based on actual spike data only,
+            # so model predictions don't inflate the scale and wash out the data.
+            # Predictions that exceed vmax will simply saturate to black.
+            local_max = max(actual_response_binned.max(), avg_other_trials.max(), pred_rates.max())
+            spike_vmax = max(1.0, local_max) + 0.2  # continuous 0 (white) → max+0.2 (black)
             spike_vmin = 0
-            spike_vmax = 5
-            spike_cmap = 'Greys'  # 0=white, vmax=black
+            norm = colors.Normalize(vmin=0, vmax=spike_vmax)
+            
+            # Continuous Greys colormap from white to black
+            spike_cmap = plt.cm.Greys
+            
+            # Brighter polarity colormap (Blue, White, Red)
+            bright_polarity_cmap = ListedColormap(["#1E8FFF", '#FFFFFF', "#D02525"])
+            
+            # Calculate x-axis range: negative for init_state, positive for predictions
+            x_min = -init_state_time_ms if use_init_state else 0
+            x_max = max_time_ms
+            
+            # For RNN with init_state: prepend init_state to all arrays for visualization
+            if use_init_state and init_state_for_plot is not None:
+                # init_state_for_plot: (n_neurons, n_init_bins), pred_rates: (n_neurons, total_output_bins)
+                pred_rates_extended = np.concatenate([init_state_for_plot, pred_rates], axis=1)
+                # Extend actual spikes with init_state data
+                actual_response_extended = np.concatenate([actual_init_state_for_plot, actual_response_binned], axis=1)
+                # Extend average spikes with init_state data
+                avg_other_trials_extended = np.concatenate([avg_init_state_for_plot, avg_other_trials], axis=1)
+            else:
+                pred_rates_extended = pred_rates
+                actual_response_extended = actual_response_binned
+                avg_other_trials_extended = avg_other_trials
             
             # Create figure with 4 panels
-            fig, axes = plt.subplots(4, 1, figsize=(8, 7), constrained_layout=True)
+            fig, axes = plt.subplots(4, 1, figsize=(4, 7), constrained_layout=True)
             
             # Panel 0: Stimulation pattern colored by polarity
-            im0 = axes[0].imshow(polarity_plot, aspect='auto', cmap=polarity_cmap, vmin=-1, vmax=1, 
+            im0 = axes[0].imshow(polarity_plot, aspect='auto', cmap=bright_polarity_cmap, vmin=-1, vmax=1, 
                                   interpolation='nearest', extent=[0, max_time_ms, polarity_plot.shape[0], 0])
             axes[0].set_title(f"Pattern {pattern_name} - trial {trial_idx} - Stimulation")
             axes[0].set_ylabel('Channel')
-            axes[0].axvline(x=600, color='gray', linestyle='--', linewidth=1, alpha=0.7)
+            axes[0].axvline(x=600, color='gray', linestyle='--', linewidth=1, alpha=0.9)
+            axes[0].axvline(x=0, color='black', linestyle='-', linewidth=1, alpha=0.5)
+            axes[0].set_xlim(x_min, x_max)
+            
+            # Visibility tweaks for polarity
             cbar0 = fig.colorbar(im0, ax=axes[0], orientation='vertical', shrink=0.8, label='Polarity', ticks=[-1, 0, 1])
             cbar0.ax.set_yticklabels(['-1', '0', '+1'])
             
-            # Panel 1: Actual spike counts (full binned response, not just target bins)
-            im1 = axes[1].imshow(actual_response_binned, aspect='auto', cmap=spike_cmap, interpolation='nearest', 
+            # Panel 1: Actual spike counts (with init_state prepended for RNN)
+            im1 = axes[1].imshow(actual_response_extended, aspect='auto', cmap=spike_cmap, interpolation='nearest', 
                                   vmin=spike_vmin, vmax=spike_vmax,
-                                  extent=[0, max_time_ms, actual_response_binned.shape[0], 0])
+                                  extent=[x_min, max_time_ms, actual_response_extended.shape[0], 0])
             axes[1].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
-            axes[1].set_title(f'Actual spikes ({bin_size}ms bins)')
+            axes[1].axvline(x=0, color='black', linestyle='-', linewidth=1, alpha=0.5)
+            axes[1].set_title(f'Actual spikes ({output_bin_size_ms}ms bins)')
             axes[1].set_ylabel('Neuron')
-            cbar1 = fig.colorbar(im1, ax=axes[1], orientation='vertical', shrink=0.8, label='Spike count')
-            cbar1.set_ticks([spike_vmin, spike_vmax])
-            cbar1.set_ticklabels(['0', f'{spike_vmax}+'])
+            axes[1].set_xlim(x_min, x_max)
             
-            # Panel 2: Model prediction (rates) at target bins 
-            im2 = axes[2].imshow(pred_rates, aspect='auto', cmap=spike_cmap, interpolation='nearest', 
+            # Panel 2: Model prediction (with init_state prepended for RNN)
+            im2 = axes[2].imshow(pred_rates_extended, aspect='auto', cmap=spike_cmap, interpolation='nearest', 
                                   vmin=spike_vmin, vmax=spike_vmax,
-                                  extent=[0, max_time_ms, pred_rates.shape[0], 0])
+                                  extent=[x_min, max_time_ms, pred_rates_extended.shape[0], 0])
             axes[2].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
-            axes[2].set_title(f'Model prediction (rate, {bin_size}ms bins)')
+            axes[2].axvline(x=0, color='black', linestyle='-', linewidth=1, alpha=0.5)
+            title_suffix = " (w/ init state)" if use_init_state and init_state_for_plot is not None else ""
+            axes[2].set_title(f'Model prediction (rate, {output_bin_size_ms}ms bins){title_suffix}')
             axes[2].set_ylabel('Neuron')
-            cbar2 = fig.colorbar(im2, ax=axes[2], orientation='vertical', shrink=0.8, label='Predicted rate')
-            cbar2.set_ticks([spike_vmin, spike_vmax])
-            cbar2.set_ticklabels(['0', f'{spike_vmax}+'])
+            axes[2].set_xlim(x_min, x_max)
             
-            # Panel 3: Average spikes across other oracle trials
-            im3 = axes[3].imshow(avg_other_trials, aspect='auto', cmap=spike_cmap, interpolation='nearest', 
+            # Panel 3: Average spikes across other oracle trials (with init_state prepended for RNN)
+            im3 = axes[3].imshow(avg_other_trials_extended, aspect='auto', cmap=spike_cmap, interpolation='nearest', 
                                   vmin=spike_vmin, vmax=spike_vmax,
-                                  extent=[0, max_time_ms, avg_other_trials.shape[0], 0])
+                                  extent=[x_min, max_time_ms, avg_other_trials_extended.shape[0], 0])
             axes[3].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+            axes[3].axvline(x=0, color='black', linestyle='-', linewidth=1, alpha=0.5)
             n_other = len(other_trial_indices)
-            axes[3].set_title(f'Avg spikes over {n_other} other oracle trials ({bin_size}ms bins)')
+            axes[3].set_title(f'Avg spikes over {n_other} other oracle trials ({output_bin_size_ms}ms bins)')
             axes[3].set_ylabel('Neuron')
             axes[3].set_xlabel('Time (ms)')
-            cbar3 = fig.colorbar(im3, ax=axes[3], orientation='vertical', shrink=0.8, label='Spike count')
-            cbar3.set_ticks([spike_vmin, spike_vmax])
-            cbar3.set_ticklabels(['0', f'{spike_vmax}+'])
+            axes[3].set_xlim(x_min, x_max)
+            
+            # Shared colorbar for Panels 1, 2, 3
+            # Use im3 as mappable, assuming all share same vmin/vmax
+            cbar_shared = fig.colorbar(im3, ax=axes[1:], orientation='vertical', shrink=0.8, label='Spike count', norm=norm)
+            cbar_shared.set_ticks(np.arange(spike_vmin, spike_vmax + 0.2))
             
             # Save figure as compressed JPEG using PIL
             buf = BytesIO()
@@ -586,8 +798,7 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
         logger.info(f"Saved all oracle pattern figures to {out_base}")
 
 
-def plot_oracle_pattern_average_responses(unique_trials, spike_responses, spiking_neurons, savepath,
-                                          plot_duration=60000, bin_size=1800):
+def plot_oracle_pattern_average_responses(unique_trials, spike_responses, spiking_neurons, savepath,plot_duration=60000, bin_size=1800):
     if not os.path.exists(savepath):
         os.makedirs(savepath)
     # Make a plot showing average for each oracle pattern across its trials
@@ -596,16 +807,20 @@ def plot_oracle_pattern_average_responses(unique_trials, spike_responses, spikin
         raise ValueError("bin_size_frames must be >= 1")
 
     oracle_patterns = unique_trials[unique_trials['is_oracle']]['pattern_name'].unique()
+    
     for pattern_name in oracle_patterns:  
+        print ("\n===============================================\nOracle trial: ", pattern_name)
         trials = unique_trials[unique_trials['pattern_name'] == pattern_name]
         n_neurons = len(spiking_neurons)
 
         n_bins = (plot_duration + bin_size - 1) // bin_size
+        print (f"Plotting average spike response for pattern {pattern_name} over {len(trials)} trials with {n_bins} bins of size {bin_size}  over {plot_duration} ")
         avg_spike_response = np.zeros((n_neurons, n_bins))
 
         for _, trial_info in trials.iterrows():
             timing_idx = trial_info['pattern_timing_index']
             resp = spike_responses[timing_idx]
+            # Bin the spike response
             binned = bin_spike_response(resp, bin_size, max_time=plot_duration, remainder="append")
             avg_spike_response += binned
         avg_spike_response /= len(trials)
@@ -617,12 +832,12 @@ def plot_oracle_pattern_average_responses(unique_trials, spike_responses, spikin
         plt.imshow(
             avg_spike_response,
             aspect='auto',
-            cmap='viridis',
+            cmap='Greys',
             interpolation='nearest',
             extent=[0, plot_duration, avg_spike_response.shape[0], 0],
         )
         plt.colorbar(label='Average Spike Count per Bin')
-        plt.xlabel('Time (frames)')
+        plt.xlabel('Time (ms)')
         plt.ylabel('Neuron Index')
         plt.title(f'Average Spike Response for Oracle Pattern: {pattern_name}')
         plt.tight_layout()
@@ -651,3 +866,291 @@ def plot_stimulation_polarity_timeseries(pattern_stims, pattern_polarities, patt
     plt.close()
 
 
+
+def plot_stimulation_polarity_frame_res(pattern_name, trial, pattern_df, savepath):
+    '''
+    Plot the stimulation pattern at frame resolution (n_electrodes x 61000).
+    Each step is colored by delay_mode and spans from step_start_timestamp to
+    the next step's step_start_timestamp (or +1800 frames for the last step).
+    The time origin is min(pattern_flag_start_timestamp, earliest step_start_timestamp).
+    
+    :param pattern_name: integer pattern name (e.g. 4033)
+    :param trial: trial number (uses 'trial' column if present, else 'pattern_timing_index')
+    :param pattern_df: full pattern DataFrame (all patterns) — used to build the
+                       global electrode list so the y-axis is consistent across plots
+    :param savepath: base directory; a subdirectory per pattern_name is created
+    '''
+    import matplotlib.patches as mpatches
+
+    # ------------------------------------------------------------------
+    # 1. Build a GLOBAL electrode list from the full DataFrame (before
+    #    subsetting by pattern/trial) so the y-axis is identical for all
+    #    patterns and trials.
+    # ------------------------------------------------------------------
+    all_channels = sorted(pattern_df["channel"].dropna().unique())
+    ch_enc = {ch: idx for idx, ch in enumerate(all_channels)}
+    n_electrodes = len(all_channels)
+    # Labels for the y-axis (actual electrode names)
+    channel_labels = [str(int(ch)) for ch in all_channels]
+
+    # ------------------------------------------------------------------
+    # 2. Subset to the requested pattern_name + trial
+    # ------------------------------------------------------------------
+    trial_col = 'trial' if 'trial' in pattern_df.columns else 'pattern_timing_index'
+    trial_df = pattern_df[(pattern_df['pattern_name'] == pattern_name) &
+                          (pattern_df[trial_col] == trial)]
+
+    if trial_df.empty:
+        print(f"No data found for pattern {pattern_name}, trial {trial}")
+        return
+
+    # ------------------------------------------------------------------
+    # 3. Determine time origin
+    # ------------------------------------------------------------------
+    pat_start = (trial_df['pattern_flag_start_timestamp'].iloc[0]
+                 if 'pattern_flag_start_timestamp' in trial_df.columns
+                 else float('inf'))
+    min_step_start = trial_df['step_start_timestamp'].min()
+    start_time = int(min(pat_start, min_step_start))
+
+    duration_frames = 61000
+
+    # ------------------------------------------------------------------
+    # 4. Build a lookup: step_index -> (step_start, step_end) in absolute
+    #    frames.  step_end is the next step's start; for the last step we
+    #    add 1800 frames (~60 ms @ 30 kHz).
+    # ------------------------------------------------------------------
+    step_starts = (trial_df[['step_index', 'step_start_timestamp']]
+                   .drop_duplicates()
+                   .sort_values('step_index'))
+    step_start_list = step_starts['step_start_timestamp'].astype(int).tolist()
+    step_index_list = step_starts['step_index'].astype(int).tolist()
+
+    step_end_map = {}   # step_index -> absolute end frame
+    for i, si in enumerate(step_index_list):
+        if i + 1 < len(step_index_list):
+            step_end_map[si] = step_start_list[i + 1]
+        else:
+            step_end_map[si] = step_start_list[i] + 1800  # ~60 ms
+
+    # ------------------------------------------------------------------
+    # 5. Fill the visualisation matrix
+    # ------------------------------------------------------------------
+    vis_data = np.zeros((n_electrodes, duration_frames), dtype=int)
+
+    mode_color_map = {
+        0:  1,   # Gray
+        1:  2,   # Red
+        -1: 3,   # Blue
+        2:  4,   # Green
+    }
+
+    for _, row in trial_df.iterrows():
+        if pd.isna(row['channel']) or pd.isna(row.get('delay_mode', np.nan)):
+            continue
+        try:
+            si = int(row['step_index'])
+            abs_start = int(row['step_start_timestamp'])
+            abs_end = step_end_map.get(si, abs_start + 1800)
+
+            rel_start = abs_start - start_time
+            rel_end   = abs_end   - start_time
+
+            # Clip to [0, duration_frames)
+            r_s = max(0, rel_start)
+            r_e = min(duration_frames, rel_end)
+            if r_e <= r_s:
+                continue
+
+            ch = int(row['channel'])
+            if ch not in ch_enc:
+                continue
+            ch_idx = ch_enc[ch]
+
+            mode = int(row['delay_mode'])
+            val = mode_color_map.get(mode, 1)
+            vis_data[ch_idx, r_s:r_e] = val
+        except (ValueError, KeyError):
+            continue
+
+    # ------------------------------------------------------------------
+    # 6. Plot
+    # ------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(20, 8))
+
+    colors = ['white', 'gray', 'red', 'blue', 'green']
+    cmap = ListedColormap(colors)
+
+    ax.imshow(vis_data, aspect='auto', cmap=cmap, interpolation='nearest',
+              vmin=0, vmax=4, extent=[0, duration_frames, n_electrodes, 0])
+
+    ax.set_title(f"Stimulation Pattern: {pattern_name} | Trial: {trial}\nResolution: 1 frame (@30kHz)")
+    ax.set_xlabel("Time (frames from pattern start)")
+    ax.set_ylabel("Electrode")
+
+    # Y-axis: show actual electrode names
+    ax.set_yticks(np.arange(n_electrodes) + 0.5)
+    ax.set_yticklabels(channel_labels, fontsize=6)
+
+    # Legend
+    legend_patches = [
+        mpatches.Patch(color='gray',  label='delay_mode 0'),
+        mpatches.Patch(color='red',   label='delay_mode 1'),
+        mpatches.Patch(color='blue',  label='delay_mode -1'),
+        mpatches.Patch(color='green', label='delay_mode 2'),
+    ]
+    ax.legend(handles=legend_patches, loc='upper right')
+
+    # ------------------------------------------------------------------
+    # 7. Save  (savepath / pattern_name / trial.png)
+    # ------------------------------------------------------------------
+    pattern_dir = os.path.join(savepath, str(pattern_name))
+    os.makedirs(pattern_dir, exist_ok=True)
+
+    save_file = os.path.join(pattern_dir, f"{trial}.png")
+    plt.savefig(save_file, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+
+
+def plot_stimulation_polarity_frame_res_alpha(pattern_name, pattern_df, savepath, alpha=0.2):
+    '''
+    Overlay all oracle trials of a given pattern on one figure with transparent
+    patches.  Where stimulation aligns across trials the colour saturates;
+    misalignment is visible as fringes.
+
+    :param pattern_name: integer pattern name (e.g. 4033)
+    :param pattern_df: full pattern DataFrame (all patterns)
+    :param savepath: base directory; a subdirectory per pattern_name is created
+    :param alpha: transparency per trial per patch (default 0.2)
+    '''
+    import matplotlib.patches as mpatches
+    from matplotlib.patches import Rectangle
+    from matplotlib.collections import PatchCollection
+
+    # ------------------------------------------------------------------
+    # 1. Global electrode list (consistent y-axis across all calls)
+    # ------------------------------------------------------------------
+    all_channels = sorted(pattern_df["channel"].dropna().unique())
+    ch_enc = {ch: idx for idx, ch in enumerate(all_channels)}
+    n_electrodes = len(all_channels)
+    channel_labels = [str(int(ch)) for ch in all_channels]
+
+    # ------------------------------------------------------------------
+    # 2. Get all trials for this pattern
+    # ------------------------------------------------------------------
+    trial_col = 'trial' if 'trial' in pattern_df.columns else 'pattern_timing_index'
+    pattern_subset = pattern_df[pattern_df['pattern_name'] == pattern_name]
+
+    if pattern_subset.empty:
+        print(f"No data found for pattern {pattern_name}")
+        return
+
+    all_trials = sorted(pattern_subset[trial_col].unique())
+    n_trials = len(all_trials)
+
+    duration_frames = 20000  # ~>600 ms at 30 kHz, chosen to capture the main stimulation period across all trials
+
+    mode_color = {
+        0:  'gray',
+        1:  'red',
+        -1: 'blue',
+        2:  'green',
+    }
+
+    # ------------------------------------------------------------------
+    # 3. Collect rectangles across ALL trials
+    # ------------------------------------------------------------------
+    rects_by_color = {c: [] for c in mode_color.values()}
+
+    for trial in all_trials:
+        trial_df = pattern_subset[pattern_subset[trial_col] == trial]
+
+        # Time origin for this trial
+        pat_start = (trial_df['pattern_flag_start_timestamp'].iloc[0]
+                     if 'pattern_flag_start_timestamp' in trial_df.columns
+                     else float('inf'))
+        min_step_start = trial_df['step_start_timestamp'].min()
+        start_time = int(min(pat_start, min_step_start))
+
+        # step_index -> end frame lookup for this trial
+        step_starts = (trial_df[['step_index', 'step_start_timestamp']]
+                       .drop_duplicates()
+                       .sort_values('step_index'))
+        step_start_list = step_starts['step_start_timestamp'].astype(int).tolist()
+        step_index_list = step_starts['step_index'].astype(int).tolist()
+
+        step_end_map = {}
+        for i, si in enumerate(step_index_list):
+            if i + 1 < len(step_index_list):
+                step_end_map[si] = step_start_list[i + 1]
+            else:
+                step_end_map[si] = step_start_list[i] + 1800
+
+        for _, row in trial_df.iterrows():
+            if pd.isna(row['channel']) or pd.isna(row.get('delay_mode', np.nan)):
+                continue
+            try:
+                si = int(row['step_index'])
+                abs_start = int(row['step_start_timestamp'])
+                abs_end = step_end_map.get(si, abs_start + 1800)
+
+                rel_start = abs_start - start_time
+                rel_end   = abs_end   - start_time
+
+                r_s = max(0, rel_start)
+                r_e = min(duration_frames, rel_end)
+                if r_e <= r_s:
+                    continue
+
+                ch = int(row['channel'])
+                if ch not in ch_enc:
+                    continue
+                ch_idx = ch_enc[ch]
+
+                mode = int(row['delay_mode'])
+                color = mode_color.get(mode, 'gray')
+                rects_by_color[color].append(
+                    Rectangle((r_s, ch_idx), r_e - r_s, 1)
+                )
+            except (ValueError, KeyError):
+                continue
+
+    # ------------------------------------------------------------------
+    # 4. Plot
+    # ------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(20, 8))
+    ax.set_facecolor('white')
+
+    for color, rects in rects_by_color.items():
+        if not rects:
+            continue
+        pc = PatchCollection(rects, facecolor=color, edgecolor='none', alpha=alpha)
+        ax.add_collection(pc)
+
+    ax.set_xlim(0, duration_frames)
+    ax.set_ylim(n_electrodes, 0)
+    ax.set_aspect('auto')
+
+    ax.set_title(f"Stimulation Pattern: {pattern_name} | All {n_trials} trials overlaid\n"
+                 f"Resolution: 1 frame (@30kHz) | alpha={alpha}")
+    ax.set_xlabel("Time (frames from pattern start)")
+    ax.set_ylabel("Electrode")
+
+    ax.set_yticks(np.arange(n_electrodes) + 0.5)
+    ax.set_yticklabels(channel_labels, fontsize=6)
+
+    legend_patches = [
+        mpatches.Patch(color='gray',  alpha=alpha, label='delay_mode 0'),
+        mpatches.Patch(color='red',   alpha=alpha, label='delay_mode 1'),
+        mpatches.Patch(color='blue',  alpha=alpha, label='delay_mode -1'),
+        mpatches.Patch(color='green', alpha=alpha, label='delay_mode 2'),
+    ]
+    ax.legend(handles=legend_patches, loc='upper right')
+
+    # ------------------------------------------------------------------
+    # 5. Save
+    # ------------------------------------------------------------------
+
+    save_file = os.path.join(savepath,f"{pattern_name}_all_trials_alpha.png")
+    plt.savefig(save_file, dpi=150, bbox_inches='tight')
+    plt.close(fig)

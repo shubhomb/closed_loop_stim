@@ -1,0 +1,77 @@
+# =====================
+# Experiment Configuration
+# =====================
+
+# Paths
+datadir: "data/oracle_ICMS_150/"
+
+# Experiment settings
+inference_mode: false
+artifact_path: null  # Set to a timestamped folder path for inference mode
+seed: 42
+
+# Data split settings
+split_mode: "oracle"  # 'oracle' or 'random'
+
+# Dataset configuration
+input_bin_size_ms: 10   # Input (stim) temporal resolution (e.g., 10ms, 20ms)
+output_bin_size_ms: 10  # Output (spike) temporal resolution 
+n_input_bins: 60        # How many consecutive stim bins to use as input
+n_output_bins: 60        # How many consecutive spike bins to predict
+output_offset: 0      # Offset from input start to output start (0 = same window)
+max_time_ms: 600       # Maximum time to consider after trial start
+encoding_mode: 'current' # 'categorical' or 'current'
+history: 5  # Number of previous output bins to include in input (for RNN) 
+
+
+# DataLoader settings
+batch_size: 16
+
+# Problematic neurons to drop (high firing rates, multi-unit activity, artifacts)
+problematic_neurons: [19, 104, 201, 211, 300, 310, 311, 312]
+
+# =====================
+# Model Configuration
+# =====================
+model_type: "cnn"      # 'mlp' or 'cnn' or 'rnn'
+
+# Shared model settings
+embedding_dim: 0
+dropout: 0.2
+
+# MLP-specific settings
+hidden_dims: [128, 64]
+
+# CNN-specific settings
+conv_channels: [128]
+kernel_sizes: [60]
+pooling: "max"
+fc_dims: [256]
+
+# RNN-specific settings
+latent_dim: 32
+n_initial_state_bins: 1
+num_gru_layers: 1
+init_state: false
+
+# Model initialization
+init_bias: null
+linear: false           # MLP only
+
+# =====================
+# Training Configuration
+# =====================
+num_epochs: 50
+learning_rate: 0.001
+weight_decay: 0
+weight_loss: 1        # Weight for non-zero samples in loss
+sum_loss: false        # If true, sum loss over output bins; else average
+patience: 10           # Early stopping patience
+
+# Loss function
+criterion_fn: "poisson"  # 'poisson' or 'bce'
+
+# =====================
+# Visualization settings
+# =====================
+pattern_limit: 50      # Number of patterns to visualize in oracle trials plot

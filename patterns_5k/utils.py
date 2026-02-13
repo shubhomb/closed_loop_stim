@@ -14,6 +14,20 @@ NO_STIM_INDEX = 4  # Category for no stimulation
 NUM_STIM_LEVELS = 5  # Total categories: 4 delay modes + 1 no-stim
 
 
+
+def compute_correlation(pred_log_rates, target_spikes):
+    """
+    Computes Pearson correlation between predicted rates and actual spike counts.
+    Input shapes: (batch, n_neurons, n_bins)
+    """
+    pred_rates = torch.exp(pred_log_rates).detach().cpu().numpy().flatten()
+    targets = target_spikes.detach().cpu().numpy().flatten()
+    
+    if np.std(pred_rates) == 0 or np.std(targets) == 0:
+        return 0.0
+        
+    return np.corrcoef(pred_rates, targets)[0, 1]
+
 def make_spikes_responses_df(spkVecs_file):
     """
     Load spike vectors from a pickle file and convert to a pandas DataFrame.
@@ -86,12 +100,14 @@ def read_pattern_json(pattern_registrations_pkl_path):
 
     return final_df
 
-def preprocess_pattern_stimulations_df(pattern_df):
+def preprocess_pattern_stimulations_df(pattern_df, align_to_stim=False, center_to_0=False):
     """
     Preprocess the pattern stimulations DataFrame by adding useful columns.
     
     Args:
         pattern_stimulations_df (pd.DataFrame): DataFrame containing pattern stimulations.
+        align_to_stim(bool): whether each pattern start should be defined by the original pattern flag start or by the first stimulation onset
+        center_to_0 (bool): whether to subtract min_pattern_idx
     """
     # Add pattern duration column
     # define pattern end as pattern's start time - 1
@@ -100,31 +116,55 @@ def preprocess_pattern_stimulations_df(pattern_df):
                 .first().reset_index())
     patterns = patterns.sort_values('pattern_timing_index').reset_index(drop=True)
 
+    if align_to_stim:
+        # Get the step_start_timestamp for step_index == 0 for each pattern
+        first_step_timestamps = (
+            pattern_df[pattern_df['step_index'] == 0]
+            .groupby('pattern_timing_index')['step_start_timestamp']
+            .first()
+            .reset_index()
+            .rename(columns={'step_start_timestamp': 'first_stim_timestamp'})
+        )
+        # Merge and replace pattern_flag_start_timestamp with the first stimulation timestamp
+        patterns = patterns.merge(first_step_timestamps, on='pattern_timing_index', how='left')
+        patterns['pattern_flag_start_timestamp'] = patterns['first_stim_timestamp']
+        patterns = patterns.drop(columns=['first_stim_timestamp'])
 
     # end = next start - 1
     patterns['pattern_end_timestamp'] = patterns['pattern_flag_start_timestamp'].shift(-1) - 1
-    patterns.loc[patterns.index[-1], 'pattern_end_timestamp'] = patterns.loc[patterns.index[-1], 'pattern_flag_start_timestamp'] + 1999  # assume 2000 ms for last pattern
+    # For last pattern, assume 2000ms duration. Timestamps are in frames at 30 kHz, so 2000ms = 60000 frames
+    patterns.loc[patterns.index[-1], 'pattern_end_timestamp'] = patterns.loc[patterns.index[-1], 'pattern_flag_start_timestamp'] + 60000 - 1  # 2000 ms = 60000 frames
 
     # ensure integer timestamps
     patterns['pattern_end_timestamp'] = patterns['pattern_end_timestamp'].astype(int)
     patterns['pattern_flag_start_timestamp'] = patterns['pattern_flag_start_timestamp'].astype(int)
 
-    # merge end times back into the full step-level dataframe
-    pattern_df = pattern_df.merge(
-        patterns[['pattern_timing_index', 'pattern_end_timestamp']],
-        on='pattern_timing_index',
-        how='left'
-    )
+    # merge end times (and updated start times if align_to_stim) back into the full step-level dataframe
+    if align_to_stim:
+        # Also update pattern_flag_start_timestamp in the original dataframe
+        pattern_df = pattern_df.drop(columns=['pattern_flag_start_timestamp'], errors='ignore')
+        pattern_df = pattern_df.merge(
+            patterns[['pattern_timing_index', 'pattern_end_timestamp', 'pattern_flag_start_timestamp']],
+            on='pattern_timing_index',
+            how='left'
+        )
+    else:
+        pattern_df = pattern_df.merge(
+            patterns[['pattern_timing_index', 'pattern_end_timestamp']],
+            on='pattern_timing_index',
+            how='left'
+        )
 
     # how many times each pattern appears in separate timestamps
     pattern_counts = pattern_df[['pattern_name', 'pattern_timing_index']].drop_duplicates().groupby('pattern_name').size()
     min_pattern_timestamp = pattern_df['pattern_flag_start_timestamp'].min()
 
     # Center times to 0 for easier intepretation
-    pattern_df['pattern_flag_start_timestamp'] -= min_pattern_timestamp
-    pattern_df['pattern_end_timestamp'] -= min_pattern_timestamp
+    if center_to_0: 
+        pattern_df['pattern_flag_start_timestamp'] -= min_pattern_timestamp
+        pattern_df['pattern_end_timestamp'] -= min_pattern_timestamp
+        pattern_df['step_start_timestamp'] -= min_pattern_timestamp
     pattern_df['pattern_duration'] = pattern_df['pattern_end_timestamp'] - pattern_df['pattern_flag_start_timestamp']
-    pattern_df['step_start_timestamp'] -= min_pattern_timestamp
     return pattern_df, min_pattern_timestamp
 
 
@@ -205,9 +245,9 @@ def trial_breakout_spikes_and_patterns(spikes_df, pattern_df, channel_to_index, 
             neuron_id = row['neuron_id']
             neuron_index = spiking_neuron_to_index[neuron_id]
             spike_time = row['timestamp'] - pattern_start_time # this is in frames, centered on the pattern_start_time
-            if 0 <= spike_time < 30000 * 2:
+            if spike_time >= 0 and spike_time < 60000:  # cut off at 2s after 
                 ms_idx = (spike_time) // 30 
-                spike_responses_pattern[neuron_index, ms_idx] += 1
+            spike_responses_pattern[neuron_index, ms_idx] += 1
         spike_responses[timing_idx] = spike_responses_pattern
     return pattern_stims, pattern_polarities, spike_responses, timing_to_pattern, unique_trials
 
@@ -275,62 +315,90 @@ class BinnedStimSpikeDataset(Dataset):
     For a trial of length T bins, with n_input_bins=1 and n_output_bins=2,
     we generate samples at positions t=0, 1, ..., T-2 (output extends 2 bins from t).
     
+    Causal Mode:
+    When causal=True, the dataset returns inputs that are left-padded so that
+    only the input bins corresponding to each output bin are visible (right-aligned).
+    This enables autoregressive prediction where each output bin only sees its
+    corresponding input bins plus all previous ones.
+    
     Args:
         pattern_df: DataFrame with step-level stimulation information
         spike_responses: dict mapping pattern_timing_index -> (n_neurons, 2000) numpy array
         channel_to_index: dict mapping channel name -> index
         timing_to_pattern: dict mapping pattern_timing_index -> pattern_name
+        encoding_mode: "categorical" (default) for categorical encoding of stim patterns
         trial_indices: list of pattern_timing_index values to include
-        bin_size_ms: temporal resolution in milliseconds (e.g., 10, 20)
+        input_bin_size_ms: temporal resolution for inputs in milliseconds (e.g., 10)
+        output_bin_size_ms: temporal resolution for outputs in milliseconds (e.g., 60)
         n_input_bins: number of consecutive stim bins to use as input (default 1)
         n_output_bins: number of consecutive spike bins to predict (default 1)
         max_time_ms: maximum time to consider (default 2000)
         output_offset: how many bins after input start to begin output (default 0 = same window)
+        causal: if True, return left-padded inputs for causal/autoregressive prediction
         logger: optional logger instance for logging messages
     """
-    def __init__(self, pattern_df, spike_responses, channel_to_index, timing_to_pattern,
-                 trial_indices=None, bin_size_ms=10, n_input_bins=1, n_output_bins=1,
-                 max_time_ms=2000, output_offset=0, logger=None):
+    def __init__(self, pattern_df, spike_responses, channel_to_index, timing_to_pattern, trial_indices=None, encoding_mode="categorical",
+                 input_bin_size_ms=10, output_bin_size_ms=60, n_input_bins=1, n_output_bins=1,
+                 max_time_ms=2000, output_offset=0, init_state=False, n_initial_state_bins=1, history=None, logger=None):
+        
+        if history and history > 0 and init_state:
+            raise ValueError("history and init_state cannot both be enabled. Use one or the other.")
         
         if trial_indices is None:
             trial_indices = list(spike_responses.keys())
-        
-        assert max_time_ms % bin_size_ms == 0, f"max_time_ms ({max_time_ms}) must be divisible by bin_size_ms ({bin_size_ms})"
-        
+                
         self.trial_indices = trial_indices
         self.timing_to_pattern = timing_to_pattern
+        self.encoding_mode = encoding_mode
         self.n_channels = len(channel_to_index)
-        self.bin_size = bin_size_ms
+        self.input_bin_size = input_bin_size_ms
+        self.output_bin_size = output_bin_size_ms
         self.n_input_bins = n_input_bins
         self.n_output_bins = n_output_bins
         self.max_time_ms = max_time_ms
         self.output_offset = output_offset
-        self.total_bins = max_time_ms // bin_size_ms
+        self.total_bins_input = max_time_ms // input_bin_size_ms
+        self.total_bins_output = max_time_ms // output_bin_size_ms
         self._logger = logger
-        
+        self.init_state = init_state
+        self.n_initial_state_bins = n_initial_state_bins
+        self.history = history if history is not None else None
         # Pre-compute all binned stimulation patterns (one per unique pattern)
         # Shape: (n_channels, total_bins) with categorical indices
         self.pattern_stims = {}
+        self.responses = {}
         unique_patterns = pattern_df['pattern_name'].unique()
+
+        # Inputs are binned at input_bin_size_ms
         for pattern_name in unique_patterns:
             pattern_subset = pattern_df[pattern_df['pattern_name'] == pattern_name].drop_duplicates(
                 subset=['step_index', 'channel', 'delay_mode'])
             self.pattern_stims[pattern_name] = self._encode_pattern_binned(
-                pattern_subset, channel_to_index, bin_size_ms, max_time_ms)
-        
-        # Pre-compute all binned spike responses
+                pattern_subset, channel_to_index, input_bin_size_ms, max_time_ms)
+            
+        # Pre-compute all binned spike response with output bin size
         # Shape: (n_neurons, total_bins) with spike counts
         self.spike_responses_binned = {}
+        non_specified = 0 
         for timing_idx in trial_indices:
             raw_spikes = spike_responses[timing_idx][:, :max_time_ms]
-            self.spike_responses_binned[timing_idx] = self._bin_spikes(raw_spikes, bin_size_ms)
+            self.spike_responses_binned[timing_idx] = self._bin_spikes(raw_spikes, output_bin_size_ms)
+            if self.init_state and timing_idx - 1 not in trial_indices: # need response spikes for part of a previous trial
+                if timing_idx == 0:
+                    # repeat first bin as initial state if gl first trial
+                    self.spike_responses_binned[timing_idx - 1] = self._bin_spikes(spike_responses[timing_idx][:, :max_time_ms], output_bin_size_ms)
+                else:
+                    self.spike_responses_binned[timing_idx - 1] = self._bin_spikes(spike_responses[timing_idx - 1][:, :max_time_ms], output_bin_size_ms)
+                print ("Added init state spikes for trial ", timing_idx - 1, " from non-specified set of trials")
+                non_specified += 1
+        print (f"{non_specified} trials were added in spike responses")
         
         # Calculate valid starting positions for each trial
         # Output ends at: t + output_offset + n_output_bins
         # So max valid t is: total_bins - output_offset - n_output_bins
         # Also need: t + n_input_bins <= total_bins
-        max_start_for_output = self.total_bins - output_offset - n_output_bins
-        max_start_for_input = self.total_bins - n_input_bins
+        max_start_for_output = self.total_bins_output - output_offset - n_output_bins
+        max_start_for_input = self.total_bins_input - n_input_bins
         max_valid_start = min(max_start_for_output, max_start_for_input)
         
         # Generate (trial_idx, time_bin) pairs for all samples
@@ -344,8 +412,9 @@ class BinnedStimSpikeDataset(Dataset):
         self.n_neurons = spike_responses[sample_key].shape[0]
         
         self._log(f"BinnedStimSpikeDataset initialized:")
-        self._log(f"  bin_size_ms={bin_size_ms}, n_input_bins={n_input_bins}, n_output_bins={n_output_bins}")
-        self._log(f"  output_offset={output_offset}, total_bins per trial={self.total_bins}")
+        self._log(f"  input_bin_size_ms={input_bin_size_ms}, output_bin_size_ms={output_bin_size_ms}")
+        self._log(f"  n_input_bins={n_input_bins}, n_output_bins={n_output_bins}")
+        self._log(f"  output_offset={output_offset}, total_bins_input={self.total_bins_input}, total_bins_output={self.total_bins_output}")
         self._log(f"  Valid start positions per trial: 0 to {max_valid_start}")
         self._log(f"  Total samples: {len(self.samples)} ({len(trial_indices)} trials × {max_valid_start + 1} positions)")
     
@@ -364,30 +433,58 @@ class BinnedStimSpikeDataset(Dataset):
         """
         n_channels = len(channel_to_index)
         total_bins = max_time_ms // bin_size_ms
-        stim = np.full((n_channels, total_bins), NO_STIM_INDEX, dtype=np.int64)
         assert bin_size_ms <= 60 # if bin size is more than 60, then we can have multiple stimulations per bin which would need to be encoded differently
-        for _, row in pattern_subset.iterrows():
-            if pd.isna(row['channel']):
-                continue
-            step_index = int(row['step_index'])
-            if step_index >= 10:  # Only first 10 steps (600ms of stimulation)
-                continue
-            
-            channel_index = channel_to_index[int(row['channel'])]
-            delay_mode = int(row['delay_mode'])
-            category_idx = DELAY_MODE_TO_INDEX[delay_mode]
-            
-            # Each 60ms step contains stimulation
-            # Mark all bins within this 60ms window with the delay mode category
-            step_start_ms = step_index * 60
-            step_end_ms = step_start_ms + 60
-            
-            start_bin = step_start_ms // bin_size_ms
-            end_bin = min(step_end_ms // bin_size_ms, total_bins)
-            
-            for b in range(start_bin, end_bin):
-                stim[channel_index, b] = category_idx
-        
+        if self.encoding_mode == "categorical":
+            stim = np.full((n_channels, total_bins), NO_STIM_INDEX, dtype=np.int64)
+            for _, row in pattern_subset.iterrows():
+                if pd.isna(row['channel']):
+                    continue
+                step_index = int(row['step_index'])
+                if step_index >= 10:  # Only first 10 steps (600ms of stimulation)
+                    continue
+                
+                channel_index = channel_to_index[int(row['channel'])]
+                delay_mode = int(row['delay_mode'])
+                category_idx = DELAY_MODE_TO_INDEX[delay_mode]
+                
+                # Each 60ms step contains stimulation
+                # Mark all bins within this 60ms window with the delay mode category
+                step_start_ms = step_index * 60
+                step_end_ms = step_start_ms + 60
+                
+                start_bin = step_start_ms // bin_size_ms
+                end_bin = min(step_end_ms // bin_size_ms, total_bins)
+                
+                for b in range(start_bin, end_bin):
+                    stim[channel_index, b] = category_idx
+        elif self.encoding_mode == "current":
+            stim = np.full((n_channels, total_bins), 0, dtype=np.int64)
+            assert bin_size_ms == 10, "Current encoding only supported for 10ms bins"
+            for _, row in pattern_subset.iterrows():
+                if pd.isna(row['channel']):
+                    continue
+                step_index = int(row['step_index'])
+                
+                channel_index = channel_to_index[int(row['channel'])]
+                delay_mode = int(row['delay_mode'])
+                
+                # Each 60ms step contains stimulation
+                step_start_ms = step_index * 60
+                step_end_ms = step_start_ms + 60
+                
+                start_bin = step_start_ms // bin_size_ms
+                end_bin = min(step_end_ms // bin_size_ms, total_bins)
+                
+
+                # since we know each bin is 10 ms, we can set the current directly
+                if delay_mode == 0:
+                    stim[channel_index, start_bin:end_bin:2] = 3
+                elif delay_mode == 1:
+                    stim[channel_index, start_bin+1:end_bin:2] = -3
+                elif delay_mode == -1: # reverse phase of delay mode 0
+                    stim[channel_index, start_bin:end_bin:2] = -3
+                elif delay_mode == 2: # 100 Hz
+                    stim[channel_index, start_bin:end_bin] = 3
         return stim
     
     def _bin_spikes(self, spike_resp, bin_size_ms):
@@ -412,15 +509,50 @@ class BinnedStimSpikeDataset(Dataset):
         
         # Extract input: stim bins [t, t + n_input_bins)
         stim_full = self.pattern_stims[pattern_name]
-        x = stim_full[:, t : t + self.n_input_bins]  # (n_channels, n_input_bins)
+        x = stim_full[:, t : t + self.n_input_bins].copy()  # (n_channels, n_input_bins)
         
         # Extract output: spike bins [t + output_offset, t + output_offset + n_output_bins)
         spikes_full = self.spike_responses_binned[timing_idx]
         out_start = t + self.output_offset
         y = spikes_full[:, out_start : out_start + self.n_output_bins]  # (n_neurons, n_output_bins)
+        if self.history is not None and self.history >= 0:
+            # If history is specified, we want to include the previous history bins as part of the input
+            # We will concatenate these to the input x, and the model can learn to use them as needed
+            if self.history == 0:
+                print("History of 0 specified, so output will be fed as input! Make sure this is intentional.")
+            y_history = np.zeros((y.shape[0], x.shape[1]), dtype=np.float32) # in neurons dimension (one for each neuron) of output and time dimension of which matches input
+            if self.history > 0: 
+                # given self.history param, I want to paste y to y_history with DELAY as the offset, so that the model can learn to use the history of spikes to predict current spikes
+                y_history[:, self.history:] = y[:, :-self.history]
+                return torch.cat([torch.tensor(x, dtype=torch.float32), torch.tensor(y_history, dtype=torch.float32)], dim=0), torch.tensor(y, dtype=torch.float32)
+            elif self.history == 0:
+                return torch.cat([torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)], dim=0), torch.tensor(y, dtype=torch.float32)
+        elif not self.init_state:
+            if self.encoding_mode == "categorical": 
+                return torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.float32)
+            else:
+                return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
+        elif self.init_state:
+            # Get initial state from previous trial's last bins
+            # Handle edge case where timing_idx - 1 may not exist
+            prev_idx = timing_idx - 1
+            if prev_idx in self.spike_responses_binned:
+                # Get the last n_initial_state_bins from previous trial as initial state
+                init_state = self.spike_responses_binned[prev_idx][:, -self.n_initial_state_bins:]
+            else:
+                # Use zeros if no previous trial exists
+                init_state = np.zeros((self.n_neurons, self.n_initial_state_bins), dtype=np.float32)
+
+            if self.encoding_mode == "categorical": 
+                return torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.float32), torch.tensor(init_state, dtype=torch.float32)
+            else:
+                return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32), torch.tensor(init_state, dtype=torch.float32)
+            raise ValueError("init_state must be True or False")
+        else:
+            raise ValueError("init_state must be True or False")
         
-        return torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.float32)
-    
+
+ 
     def compute_sparsity(self):
         """Compute sparsity statistics for the dataset.
         
@@ -435,9 +567,9 @@ class BinnedStimSpikeDataset(Dataset):
         zero_bins = 0
         
         for timing_idx in self.trial_indices:
-            spikes = self.spike_responses_binned[timing_idx]  # (n_neurons, total_bins)
+            spikes = self.spike_responses_binned[timing_idx]  # (n_neurons, total_bins_output)
             # Count across valid output positions
-            max_start = self.total_bins - self.output_offset - self.n_output_bins
+            max_start = self.total_bins_output - self.output_offset - self.n_output_bins
             for t in range(max_start + 1):
                 out_start = t + self.output_offset
                 y = spikes[:, out_start : out_start + self.n_output_bins]
@@ -468,8 +600,8 @@ class BinnedStimSpikeDataset(Dataset):
         per_sample_zero_frac = []
         
         for timing_idx in self.trial_indices:
-            spikes = self.spike_responses_binned[timing_idx]  # (n_neurons, total_bins)
-            max_start = self.total_bins - self.output_offset - self.n_output_bins
+            spikes = self.spike_responses_binned[timing_idx]  # (n_neurons, total_bins_output)
+            max_start = self.total_bins_output - self.output_offset - self.n_output_bins
             for t in range(max_start + 1):
                 out_start = t + self.output_offset
                 y = spikes[:, out_start : out_start + self.n_output_bins]  # (n_neurons, n_output_bins)
@@ -487,16 +619,3 @@ class BinnedStimSpikeDataset(Dataset):
             'std_zero_frac': float(per_sample_zero_frac.std())
         }
 
-
-def compute_correlation(pred_log_rates, target_spikes):
-    """
-    Computes Pearson correlation between predicted rates and actual spike counts.
-    Input shapes: (batch, n_neurons, n_bins)
-    """
-    pred_rates = torch.exp(pred_log_rates).detach().cpu().numpy().flatten()
-    targets = target_spikes.detach().cpu().numpy().flatten()
-    
-    if np.std(pred_rates) == 0 or np.std(targets) == 0:
-        return 0.0
-        
-    return np.corrcoef(pred_rates, targets)[0, 1]

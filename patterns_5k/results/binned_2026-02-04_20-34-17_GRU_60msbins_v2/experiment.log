@@ -1,0 +1,908 @@
+2026-02-04 20:34:17,836 - INFO - ==================================================
+2026-02-04 20:34:17,837 - INFO - Experiment run directory: results/binned_2026-02-04_20-34-17
+2026-02-04 20:34:17,838 - INFO - Config file: config.yaml (copied to results/binned_2026-02-04_20-34-17/config.yaml)
+2026-02-04 20:34:17,839 - INFO - Inference mode: False
+2026-02-04 20:34:17,841 - INFO - Random seed: 42
+2026-02-04 20:34:17,842 - INFO - ==================================================
+2026-02-04 20:34:17,845 - INFO - Total trials: 5000
+2026-02-04 20:34:17,867 - INFO - Oracle trials: 1000 (50 patterns × 10 trials)
+2026-02-04 20:34:17,868 - INFO - Sample trials: 4000
+2026-02-04 20:34:17,873 - INFO - Train: 3400, Val: 600, Test: 1000
+2026-02-04 20:34:17,874 - INFO - Dataset config: input_bin_size=10ms, output_bin_size=60ms, n_input_bins=60, n_output_bins=10, output_offset=0, encoding_mode=current
+2026-02-04 20:34:39,726 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-04 20:34:40,408 - INFO -   input_bin_size_ms=10, output_bin_size_ms=60
+2026-02-04 20:34:40,421 - INFO -   n_input_bins=60, n_output_bins=10
+2026-02-04 20:34:40,422 - INFO -   output_offset=0, total_bins_input=100, total_bins_output=16
+2026-02-04 20:34:40,425 - INFO -   Valid start positions per trial: 0 to 6
+2026-02-04 20:34:40,428 - INFO -   Total samples: 23800 (3400 trials × 7 positions)
+2026-02-04 20:34:58,036 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-04 20:34:58,039 - INFO -   input_bin_size_ms=10, output_bin_size_ms=60
+2026-02-04 20:34:58,039 - INFO -   n_input_bins=60, n_output_bins=10
+2026-02-04 20:34:58,039 - INFO -   output_offset=0, total_bins_input=100, total_bins_output=16
+2026-02-04 20:34:58,040 - INFO -   Valid start positions per trial: 0 to 6
+2026-02-04 20:34:58,040 - INFO -   Total samples: 4200 (600 trials × 7 positions)
+2026-02-04 20:35:14,140 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-04 20:35:14,140 - INFO -   input_bin_size_ms=10, output_bin_size_ms=60
+2026-02-04 20:35:14,141 - INFO -   n_input_bins=60, n_output_bins=10
+2026-02-04 20:35:14,141 - INFO -   output_offset=0, total_bins_input=100, total_bins_output=16
+2026-02-04 20:35:14,142 - INFO -   Valid start positions per trial: 0 to 6
+2026-02-04 20:35:14,142 - INFO -   Total samples: 7000 (1000 trials × 7 positions)
+2026-02-04 20:35:14,167 - INFO - Train samples: 23800, Val samples: 4200, Test samples: 7000
+2026-02-04 20:35:14,171 - INFO - Train batches: 1488, Val batches: 263, Test batches: 438
+2026-02-04 20:35:14,172 - INFO - Number of stimulation channels: 42
+2026-02-04 20:35:14,173 - INFO - Number of recorded neurons: 63
+2026-02-04 20:35:14,176 - INFO - Using Apple Silicon MPS acceleration
+2026-02-04 20:35:14,178 - INFO - PyTorch version: 2.10.0.dev20251124
+2026-02-04 20:35:14,178 - INFO - Device: mps
+2026-02-04 20:35:14,182 - INFO - Saved experiment config to results/binned_2026-02-04_20-34-17/summary_config.json
+2026-02-04 20:40:47,346 - INFO - Model: RNN
+2026-02-04 20:40:47,347 - INFO -   Embedding: 5 categories -> 0-dim vectors
+2026-02-04 20:40:47,347 - INFO -   Hidden layers: [128]
+2026-02-04 20:40:47,348 - INFO -   Dropout: 0.2
+2026-02-04 20:40:47,348 - INFO -   Total parameters: 35,999
+2026-02-04 20:40:47,349 - INFO -   Trainable parameters: 35,999
+2026-02-04 20:40:47,401 - INFO - Input shape: torch.Size([16, 42, 60]), dtype: torch.float32
+2026-02-04 20:40:47,402 - INFO - Output shape: torch.Size([16, 63, 10])
+2026-02-04 20:40:47,402 - INFO - Target shape: torch.Size([16, 63, 10])
+2026-02-04 20:40:47,411 - INFO - ✓ Output and target shapes match!
+2026-02-04 20:40:47,411 - INFO - Sample model inputs (first batch):
+2026-02-04 20:40:47,412 - INFO - Sample model outputs (first batch):
+2026-02-04 20:40:47,413 - INFO - Sample 0 target (neuron 4, all output bins): [0. 3. 0. 2. 1. 1. 0. 0. 0. 1.]
+2026-02-04 20:40:47,413 - INFO - Sample 1 target (neuron 4, all output bins): [1. 0. 0. 0. 2. 1. 0. 0. 0. 0.]
+2026-02-04 20:40:47,414 - INFO - Sample 2 target (neuron 4, all output bins): [0. 0. 0. 2. 0. 0. 1. 1. 2. 0.]
+2026-02-04 20:40:47,414 - INFO - Sample 3 target (neuron 4, all output bins): [0. 3. 0. 0. 0. 0. 0. 0. 2. 1.]
+2026-02-04 20:40:47,415 - INFO - Sample 4 target (neuron 4, all output bins): [3. 1. 0. 1. 0. 1. 1. 0. 1. 3.]
+2026-02-04 20:40:47,416 - INFO - Sample 0 model output (neuron 4, all output bins): [-5.6405760e-02 -7.2288483e-02  1.2957677e-04 -9.0867817e-02
+ -1.6395628e-01 -8.2563139e-02 -7.7993348e-02 -7.1761876e-02
+ -7.7902801e-02 -9.2237867e-02]
+2026-02-04 20:40:47,416 - INFO - Sample 1 model output (neuron 4, all output bins): [-0.12887943 -0.07504606 -0.11901929 -0.06790069 -0.12799272 -0.08293211
+ -0.11285271 -0.06060381 -0.1589103  -0.08509175]
+2026-02-04 20:40:47,417 - INFO - Sample 2 model output (neuron 4, all output bins): [-0.13221203 -0.15524977 -0.1022252  -0.09361981 -0.09888187 -0.11444365
+ -0.16449115 -0.06208567 -0.03100353 -0.06791781]
+2026-02-04 20:40:47,418 - INFO - Sample 3 model output (neuron 4, all output bins): [-0.05891749 -0.07285573 -0.07637596 -0.15840957 -0.05786273 -0.07966149
+ -0.0545119  -0.06811788 -0.0720416  -0.05800197]
+2026-02-04 20:40:47,418 - INFO - Sample 4 model output (neuron 4, all output bins): [-0.11810385 -0.07686357 -0.10001627 -0.08810866 -0.09168181 -0.02301742
+ -0.05992786 -0.13759503 -0.10413788 -0.0758204 ]
+2026-02-04 20:40:52,208 - INFO - Starting training...
+2026-02-04 20:40:52,209 - INFO - ==================================================
+2026-02-04 20:41:46,633 - INFO - Epoch   1/50 | Train Loss: 0.625994 | Val Loss: 0.613750 | Val Corr: 0.279826 | LR: 1.00e-03
+2026-02-04 20:41:46,646 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:42:41,504 - INFO - Epoch   2/50 | Train Loss: 0.612059 | Val Loss: 0.610141 | Val Corr: 0.290849 | LR: 1.00e-03
+2026-02-04 20:42:41,517 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:43:34,421 - INFO - Epoch   3/50 | Train Loss: 0.607634 | Val Loss: 0.608251 | Val Corr: 0.298034 | LR: 1.00e-03
+2026-02-04 20:43:34,430 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:44:28,599 - INFO - Epoch   4/50 | Train Loss: 0.604795 | Val Loss: 0.606471 | Val Corr: 0.302566 | LR: 1.00e-03
+2026-02-04 20:44:28,608 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:45:21,601 - INFO - Epoch   5/50 | Train Loss: 0.602265 | Val Loss: 0.605651 | Val Corr: 0.306848 | LR: 1.00e-03
+2026-02-04 20:45:21,608 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:46:12,229 - INFO - Epoch   6/50 | Train Loss: 0.598814 | Val Loss: 0.603399 | Val Corr: 0.312849 | LR: 1.00e-03
+2026-02-04 20:46:12,235 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:47:02,966 - INFO - Epoch   7/50 | Train Loss: 0.594891 | Val Loss: 0.599512 | Val Corr: 0.320025 | LR: 1.00e-03
+2026-02-04 20:47:02,972 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:47:53,865 - INFO - Epoch   8/50 | Train Loss: 0.590338 | Val Loss: 0.595421 | Val Corr: 0.328575 | LR: 1.00e-03
+2026-02-04 20:47:53,875 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:48:44,194 - INFO - Epoch   9/50 | Train Loss: 0.586378 | Val Loss: 0.592552 | Val Corr: 0.333711 | LR: 1.00e-03
+2026-02-04 20:48:44,201 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:49:35,025 - INFO - Epoch  10/50 | Train Loss: 0.583810 | Val Loss: 0.592973 | Val Corr: 0.334569 | LR: 1.00e-03
+2026-02-04 20:49:35,030 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:50:26,155 - INFO - Epoch  11/50 | Train Loss: 0.582085 | Val Loss: 0.592091 | Val Corr: 0.336626 | LR: 1.00e-03
+2026-02-04 20:50:26,164 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:51:17,065 - INFO - Epoch  12/50 | Train Loss: 0.580564 | Val Loss: 0.591733 | Val Corr: 0.336929 | LR: 1.00e-03
+2026-02-04 20:51:17,070 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:52:08,282 - INFO - Epoch  13/50 | Train Loss: 0.579450 | Val Loss: 0.591435 | Val Corr: 0.338601 | LR: 1.00e-03
+2026-02-04 20:52:08,289 - INFO - Saved best model to results/binned_2026-02-04_20-34-17/best_stim_spike_model.pt
+2026-02-04 20:52:59,281 - INFO - Epoch  14/50 | Train Loss: 0.578480 | Val Loss: 0.590591 | Val Corr: 0.337474 | LR: 1.00e-03
+2026-02-04 20:53:49,901 - INFO - Epoch  15/50 | Train Loss: 0.577710 | Val Loss: 0.590923 | Val Corr: 0.338336 | LR: 1.00e-03
+2026-02-04 20:54:41,022 - INFO - Epoch  16/50 | Train Loss: 0.577089 | Val Loss: 0.592483 | Val Corr: 0.337300 | LR: 1.00e-03
+2026-02-04 20:55:32,486 - INFO - Epoch  17/50 | Train Loss: 0.576406 | Val Loss: 0.591966 | Val Corr: 0.338072 | LR: 1.00e-03
+2026-02-04 20:56:23,570 - INFO - Epoch  18/50 | Train Loss: 0.575815 | Val Loss: 0.591040 | Val Corr: 0.338467 | LR: 1.00e-03
+2026-02-04 20:57:14,499 - INFO - Epoch  19/50 | Train Loss: 0.575349 | Val Loss: 0.591323 | Val Corr: 0.337971 | LR: 1.00e-03
+2026-02-04 20:58:07,976 - INFO - Epoch  20/50 | Train Loss: 0.574759 | Val Loss: 0.591457 | Val Corr: 0.337456 | LR: 5.00e-04
+2026-02-04 20:59:05,975 - INFO - Epoch  21/50 | Train Loss: 0.573000 | Val Loss: 0.592429 | Val Corr: 0.336971 | LR: 5.00e-04
+2026-02-04 20:59:59,617 - INFO - Epoch  22/50 | Train Loss: 0.572488 | Val Loss: 0.593627 | Val Corr: 0.336564 | LR: 5.00e-04
+2026-02-04 21:00:55,429 - INFO - Epoch  23/50 | Train Loss: 0.572254 | Val Loss: 0.593996 | Val Corr: 0.335932 | LR: 5.00e-04
+2026-02-04 21:00:55,431 - INFO - Early stopping at epoch 23
+2026-02-04 21:00:55,431 - INFO - ==================================================
+2026-02-04 21:00:55,432 - INFO - Training complete! Best validation correlation: 0.338601
+2026-02-04 21:00:55,432 - INFO - Saved training history to results/binned_2026-02-04_20-34-17/training_history.json
+2026-02-04 21:01:32,027 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9954, p=5.41e-64
+2026-02-04 21:01:37,044 - INFO - 
+Per-pattern analysis:
+2026-02-04 21:01:47,430 - INFO - Pattern selectivity summary:
+2026-02-04 21:01:47,431 - INFO -   Mean correlation across neurons: 0.4258
+2026-02-04 21:01:47,432 - INFO -   Median correlation: 0.4066
+2026-02-04 21:01:47,432 - INFO -   Neurons with r > 0.5: 19 / 63
+2026-02-04 21:01:47,432 - INFO -   Neurons with r > 0.3: 51 / 63
+2026-02-04 21:01:47,585 - INFO - 
+Pattern selectivity summary:
+2026-02-04 21:01:47,586 - INFO -   Mean correlation across neurons: 0.4258
+2026-02-04 21:01:47,586 - INFO -   Median correlation: 0.4066
+2026-02-04 21:01:47,587 - INFO -   Neurons with r > 0.5: 19 / 63
+2026-02-04 21:01:47,587 - INFO -   Neurons with r > 0.3: 51 / 63
+2026-02-04 21:01:54,160 - INFO - Sample model outputs (first batch):
+2026-02-04 21:01:54,162 - INFO - Sample 0 target (neuron 4, all output bins): [0. 1. 0. 2. 3. 0. 0. 0. 0. 0.]
+2026-02-04 21:01:54,166 - INFO - Sample 0 model output (neuron 4, all output bins): [1.0244478  0.9569247  1.0099366  0.9596999  0.9215493  0.96271116
+ 0.9494605  1.0104836  0.93529916 0.9536003 ]
+2026-02-04 21:02:07,216 - INFO - Found 50 oracle patterns
+2026-02-04 21:02:07,217 - INFO - Using input_bin_size=10ms, output_bin_size=60ms, n_input_bins=60, n_output_bins=10, output_offset=0
+2026-02-04 21:02:07,217 - INFO - Total input bins: 100, Total output bins: 16
+2026-02-04 21:02:07,217 - INFO - Valid input positions: 0 to 6
+2026-02-04 21:02:07,560 - INFO - Saved pattern 4033 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4033/trial_00_timing_0.jpg
+2026-02-04 21:02:13,693 - INFO - Completed pattern 4033 (1/50)
+2026-02-04 21:02:14,017 - INFO - Saved pattern 4017 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4017/trial_00_timing_1.jpg
+2026-02-04 21:02:20,404 - INFO - Completed pattern 4017 (2/50)
+2026-02-04 21:02:20,723 - INFO - Saved pattern 4028 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4028/trial_00_timing_2.jpg
+2026-02-04 21:02:26,510 - INFO - Completed pattern 4028 (3/50)
+2026-02-04 21:02:26,822 - INFO - Saved pattern 4003 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4003/trial_00_timing_4.jpg
+2026-02-04 21:02:40,109 - INFO - Completed pattern 4003 (4/50)
+2026-02-04 21:02:40,433 - INFO - Saved pattern 4025 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4025/trial_00_timing_9.jpg
+2026-02-04 21:02:46,881 - INFO - Completed pattern 4025 (5/50)
+2026-02-04 21:02:47,347 - INFO - Saved pattern 4004 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4004/trial_00_timing_18.jpg
+2026-02-04 21:02:54,233 - INFO - Completed pattern 4004 (6/50)
+2026-02-04 21:02:54,577 - INFO - Saved pattern 4040 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4040/trial_00_timing_38.jpg
+2026-02-04 21:03:02,397 - INFO - Completed pattern 4040 (7/50)
+2026-02-04 21:03:02,712 - INFO - Saved pattern 4038 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4038/trial_00_timing_54.jpg
+2026-02-04 21:03:09,239 - INFO - Completed pattern 4038 (8/50)
+2026-02-04 21:03:09,557 - INFO - Saved pattern 4022 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4022/trial_00_timing_59.jpg
+2026-02-04 21:03:15,314 - INFO - Completed pattern 4022 (9/50)
+2026-02-04 21:03:15,628 - INFO - Saved pattern 4034 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4034/trial_00_timing_70.jpg
+2026-02-04 21:03:22,114 - INFO - Completed pattern 4034 (10/50)
+2026-02-04 21:03:22,437 - INFO - Saved pattern 4030 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4030/trial_00_timing_73.jpg
+2026-02-04 21:03:28,772 - INFO - Completed pattern 4030 (11/50)
+2026-02-04 21:03:29,087 - INFO - Saved pattern 4031 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4031/trial_00_timing_74.jpg
+2026-02-04 21:03:34,757 - INFO - Completed pattern 4031 (12/50)
+2026-02-04 21:03:35,070 - INFO - Saved pattern 4005 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4005/trial_00_timing_77.jpg
+2026-02-04 21:03:41,016 - INFO - Completed pattern 4005 (13/50)
+2026-02-04 21:03:41,363 - INFO - Saved pattern 4010 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4010/trial_00_timing_93.jpg
+2026-02-04 21:03:48,747 - INFO - Completed pattern 4010 (14/50)
+2026-02-04 21:03:49,075 - INFO - Saved pattern 4039 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4039/trial_00_timing_107.jpg
+2026-02-04 21:03:55,778 - INFO - Completed pattern 4039 (15/50)
+2026-02-04 21:03:56,411 - INFO - Saved pattern 4002 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4002/trial_00_timing_113.jpg
+2026-02-04 21:04:02,160 - INFO - Completed pattern 4002 (16/50)
+2026-02-04 21:04:02,474 - INFO - Saved pattern 4026 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4026/trial_00_timing_119.jpg
+2026-02-04 21:08:10,099 - INFO - Found 50 oracle patterns
+2026-02-04 21:08:10,100 - INFO - Using input_bin_size=10ms, output_bin_size=60ms, n_input_bins=60, n_output_bins=10, output_offset=0
+2026-02-04 21:08:10,101 - INFO - Total input bins: 100, Total output bins: 16
+2026-02-04 21:08:10,101 - INFO - Valid input positions: 0 to 6
+2026-02-04 21:08:10,482 - INFO - Saved pattern 4033 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4033/trial_00_timing_0.jpg
+2026-02-04 21:08:17,850 - INFO - Completed pattern 4033 (1/50)
+2026-02-04 21:08:18,211 - INFO - Saved pattern 4017 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4017/trial_00_timing_1.jpg
+2026-02-04 21:08:24,733 - INFO - Completed pattern 4017 (2/50)
+2026-02-04 21:08:25,047 - INFO - Saved pattern 4028 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4028/trial_00_timing_2.jpg
+2026-02-04 21:08:31,112 - INFO - Completed pattern 4028 (3/50)
+2026-02-04 21:08:31,423 - INFO - Saved pattern 4003 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4003/trial_00_timing_4.jpg
+2026-02-04 21:08:37,301 - INFO - Completed pattern 4003 (4/50)
+2026-02-04 21:08:37,620 - INFO - Saved pattern 4025 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4025/trial_00_timing_9.jpg
+2026-02-04 21:08:44,480 - INFO - Completed pattern 4025 (5/50)
+2026-02-04 21:08:44,813 - INFO - Saved pattern 4004 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4004/trial_00_timing_18.jpg
+2026-02-04 21:08:50,552 - INFO - Completed pattern 4004 (6/50)
+2026-02-04 21:08:50,859 - INFO - Saved pattern 4040 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4040/trial_00_timing_38.jpg
+2026-02-04 21:08:57,904 - INFO - Completed pattern 4040 (7/50)
+2026-02-04 21:08:58,215 - INFO - Saved pattern 4038 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4038/trial_00_timing_54.jpg
+2026-02-04 21:09:04,148 - INFO - Completed pattern 4038 (8/50)
+2026-02-04 21:09:04,460 - INFO - Saved pattern 4022 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4022/trial_00_timing_59.jpg
+2026-02-04 21:09:11,023 - INFO - Completed pattern 4022 (9/50)
+2026-02-04 21:09:11,339 - INFO - Saved pattern 4034 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4034/trial_00_timing_70.jpg
+2026-02-04 21:09:17,657 - INFO - Completed pattern 4034 (10/50)
+2026-02-04 21:09:18,005 - INFO - Saved pattern 4030 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4030/trial_00_timing_73.jpg
+2026-02-04 21:09:24,009 - INFO - Completed pattern 4030 (11/50)
+2026-02-04 21:09:24,330 - INFO - Saved pattern 4031 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4031/trial_00_timing_74.jpg
+2026-02-04 21:09:30,989 - INFO - Completed pattern 4031 (12/50)
+2026-02-04 21:09:31,295 - INFO - Saved pattern 4005 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4005/trial_00_timing_77.jpg
+2026-02-04 21:09:36,999 - INFO - Completed pattern 4005 (13/50)
+2026-02-04 21:09:37,322 - INFO - Saved pattern 4010 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4010/trial_00_timing_93.jpg
+2026-02-04 21:09:43,145 - INFO - Completed pattern 4010 (14/50)
+2026-02-04 21:09:43,456 - INFO - Saved pattern 4039 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4039/trial_00_timing_107.jpg
+2026-02-04 21:09:50,273 - INFO - Completed pattern 4039 (15/50)
+2026-02-04 21:09:50,584 - INFO - Saved pattern 4002 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4002/trial_00_timing_113.jpg
+2026-02-04 21:09:58,118 - INFO - Completed pattern 4002 (16/50)
+2026-02-04 21:09:58,466 - INFO - Saved pattern 4026 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4026/trial_00_timing_119.jpg
+2026-02-04 21:10:04,556 - INFO - Completed pattern 4026 (17/50)
+2026-02-04 21:10:04,889 - INFO - Saved pattern 4047 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4047/trial_00_timing_139.jpg
+2026-02-04 21:10:10,733 - INFO - Completed pattern 4047 (18/50)
+2026-02-04 21:10:11,045 - INFO - Saved pattern 4036 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4036/trial_00_timing_140.jpg
+2026-02-04 21:10:16,972 - INFO - Completed pattern 4036 (19/50)
+2026-02-04 21:10:17,316 - INFO - Saved pattern 4020 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4020/trial_00_timing_144.jpg
+2026-02-04 21:10:25,487 - INFO - Completed pattern 4020 (20/50)
+2026-02-04 21:10:25,815 - INFO - Saved pattern 4049 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4049/trial_00_timing_145.jpg
+2026-02-04 21:10:31,701 - INFO - Completed pattern 4049 (21/50)
+2026-02-04 21:10:32,013 - INFO - Saved pattern 4029 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4029/trial_00_timing_146.jpg
+2026-02-04 21:10:37,854 - INFO - Completed pattern 4029 (22/50)
+2026-02-04 21:10:38,169 - INFO - Saved pattern 4044 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4044/trial_00_timing_152.jpg
+2026-02-04 21:10:44,091 - INFO - Completed pattern 4044 (23/50)
+2026-02-04 21:10:44,472 - INFO - Saved pattern 4012 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4012/trial_00_timing_154.jpg
+2026-02-04 21:10:50,896 - INFO - Completed pattern 4012 (24/50)
+2026-02-04 21:10:51,254 - INFO - Saved pattern 4037 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4037/trial_00_timing_162.jpg
+2026-02-04 21:11:01,234 - INFO - Completed pattern 4037 (25/50)
+2026-02-04 21:11:01,641 - INFO - Saved pattern 4045 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4045/trial_00_timing_164.jpg
+2026-02-04 21:11:07,679 - INFO - Completed pattern 4045 (26/50)
+2026-02-04 21:11:08,001 - INFO - Saved pattern 4014 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4014/trial_00_timing_186.jpg
+2026-02-04 21:11:15,786 - INFO - Completed pattern 4014 (27/50)
+2026-02-04 21:11:16,409 - INFO - Saved pattern 4015 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4015/trial_00_timing_195.jpg
+2026-02-04 21:11:24,305 - INFO - Completed pattern 4015 (28/50)
+2026-02-04 21:11:24,693 - INFO - Saved pattern 4023 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4023/trial_00_timing_199.jpg
+2026-02-04 21:11:30,795 - INFO - Completed pattern 4023 (29/50)
+2026-02-04 21:11:31,194 - INFO - Saved pattern 4048 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4048/trial_00_timing_205.jpg
+2026-02-04 21:11:37,786 - INFO - Completed pattern 4048 (30/50)
+2026-02-04 21:11:38,109 - INFO - Saved pattern 4011 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4011/trial_00_timing_213.jpg
+2026-02-04 21:11:44,131 - INFO - Completed pattern 4011 (31/50)
+2026-02-04 21:11:44,445 - INFO - Saved pattern 4019 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4019/trial_00_timing_248.jpg
+2026-02-04 21:11:53,428 - INFO - Completed pattern 4019 (32/50)
+2026-02-04 21:11:53,765 - INFO - Saved pattern 4050 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4050/trial_00_timing_272.jpg
+2026-02-04 21:12:00,746 - INFO - Completed pattern 4050 (33/50)
+2026-02-04 21:12:01,105 - INFO - Saved pattern 4018 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4018/trial_00_timing_282.jpg
+2026-02-04 21:12:07,026 - INFO - Completed pattern 4018 (34/50)
+2026-02-04 21:12:07,345 - INFO - Saved pattern 4001 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4001/trial_00_timing_306.jpg
+2026-02-04 21:12:13,949 - INFO - Completed pattern 4001 (35/50)
+2026-02-04 21:12:14,365 - INFO - Saved pattern 4032 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4032/trial_00_timing_322.jpg
+2026-02-04 21:12:20,977 - INFO - Completed pattern 4032 (36/50)
+2026-02-04 21:12:21,307 - INFO - Saved pattern 4021 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4021/trial_00_timing_328.jpg
+2026-02-04 21:12:27,295 - INFO - Completed pattern 4021 (37/50)
+2026-02-04 21:12:27,631 - INFO - Saved pattern 4046 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4046/trial_00_timing_336.jpg
+2026-02-04 21:12:33,447 - INFO - Completed pattern 4046 (38/50)
+2026-02-04 21:12:33,756 - INFO - Saved pattern 4006 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4006/trial_00_timing_340.jpg
+2026-02-04 21:12:39,545 - INFO - Completed pattern 4006 (39/50)
+2026-02-04 21:12:39,846 - INFO - Saved pattern 4013 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4013/trial_00_timing_356.jpg
+2026-02-04 21:12:48,467 - INFO - Completed pattern 4013 (40/50)
+2026-02-04 21:12:48,798 - INFO - Saved pattern 4027 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4027/trial_00_timing_386.jpg
+2026-02-04 21:12:54,722 - INFO - Completed pattern 4027 (41/50)
+2026-02-04 21:12:55,040 - INFO - Saved pattern 4016 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4016/trial_00_timing_397.jpg
+2026-02-04 21:13:01,895 - INFO - Completed pattern 4016 (42/50)
+2026-02-04 21:13:02,244 - INFO - Saved pattern 4043 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4043/trial_00_timing_474.jpg
+2026-02-04 21:13:08,147 - INFO - Completed pattern 4043 (43/50)
+2026-02-04 21:13:08,458 - INFO - Saved pattern 4041 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4041/trial_00_timing_496.jpg
+2026-02-04 21:13:14,121 - INFO - Completed pattern 4041 (44/50)
+2026-02-04 21:13:14,427 - INFO - Saved pattern 4008 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4008/trial_00_timing_521.jpg
+2026-02-04 21:13:20,179 - INFO - Completed pattern 4008 (45/50)
+2026-02-04 21:13:20,493 - INFO - Saved pattern 4007 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4007/trial_00_timing_543.jpg
+2026-02-04 21:13:26,671 - INFO - Completed pattern 4007 (46/50)
+2026-02-04 21:13:27,018 - INFO - Saved pattern 4042 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4042/trial_00_timing_553.jpg
+2026-02-04 21:13:32,870 - INFO - Completed pattern 4042 (47/50)
+2026-02-04 21:13:33,212 - INFO - Saved pattern 4009 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4009/trial_00_timing_584.jpg
+2026-02-04 21:13:39,064 - INFO - Completed pattern 4009 (48/50)
+2026-02-04 21:13:39,375 - INFO - Saved pattern 4024 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4024/trial_00_timing_673.jpg
+2026-02-04 21:13:46,694 - INFO - Completed pattern 4024 (49/50)
+2026-02-04 21:13:47,074 - INFO - Saved pattern 4035 trial 0 figure to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern/pattern_4035/trial_00_timing_776.jpg
+2026-02-04 21:13:58,728 - INFO - Completed pattern 4035 (50/50)
+2026-02-04 21:13:58,730 - INFO - Saved all oracle pattern figures to results/binned_2026-02-04_20-34-17/oracle_trials_by_pattern
+2026-02-04 21:20:57,580 - INFO - Building stim pattern for pattern_name 4033
+2026-02-04 21:20:57,606 - INFO - Building stim pattern for pattern_name 4017
+2026-02-04 21:20:57,616 - INFO - Building stim pattern for pattern_name 4028
+2026-02-04 21:20:57,631 - INFO - Building stim pattern for pattern_name 2739
+2026-02-04 21:20:57,644 - INFO - Building stim pattern for pattern_name 4003
+2026-02-04 21:20:57,658 - INFO - Building stim pattern for pattern_name 3514
+2026-02-04 21:20:57,670 - INFO - Building stim pattern for pattern_name 91
+2026-02-04 21:20:57,684 - INFO - Building stim pattern for pattern_name 617
+2026-02-04 21:20:57,697 - INFO - Building stim pattern for pattern_name 3852
+2026-02-04 21:20:57,710 - INFO - Building stim pattern for pattern_name 4025
+2026-02-04 21:20:57,722 - INFO - Building stim pattern for pattern_name 3219
+2026-02-04 21:20:57,733 - INFO - Building stim pattern for pattern_name 3708
+2026-02-04 21:20:57,743 - INFO - Building stim pattern for pattern_name 2977
+2026-02-04 21:20:57,753 - INFO - Building stim pattern for pattern_name 399
+2026-02-04 21:20:57,763 - INFO - Building stim pattern for pattern_name 3495
+2026-02-04 21:20:57,776 - INFO - Building stim pattern for pattern_name 535
+2026-02-04 21:20:57,792 - INFO - Building stim pattern for pattern_name 522
+2026-02-04 21:20:57,802 - INFO - Building stim pattern for pattern_name 3430
+2026-02-04 21:20:57,812 - INFO - Building stim pattern for pattern_name 4004
+2026-02-04 21:20:57,824 - INFO - Building stim pattern for pattern_name 1001
+2026-02-04 21:20:57,836 - INFO - Building stim pattern for pattern_name 244
+2026-02-04 21:20:57,846 - INFO - Building stim pattern for pattern_name 1209
+2026-02-04 21:20:57,856 - INFO - Building stim pattern for pattern_name 858
+2026-02-04 21:20:57,869 - INFO - Building stim pattern for pattern_name 2446
+2026-02-04 21:20:57,879 - INFO - Building stim pattern for pattern_name 623
+2026-02-04 21:20:57,976 - INFO - Building stim pattern for pattern_name 1578
+2026-02-04 21:20:58,028 - INFO - Building stim pattern for pattern_name 1268
+2026-02-04 21:20:58,039 - INFO - Building stim pattern for pattern_name 47
+2026-02-04 21:20:58,048 - INFO - Building stim pattern for pattern_name 1768
+2026-02-04 21:20:58,059 - INFO - Building stim pattern for pattern_name 2971
+2026-02-04 21:20:58,069 - INFO - Building stim pattern for pattern_name 3515
+2026-02-04 21:20:58,079 - INFO - Building stim pattern for pattern_name 238
+2026-02-04 21:20:58,090 - INFO - Building stim pattern for pattern_name 90
+2026-02-04 21:20:58,102 - INFO - Building stim pattern for pattern_name 2509
+2026-02-04 21:20:58,142 - INFO - Building stim pattern for pattern_name 695
+2026-02-04 21:20:58,166 - INFO - Building stim pattern for pattern_name 369
+2026-02-04 21:20:58,186 - INFO - Building stim pattern for pattern_name 596
+2026-02-04 21:20:58,202 - INFO - Building stim pattern for pattern_name 2055
+2026-02-04 21:20:58,214 - INFO - Building stim pattern for pattern_name 4040
+2026-02-04 21:20:58,225 - INFO - Building stim pattern for pattern_name 2275
+2026-02-04 21:20:58,235 - INFO - Building stim pattern for pattern_name 784
+2026-02-04 21:20:58,245 - INFO - Building stim pattern for pattern_name 373
+2026-02-04 21:20:58,257 - INFO - Building stim pattern for pattern_name 43
+2026-02-04 21:20:58,267 - INFO - Building stim pattern for pattern_name 3162
+2026-02-04 21:20:58,282 - INFO - Building stim pattern for pattern_name 3934
+2026-02-04 21:20:58,293 - INFO - Building stim pattern for pattern_name 3718
+2026-02-04 21:20:58,305 - INFO - Building stim pattern for pattern_name 2046
+2026-02-04 21:20:58,316 - INFO - Building stim pattern for pattern_name 3660
+2026-02-04 21:20:58,328 - INFO - Building stim pattern for pattern_name 2329
+2026-02-04 21:20:58,342 - INFO - Building stim pattern for pattern_name 1278
+2026-02-04 21:20:58,355 - INFO - Building stim pattern for pattern_name 3361
+2026-02-04 21:20:58,369 - INFO - Building stim pattern for pattern_name 277
+2026-02-04 21:20:58,380 - INFO - Building stim pattern for pattern_name 2556
+2026-02-04 21:20:58,402 - INFO - Building stim pattern for pattern_name 3010
+2026-02-04 21:20:58,415 - INFO - Building stim pattern for pattern_name 4038
+2026-02-04 21:20:58,429 - INFO - Building stim pattern for pattern_name 1626
+2026-02-04 21:20:58,693 - INFO - Building stim pattern for pattern_name 2212
+2026-02-04 21:20:58,707 - INFO - Building stim pattern for pattern_name 2428
+2026-02-04 21:20:58,734 - INFO - Building stim pattern for pattern_name 840
+2026-02-04 21:20:58,758 - INFO - Building stim pattern for pattern_name 4022
+2026-02-04 21:20:58,778 - INFO - Building stim pattern for pattern_name 2597
+2026-02-04 21:20:58,791 - INFO - Building stim pattern for pattern_name 2560
+2026-02-04 21:20:58,803 - INFO - Building stim pattern for pattern_name 3531
+2026-02-04 21:20:58,813 - INFO - Building stim pattern for pattern_name 3288
+2026-02-04 21:20:58,824 - INFO - Building stim pattern for pattern_name 3119
+2026-02-04 21:20:58,836 - INFO - Building stim pattern for pattern_name 776
+2026-02-04 21:20:58,848 - INFO - Building stim pattern for pattern_name 3074
+2026-02-04 21:20:58,860 - INFO - Building stim pattern for pattern_name 2100
+2026-02-04 21:20:58,870 - INFO - Building stim pattern for pattern_name 449
+2026-02-04 21:20:58,882 - INFO - Building stim pattern for pattern_name 716
+2026-02-04 21:20:58,896 - INFO - Building stim pattern for pattern_name 4034
+2026-02-04 21:20:58,912 - INFO - Building stim pattern for pattern_name 3365
+2026-02-04 21:20:58,923 - INFO - Building stim pattern for pattern_name 1181
+2026-02-04 21:20:58,938 - INFO - Building stim pattern for pattern_name 4030
+2026-02-04 21:20:58,950 - INFO - Building stim pattern for pattern_name 4031
+2026-02-04 21:20:58,964 - INFO - Building stim pattern for pattern_name 1296
+2026-02-04 21:20:58,977 - INFO - Building stim pattern for pattern_name 814
+2026-02-04 21:20:58,989 - INFO - Building stim pattern for pattern_name 4005
+2026-02-04 21:20:59,000 - INFO - Building stim pattern for pattern_name 3584
+2026-02-04 21:20:59,010 - INFO - Building stim pattern for pattern_name 570
+2026-02-04 21:20:59,023 - INFO - Building stim pattern for pattern_name 2649
+2026-02-04 21:20:59,032 - INFO - Building stim pattern for pattern_name 962
+2026-02-04 21:20:59,043 - INFO - Building stim pattern for pattern_name 4
+2026-02-04 21:20:59,054 - INFO - Building stim pattern for pattern_name 2240
+2026-02-04 21:20:59,065 - INFO - Building stim pattern for pattern_name 2929
+2026-02-04 21:20:59,075 - INFO - Building stim pattern for pattern_name 345
+2026-02-04 21:20:59,090 - INFO - Building stim pattern for pattern_name 3545
+2026-02-04 21:20:59,101 - INFO - Building stim pattern for pattern_name 1590
+2026-02-04 21:20:59,113 - INFO - Building stim pattern for pattern_name 3243
+2026-02-04 21:20:59,126 - INFO - Building stim pattern for pattern_name 3251
+2026-02-04 21:20:59,139 - INFO - Building stim pattern for pattern_name 1261
+2026-02-04 21:20:59,153 - INFO - Building stim pattern for pattern_name 3792
+2026-02-04 21:20:59,172 - INFO - Building stim pattern for pattern_name 4010
+2026-02-04 21:20:59,184 - INFO - Building stim pattern for pattern_name 3475
+2026-02-04 21:20:59,195 - INFO - Building stim pattern for pattern_name 1583
+2026-02-04 21:20:59,206 - INFO - Building stim pattern for pattern_name 2987
+2026-02-04 21:20:59,230 - INFO - Building stim pattern for pattern_name 1373
+2026-02-04 21:20:59,242 - INFO - Building stim pattern for pattern_name 670
+2026-02-04 21:20:59,254 - INFO - Building stim pattern for pattern_name 2630
+2026-02-04 21:20:59,266 - INFO - Building stim pattern for pattern_name 566
+2026-02-04 21:20:59,277 - INFO - Building stim pattern for pattern_name 1389
+2026-02-04 21:20:59,295 - INFO - Building stim pattern for pattern_name 2721
+2026-02-04 21:20:59,305 - INFO - Building stim pattern for pattern_name 2260
+2026-02-04 21:20:59,315 - INFO - Building stim pattern for pattern_name 2022
+2026-02-04 21:20:59,324 - INFO - Building stim pattern for pattern_name 4039
+2026-02-04 21:20:59,335 - INFO - Building stim pattern for pattern_name 1930
+2026-02-04 21:20:59,345 - INFO - Building stim pattern for pattern_name 738
+2026-02-04 21:20:59,355 - INFO - Building stim pattern for pattern_name 2002
+2026-02-04 21:20:59,365 - INFO - Building stim pattern for pattern_name 3454
+2026-02-04 21:20:59,375 - INFO - Building stim pattern for pattern_name 408
+2026-02-04 21:20:59,386 - INFO - Building stim pattern for pattern_name 4002
+2026-02-04 21:20:59,402 - INFO - Building stim pattern for pattern_name 227
+2026-02-04 21:20:59,412 - INFO - Building stim pattern for pattern_name 3404
+2026-02-04 21:20:59,423 - INFO - Building stim pattern for pattern_name 10
+2026-02-04 21:20:59,434 - INFO - Building stim pattern for pattern_name 2714
+2026-02-04 21:20:59,445 - INFO - Building stim pattern for pattern_name 4026
+2026-02-04 21:20:59,459 - INFO - Building stim pattern for pattern_name 3755
+2026-02-04 21:20:59,471 - INFO - Building stim pattern for pattern_name 1052
+2026-02-04 21:20:59,493 - INFO - Building stim pattern for pattern_name 258
+2026-02-04 21:20:59,508 - INFO - Building stim pattern for pattern_name 576
+2026-02-04 21:20:59,520 - INFO - Building stim pattern for pattern_name 1895
+2026-02-04 21:20:59,531 - INFO - Building stim pattern for pattern_name 1455
+2026-02-04 21:20:59,542 - INFO - Building stim pattern for pattern_name 1439
+2026-02-04 21:20:59,553 - INFO - Building stim pattern for pattern_name 2933
+2026-02-04 21:20:59,564 - INFO - Building stim pattern for pattern_name 1325
+2026-02-04 21:20:59,575 - INFO - Building stim pattern for pattern_name 3610
+2026-02-04 21:20:59,587 - INFO - Building stim pattern for pattern_name 3601
+2026-02-04 21:20:59,599 - INFO - Building stim pattern for pattern_name 3022
+2026-02-04 21:20:59,609 - INFO - Building stim pattern for pattern_name 1312
+2026-02-04 21:20:59,620 - INFO - Building stim pattern for pattern_name 1654
+2026-02-04 21:20:59,633 - INFO - Building stim pattern for pattern_name 2031
+2026-02-04 21:20:59,644 - INFO - Building stim pattern for pattern_name 1564
+2026-02-04 21:20:59,662 - INFO - Building stim pattern for pattern_name 3398
+2026-02-04 21:20:59,673 - INFO - Building stim pattern for pattern_name 4047
+2026-02-04 21:20:59,685 - INFO - Building stim pattern for pattern_name 4036
+2026-02-04 21:20:59,696 - INFO - Building stim pattern for pattern_name 727
+2026-02-04 21:20:59,707 - INFO - Building stim pattern for pattern_name 263
+2026-02-04 21:20:59,717 - INFO - Building stim pattern for pattern_name 2402
+2026-02-04 21:20:59,730 - INFO - Building stim pattern for pattern_name 4020
+2026-02-04 21:20:59,740 - INFO - Building stim pattern for pattern_name 4049
+2026-02-04 21:20:59,751 - INFO - Building stim pattern for pattern_name 4029
+2026-02-04 21:20:59,761 - INFO - Building stim pattern for pattern_name 3641
+2026-02-04 21:20:59,772 - INFO - Building stim pattern for pattern_name 501
+2026-02-04 21:20:59,785 - INFO - Building stim pattern for pattern_name 3574
+2026-02-04 21:20:59,796 - INFO - Building stim pattern for pattern_name 2214
+2026-02-04 21:20:59,808 - INFO - Building stim pattern for pattern_name 543
+2026-02-04 21:20:59,819 - INFO - Building stim pattern for pattern_name 4044
+2026-02-04 21:20:59,830 - INFO - Building stim pattern for pattern_name 2058
+2026-02-04 21:20:59,842 - INFO - Building stim pattern for pattern_name 4012
+2026-02-04 21:20:59,852 - INFO - Building stim pattern for pattern_name 1565
+2026-02-04 21:20:59,862 - INFO - Building stim pattern for pattern_name 3892
+2026-02-04 21:20:59,874 - INFO - Building stim pattern for pattern_name 2481
+2026-02-04 21:20:59,884 - INFO - Building stim pattern for pattern_name 334
+2026-02-04 21:20:59,895 - INFO - Building stim pattern for pattern_name 2102
+2026-02-04 21:20:59,906 - INFO - Building stim pattern for pattern_name 3316
+2026-02-04 21:20:59,924 - INFO - Building stim pattern for pattern_name 4037
+2026-02-04 21:20:59,935 - INFO - Building stim pattern for pattern_name 1577
+2026-02-04 21:20:59,945 - INFO - Building stim pattern for pattern_name 4045
+2026-02-04 21:20:59,956 - INFO - Building stim pattern for pattern_name 394
+2026-02-04 21:20:59,966 - INFO - Building stim pattern for pattern_name 1252
+2026-02-04 21:20:59,976 - INFO - Building stim pattern for pattern_name 870
+2026-02-04 21:20:59,993 - INFO - Building stim pattern for pattern_name 1892
+2026-02-04 21:21:00,007 - INFO - Building stim pattern for pattern_name 1727
+2026-02-04 21:21:00,020 - INFO - Building stim pattern for pattern_name 175
+2026-02-04 21:21:00,039 - INFO - Building stim pattern for pattern_name 285
+2026-02-04 21:21:00,051 - INFO - Building stim pattern for pattern_name 560
+2026-02-04 21:21:00,061 - INFO - Building stim pattern for pattern_name 2111
+2026-02-04 21:21:00,073 - INFO - Building stim pattern for pattern_name 3690
+2026-02-04 21:21:00,083 - INFO - Building stim pattern for pattern_name 2901
+2026-02-04 21:21:00,093 - INFO - Building stim pattern for pattern_name 77
+2026-02-04 21:21:00,105 - INFO - Building stim pattern for pattern_name 3692
+2026-02-04 21:21:00,116 - INFO - Building stim pattern for pattern_name 3193
+2026-02-04 21:21:00,126 - INFO - Building stim pattern for pattern_name 896
+2026-02-04 21:21:00,136 - INFO - Building stim pattern for pattern_name 2138
+2026-02-04 21:21:00,145 - INFO - Building stim pattern for pattern_name 1822
+2026-02-04 21:21:00,155 - INFO - Building stim pattern for pattern_name 2381
+2026-02-04 21:21:00,165 - INFO - Building stim pattern for pattern_name 2717
+2026-02-04 21:21:00,176 - INFO - Building stim pattern for pattern_name 4014
+2026-02-04 21:21:00,188 - INFO - Building stim pattern for pattern_name 481
+2026-02-04 21:21:00,205 - INFO - Building stim pattern for pattern_name 2091
+2026-02-04 21:21:00,217 - INFO - Building stim pattern for pattern_name 2664
+2026-02-04 21:21:00,230 - INFO - Building stim pattern for pattern_name 3013
+2026-02-04 21:21:00,242 - INFO - Building stim pattern for pattern_name 463
+2026-02-04 21:21:00,253 - INFO - Building stim pattern for pattern_name 707
+2026-02-04 21:21:00,264 - INFO - Building stim pattern for pattern_name 3307
+2026-02-04 21:21:00,273 - INFO - Building stim pattern for pattern_name 4015
+2026-02-04 21:21:00,292 - INFO - Building stim pattern for pattern_name 3803
+2026-02-04 21:21:00,304 - INFO - Building stim pattern for pattern_name 4023
+2026-02-04 21:21:00,313 - INFO - Building stim pattern for pattern_name 2383
+2026-02-04 21:21:00,322 - INFO - Building stim pattern for pattern_name 3612
+2026-02-04 21:21:00,342 - INFO - Building stim pattern for pattern_name 1697
+2026-02-04 21:21:00,353 - INFO - Building stim pattern for pattern_name 3728
+2026-02-04 21:21:00,363 - INFO - Building stim pattern for pattern_name 4048
+2026-02-04 21:21:00,373 - INFO - Building stim pattern for pattern_name 3467
+2026-02-04 21:21:00,384 - INFO - Building stim pattern for pattern_name 1574
+2026-02-04 21:21:00,394 - INFO - Building stim pattern for pattern_name 862
+2026-02-04 21:21:00,403 - INFO - Building stim pattern for pattern_name 3815
+2026-02-04 21:21:00,414 - INFO - Building stim pattern for pattern_name 1971
+2026-02-04 21:21:00,424 - INFO - Building stim pattern for pattern_name 2552
+2026-02-04 21:21:00,435 - INFO - Building stim pattern for pattern_name 1106
+2026-02-04 21:21:00,446 - INFO - Building stim pattern for pattern_name 4011
+2026-02-04 21:21:00,456 - INFO - Building stim pattern for pattern_name 1169
+2026-02-04 21:21:00,465 - INFO - Building stim pattern for pattern_name 2064
+2026-02-04 21:21:00,477 - INFO - Building stim pattern for pattern_name 842
+2026-02-04 21:21:00,487 - INFO - Building stim pattern for pattern_name 1291
+2026-02-04 21:21:00,497 - INFO - Building stim pattern for pattern_name 1010
+2026-02-04 21:21:00,506 - INFO - Building stim pattern for pattern_name 2060
+2026-02-04 21:21:00,521 - INFO - Building stim pattern for pattern_name 446
+2026-02-04 21:21:00,531 - INFO - Building stim pattern for pattern_name 2079
+2026-02-04 21:21:00,542 - INFO - Building stim pattern for pattern_name 1757
+2026-02-04 21:21:00,552 - INFO - Building stim pattern for pattern_name 2970
+2026-02-04 21:21:00,565 - INFO - Building stim pattern for pattern_name 2644
+2026-02-04 21:21:00,576 - INFO - Building stim pattern for pattern_name 3990
+2026-02-04 21:21:00,587 - INFO - Building stim pattern for pattern_name 3640
+2026-02-04 21:21:00,597 - INFO - Building stim pattern for pattern_name 1082
+2026-02-04 21:21:00,607 - INFO - Building stim pattern for pattern_name 2042
+2026-02-04 21:21:00,617 - INFO - Building stim pattern for pattern_name 95
+2026-02-04 21:21:00,626 - INFO - Building stim pattern for pattern_name 2950
+2026-02-04 21:21:00,636 - INFO - Building stim pattern for pattern_name 426
+2026-02-04 21:21:00,645 - INFO - Building stim pattern for pattern_name 1850
+2026-02-04 21:21:00,656 - INFO - Building stim pattern for pattern_name 75
+2026-02-04 21:21:00,667 - INFO - Building stim pattern for pattern_name 2924
+2026-02-04 21:21:00,684 - INFO - Building stim pattern for pattern_name 2441
+2026-02-04 21:21:00,695 - INFO - Building stim pattern for pattern_name 3549
+2026-02-04 21:21:00,708 - INFO - Building stim pattern for pattern_name 2675
+2026-02-04 21:21:00,725 - INFO - Building stim pattern for pattern_name 2725
+2026-02-04 21:21:00,736 - INFO - Building stim pattern for pattern_name 1870
+2026-02-04 21:21:00,747 - INFO - Building stim pattern for pattern_name 2451
+2026-02-04 21:21:00,759 - INFO - Building stim pattern for pattern_name 3724
+2026-02-04 21:21:00,771 - INFO - Building stim pattern for pattern_name 3249
+2026-02-04 21:21:00,781 - INFO - Building stim pattern for pattern_name 3699
+2026-02-04 21:21:00,794 - INFO - Building stim pattern for pattern_name 3552
+2026-02-04 21:21:00,808 - INFO - Building stim pattern for pattern_name 4019
+2026-02-04 21:21:00,820 - INFO - Building stim pattern for pattern_name 3991
+2026-02-04 21:21:00,842 - INFO - Building stim pattern for pattern_name 947
+2026-02-04 21:21:00,856 - INFO - Building stim pattern for pattern_name 3400
+2026-02-04 21:21:00,868 - INFO - Building stim pattern for pattern_name 1872
+2026-02-04 21:21:00,879 - INFO - Building stim pattern for pattern_name 2998
+2026-02-04 21:21:00,890 - INFO - Building stim pattern for pattern_name 279
+2026-02-04 21:21:00,899 - INFO - Building stim pattern for pattern_name 2713
+2026-02-04 21:21:00,910 - INFO - Building stim pattern for pattern_name 3671
+2026-02-04 21:21:00,920 - INFO - Building stim pattern for pattern_name 2049
+2026-02-04 21:21:00,935 - INFO - Building stim pattern for pattern_name 3492
+2026-02-04 21:21:00,945 - INFO - Building stim pattern for pattern_name 3191
+2026-02-04 21:21:00,957 - INFO - Building stim pattern for pattern_name 1320
+2026-02-04 21:21:00,973 - INFO - Building stim pattern for pattern_name 1107
+2026-02-04 21:21:00,990 - INFO - Building stim pattern for pattern_name 1467
+2026-02-04 21:21:01,002 - INFO - Building stim pattern for pattern_name 242
+2026-02-04 21:21:01,018 - INFO - Building stim pattern for pattern_name 159
+2026-02-04 21:21:01,028 - INFO - Building stim pattern for pattern_name 3747
+2026-02-04 21:21:01,041 - INFO - Building stim pattern for pattern_name 951
+2026-02-04 21:21:01,052 - INFO - Building stim pattern for pattern_name 4050
+2026-02-04 21:21:01,062 - INFO - Building stim pattern for pattern_name 2008
+2026-02-04 21:21:01,072 - INFO - Building stim pattern for pattern_name 956
+2026-02-04 21:21:01,081 - INFO - Building stim pattern for pattern_name 3761
+2026-02-04 21:21:01,091 - INFO - Building stim pattern for pattern_name 1473
+2026-02-04 21:21:01,101 - INFO - Building stim pattern for pattern_name 2087
+2026-02-04 21:21:01,112 - INFO - Building stim pattern for pattern_name 1154
+2026-02-04 21:21:01,122 - INFO - Building stim pattern for pattern_name 2730
+2026-02-04 21:21:01,132 - INFO - Building stim pattern for pattern_name 2718
+2026-02-04 21:21:01,141 - INFO - Building stim pattern for pattern_name 218
+2026-02-04 21:21:01,150 - INFO - Building stim pattern for pattern_name 4018
+2026-02-04 21:21:01,160 - INFO - Building stim pattern for pattern_name 2301
+2026-02-04 21:21:01,170 - INFO - Building stim pattern for pattern_name 3763
+2026-02-04 21:21:01,181 - INFO - Building stim pattern for pattern_name 1623
+2026-02-04 21:21:01,198 - INFO - Building stim pattern for pattern_name 3285
+2026-02-04 21:21:01,208 - INFO - Building stim pattern for pattern_name 953
+2026-02-04 21:21:01,218 - INFO - Building stim pattern for pattern_name 1075
+2026-02-04 21:21:01,229 - INFO - Building stim pattern for pattern_name 143
+2026-02-04 21:21:01,239 - INFO - Building stim pattern for pattern_name 250
+2026-02-04 21:21:01,252 - INFO - Building stim pattern for pattern_name 1644
+2026-02-04 21:21:01,268 - INFO - Building stim pattern for pattern_name 2740
+2026-02-04 21:21:01,280 - INFO - Building stim pattern for pattern_name 1048
+2026-02-04 21:21:01,291 - INFO - Building stim pattern for pattern_name 3084
+2026-02-04 21:21:01,309 - INFO - Building stim pattern for pattern_name 3717
+2026-02-04 21:21:01,319 - INFO - Building stim pattern for pattern_name 2184
+2026-02-04 21:21:01,330 - INFO - Building stim pattern for pattern_name 128
+2026-02-04 21:21:01,339 - INFO - Building stim pattern for pattern_name 965
+2026-02-04 21:21:01,351 - INFO - Building stim pattern for pattern_name 3493
+2026-02-04 21:21:01,364 - INFO - Building stim pattern for pattern_name 1234
+2026-02-04 21:21:01,376 - INFO - Building stim pattern for pattern_name 3247
+2026-02-04 21:21:01,396 - INFO - Building stim pattern for pattern_name 4001
+2026-02-04 21:21:01,406 - INFO - Building stim pattern for pattern_name 2430
+2026-02-04 21:21:01,417 - INFO - Building stim pattern for pattern_name 3266
+2026-02-04 21:21:01,427 - INFO - Building stim pattern for pattern_name 1227
+2026-02-04 21:21:01,438 - INFO - Building stim pattern for pattern_name 2495
+2026-02-04 21:21:01,448 - INFO - Building stim pattern for pattern_name 3507
+2026-02-04 21:21:01,460 - INFO - Building stim pattern for pattern_name 181
+2026-02-04 21:21:01,478 - INFO - Building stim pattern for pattern_name 1036
+2026-02-04 21:21:01,489 - INFO - Building stim pattern for pattern_name 922
+2026-02-04 21:21:01,506 - INFO - Building stim pattern for pattern_name 3226
+2026-02-04 21:21:01,516 - INFO - Building stim pattern for pattern_name 100
+2026-02-04 21:21:01,526 - INFO - Building stim pattern for pattern_name 1211
+2026-02-04 21:21:01,535 - INFO - Building stim pattern for pattern_name 440
+2026-02-04 21:21:01,547 - INFO - Building stim pattern for pattern_name 2073
+2026-02-04 21:21:01,559 - INFO - Building stim pattern for pattern_name 4032
+2026-02-04 21:21:01,570 - INFO - Building stim pattern for pattern_name 3500
+2026-02-04 21:21:01,580 - INFO - Building stim pattern for pattern_name 3644
+2026-02-04 21:21:01,591 - INFO - Building stim pattern for pattern_name 3916
+2026-02-04 21:21:01,601 - INFO - Building stim pattern for pattern_name 1394
+2026-02-04 21:21:01,611 - INFO - Building stim pattern for pattern_name 483
+2026-02-04 21:21:01,621 - INFO - Building stim pattern for pattern_name 4021
+2026-02-04 21:21:01,630 - INFO - Building stim pattern for pattern_name 3
+2026-02-04 21:21:01,643 - INFO - Building stim pattern for pattern_name 213
+2026-02-04 21:21:01,653 - INFO - Building stim pattern for pattern_name 251
+2026-02-04 21:21:01,662 - INFO - Building stim pattern for pattern_name 1120
+2026-02-04 21:21:01,674 - INFO - Building stim pattern for pattern_name 1975
+2026-02-04 21:21:01,683 - INFO - Building stim pattern for pattern_name 1508
+2026-02-04 21:21:01,693 - INFO - Building stim pattern for pattern_name 4046
+2026-02-04 21:21:01,703 - INFO - Building stim pattern for pattern_name 3344
+2026-02-04 21:21:01,714 - INFO - Building stim pattern for pattern_name 750
+2026-02-04 21:21:01,725 - INFO - Building stim pattern for pattern_name 3446
+2026-02-04 21:21:01,734 - INFO - Building stim pattern for pattern_name 4006
+2026-02-04 21:21:01,744 - INFO - Building stim pattern for pattern_name 2695
+2026-02-04 21:21:01,754 - INFO - Building stim pattern for pattern_name 3354
+2026-02-04 21:21:01,764 - INFO - Building stim pattern for pattern_name 1520
+2026-02-04 21:21:01,774 - INFO - Building stim pattern for pattern_name 1826
+2026-02-04 21:21:01,786 - INFO - Building stim pattern for pattern_name 2940
+2026-02-04 21:21:01,797 - INFO - Building stim pattern for pattern_name 2122
+2026-02-04 21:21:01,810 - INFO - Building stim pattern for pattern_name 881
+2026-02-04 21:21:01,820 - INFO - Building stim pattern for pattern_name 3672
+2026-02-04 21:21:01,833 - INFO - Building stim pattern for pattern_name 992
+2026-02-04 21:21:01,847 - INFO - Building stim pattern for pattern_name 2321
+2026-02-04 21:21:01,859 - INFO - Building stim pattern for pattern_name 2616
+2026-02-04 21:21:01,874 - INFO - Building stim pattern for pattern_name 262
+2026-02-04 21:21:01,889 - INFO - Building stim pattern for pattern_name 1469
+2026-02-04 21:21:01,990 - INFO - Building stim pattern for pattern_name 2457
+2026-02-04 21:21:02,294 - INFO - Building stim pattern for pattern_name 4013
+2026-02-04 21:21:02,328 - INFO - Building stim pattern for pattern_name 2163
+2026-02-04 21:21:02,348 - INFO - Building stim pattern for pattern_name 1813
+2026-02-04 21:21:02,361 - INFO - Building stim pattern for pattern_name 1774
+2026-02-04 21:21:02,379 - INFO - Building stim pattern for pattern_name 1958
+2026-02-04 21:21:02,396 - INFO - Building stim pattern for pattern_name 1381
+2026-02-04 21:21:02,408 - INFO - Building stim pattern for pattern_name 686
+2026-02-04 21:21:02,419 - INFO - Building stim pattern for pattern_name 1858
+2026-02-04 21:21:02,430 - INFO - Building stim pattern for pattern_name 3453
+2026-02-04 21:21:02,444 - INFO - Building stim pattern for pattern_name 3733
+2026-02-04 21:21:02,458 - INFO - Building stim pattern for pattern_name 556
+2026-02-04 21:21:02,471 - INFO - Building stim pattern for pattern_name 1994
+2026-02-04 21:21:02,484 - INFO - Building stim pattern for pattern_name 2524
+2026-02-04 21:21:02,504 - INFO - Building stim pattern for pattern_name 557
+2026-02-04 21:21:02,519 - INFO - Building stim pattern for pattern_name 1558
+2026-02-04 21:21:02,550 - INFO - Building stim pattern for pattern_name 60
+2026-02-04 21:21:02,563 - INFO - Building stim pattern for pattern_name 2622
+2026-02-04 21:21:02,574 - INFO - Building stim pattern for pattern_name 1390
+2026-02-04 21:21:02,588 - INFO - Building stim pattern for pattern_name 1571
+2026-02-04 21:21:02,599 - INFO - Building stim pattern for pattern_name 3504
+2026-02-04 21:21:02,612 - INFO - Building stim pattern for pattern_name 495
+2026-02-04 21:21:02,624 - INFO - Building stim pattern for pattern_name 2783
+2026-02-04 21:21:02,635 - INFO - Building stim pattern for pattern_name 3214
+2026-02-04 21:21:02,649 - INFO - Building stim pattern for pattern_name 952
+2026-02-04 21:21:02,661 - INFO - Building stim pattern for pattern_name 3294
+2026-02-04 21:21:02,673 - INFO - Building stim pattern for pattern_name 660
+2026-02-04 21:21:02,688 - INFO - Building stim pattern for pattern_name 946
+2026-02-04 21:21:02,700 - INFO - Building stim pattern for pattern_name 2420
+2026-02-04 21:21:02,711 - INFO - Building stim pattern for pattern_name 4027
+2026-02-04 21:21:02,722 - INFO - Building stim pattern for pattern_name 1995
+2026-02-04 21:21:02,763 - INFO - Building stim pattern for pattern_name 1279
+2026-02-04 21:21:02,774 - INFO - Building stim pattern for pattern_name 2700
+2026-02-04 21:21:02,786 - INFO - Building stim pattern for pattern_name 1475
+2026-02-04 21:21:02,799 - INFO - Building stim pattern for pattern_name 869
+2026-02-04 21:21:02,809 - INFO - Building stim pattern for pattern_name 2167
+2026-02-04 21:21:02,833 - INFO - Building stim pattern for pattern_name 577
+2026-02-04 21:21:02,844 - INFO - Building stim pattern for pattern_name 4016
+2026-02-04 21:21:02,856 - INFO - Building stim pattern for pattern_name 2799
+2026-02-04 21:21:02,867 - INFO - Building stim pattern for pattern_name 3782
+2026-02-04 21:21:02,879 - INFO - Building stim pattern for pattern_name 1906
+2026-02-04 21:21:02,890 - INFO - Building stim pattern for pattern_name 865
+2026-02-04 21:21:02,899 - INFO - Building stim pattern for pattern_name 1899
+2026-02-04 21:21:02,909 - INFO - Building stim pattern for pattern_name 350
+2026-02-04 21:21:02,920 - INFO - Building stim pattern for pattern_name 3349
+2026-02-04 21:21:02,937 - INFO - Building stim pattern for pattern_name 3253
+2026-02-04 21:21:02,948 - INFO - Building stim pattern for pattern_name 3470
+2026-02-04 21:21:02,959 - INFO - Building stim pattern for pattern_name 3292
+2026-02-04 21:21:02,970 - INFO - Building stim pattern for pattern_name 3817
+2026-02-04 21:21:02,982 - INFO - Building stim pattern for pattern_name 192
+2026-02-04 21:21:02,994 - INFO - Building stim pattern for pattern_name 900
+2026-02-04 21:21:03,006 - INFO - Building stim pattern for pattern_name 294
+2026-02-04 21:21:03,017 - INFO - Building stim pattern for pattern_name 161
+2026-02-04 21:21:03,041 - INFO - Building stim pattern for pattern_name 2539
+2026-02-04 21:21:03,051 - INFO - Building stim pattern for pattern_name 1854
+2026-02-04 21:21:03,061 - INFO - Building stim pattern for pattern_name 3469
+2026-02-04 21:21:03,072 - INFO - Building stim pattern for pattern_name 2053
+2026-02-04 21:21:03,083 - INFO - Building stim pattern for pattern_name 3100
+2026-02-04 21:21:03,105 - INFO - Building stim pattern for pattern_name 967
+2026-02-04 21:21:03,117 - INFO - Building stim pattern for pattern_name 3840
+2026-02-04 21:21:03,131 - INFO - Building stim pattern for pattern_name 2020
+2026-02-04 21:21:03,143 - INFO - Building stim pattern for pattern_name 3423
+2026-02-04 21:21:03,154 - INFO - Building stim pattern for pattern_name 141
+2026-02-04 21:21:03,166 - INFO - Building stim pattern for pattern_name 3861
+2026-02-04 21:21:03,178 - INFO - Building stim pattern for pattern_name 584
+2026-02-04 21:21:03,189 - INFO - Building stim pattern for pattern_name 969
+2026-02-04 21:21:03,205 - INFO - Building stim pattern for pattern_name 3582
+2026-02-04 21:21:03,218 - INFO - Building stim pattern for pattern_name 3050
+2026-02-04 21:21:03,230 - INFO - Building stim pattern for pattern_name 439
+2026-02-04 21:21:03,242 - INFO - Building stim pattern for pattern_name 3742
+2026-02-04 21:21:03,254 - INFO - Building stim pattern for pattern_name 3036
+2026-02-04 21:21:03,271 - INFO - Building stim pattern for pattern_name 2346
+2026-02-04 21:21:03,288 - INFO - Building stim pattern for pattern_name 3713
+2026-02-04 21:21:03,306 - INFO - Building stim pattern for pattern_name 2185
+2026-02-04 21:21:03,317 - INFO - Building stim pattern for pattern_name 3794
+2026-02-04 21:21:03,329 - INFO - Building stim pattern for pattern_name 1458
+2026-02-04 21:21:03,341 - INFO - Building stim pattern for pattern_name 3301
+2026-02-04 21:21:03,351 - INFO - Building stim pattern for pattern_name 1421
+2026-02-04 21:21:03,361 - INFO - Building stim pattern for pattern_name 2047
+2026-02-04 21:21:03,372 - INFO - Building stim pattern for pattern_name 1666
+2026-02-04 21:21:03,382 - INFO - Building stim pattern for pattern_name 852
+2026-02-04 21:21:03,397 - INFO - Building stim pattern for pattern_name 461
+2026-02-04 21:21:03,408 - INFO - Building stim pattern for pattern_name 2964
+2026-02-04 21:21:03,420 - INFO - Building stim pattern for pattern_name 3723
+2026-02-04 21:21:03,434 - INFO - Building stim pattern for pattern_name 2045
+2026-02-04 21:21:03,446 - INFO - Building stim pattern for pattern_name 3663
+2026-02-04 21:21:03,459 - INFO - Building stim pattern for pattern_name 1694
+2026-02-04 21:21:03,478 - INFO - Building stim pattern for pattern_name 3772
+2026-02-04 21:21:03,490 - INFO - Building stim pattern for pattern_name 593
+2026-02-04 21:21:03,503 - INFO - Building stim pattern for pattern_name 2256
+2026-02-04 21:21:03,513 - INFO - Building stim pattern for pattern_name 2750
+2026-02-04 21:21:03,534 - INFO - Building stim pattern for pattern_name 3007
+2026-02-04 21:21:03,544 - INFO - Building stim pattern for pattern_name 1875
+2026-02-04 21:21:03,555 - INFO - Building stim pattern for pattern_name 2231
+2026-02-04 21:21:03,566 - INFO - Building stim pattern for pattern_name 310
+2026-02-04 21:21:03,576 - INFO - Building stim pattern for pattern_name 1939
+2026-02-04 21:21:03,587 - INFO - Building stim pattern for pattern_name 1037
+2026-02-04 21:21:03,599 - INFO - Building stim pattern for pattern_name 3302
+2026-02-04 21:21:03,611 - INFO - Building stim pattern for pattern_name 3597
+2026-02-04 21:21:03,621 - INFO - Building stim pattern for pattern_name 2225
+2026-02-04 21:21:03,639 - INFO - Building stim pattern for pattern_name 4043
+2026-02-04 21:21:03,649 - INFO - Building stim pattern for pattern_name 3413
+2026-02-04 21:21:03,671 - INFO - Building stim pattern for pattern_name 2592
+2026-02-04 21:21:03,679 - INFO - Building stim pattern for pattern_name 3888
+2026-02-04 21:21:03,689 - INFO - Building stim pattern for pattern_name 3853
+2026-02-04 21:21:03,704 - INFO - Building stim pattern for pattern_name 2804
+2026-02-04 21:21:03,716 - INFO - Building stim pattern for pattern_name 1599
+2026-02-04 21:21:03,728 - INFO - Building stim pattern for pattern_name 2263
+2026-02-04 21:21:03,742 - INFO - Building stim pattern for pattern_name 1979
+2026-02-04 21:21:03,754 - INFO - Building stim pattern for pattern_name 2093
+2026-02-04 21:21:03,765 - INFO - Building stim pattern for pattern_name 3460
+2026-02-04 21:21:03,783 - INFO - Building stim pattern for pattern_name 3778
+2026-02-04 21:21:03,795 - INFO - Building stim pattern for pattern_name 123
+2026-02-04 21:21:03,819 - INFO - Building stim pattern for pattern_name 1685
+2026-02-04 21:21:03,831 - INFO - Building stim pattern for pattern_name 3231
+2026-02-04 21:21:03,844 - INFO - Building stim pattern for pattern_name 3317
+2026-02-04 21:21:03,853 - INFO - Building stim pattern for pattern_name 950
+2026-02-04 21:21:03,862 - INFO - Building stim pattern for pattern_name 1737
+2026-02-04 21:21:03,873 - INFO - Building stim pattern for pattern_name 4041
+2026-02-04 21:21:03,884 - INFO - Building stim pattern for pattern_name 796
+2026-02-04 21:21:03,900 - INFO - Building stim pattern for pattern_name 768
+2026-02-04 21:21:03,913 - INFO - Building stim pattern for pattern_name 2821
+2026-02-04 21:21:03,926 - INFO - Building stim pattern for pattern_name 465
+2026-02-04 21:21:03,937 - INFO - Building stim pattern for pattern_name 2922
+2026-02-04 21:21:03,947 - INFO - Building stim pattern for pattern_name 32
+2026-02-04 21:21:03,959 - INFO - Building stim pattern for pattern_name 3359
+2026-02-04 21:21:03,971 - INFO - Building stim pattern for pattern_name 3658
+2026-02-04 21:21:03,981 - INFO - Building stim pattern for pattern_name 2143
+2026-02-04 21:21:03,992 - INFO - Building stim pattern for pattern_name 3267
+2026-02-04 21:21:04,003 - INFO - Building stim pattern for pattern_name 1533
+2026-02-04 21:21:04,014 - INFO - Building stim pattern for pattern_name 544
+2026-02-04 21:21:04,024 - INFO - Building stim pattern for pattern_name 3686
+2026-02-04 21:21:04,034 - INFO - Building stim pattern for pattern_name 3557
+2026-02-04 21:21:04,044 - INFO - Building stim pattern for pattern_name 2328
+2026-02-04 21:21:04,062 - INFO - Building stim pattern for pattern_name 2626
+2026-02-04 21:21:04,072 - INFO - Building stim pattern for pattern_name 2425
+2026-02-04 21:21:04,092 - INFO - Building stim pattern for pattern_name 3622
+2026-02-04 21:21:04,103 - INFO - Building stim pattern for pattern_name 1977
+2026-02-04 21:21:04,114 - INFO - Building stim pattern for pattern_name 3830
+2026-02-04 21:21:04,126 - INFO - Building stim pattern for pattern_name 392
+2026-02-04 21:21:04,136 - INFO - Building stim pattern for pattern_name 4008
+2026-02-04 21:21:04,147 - INFO - Building stim pattern for pattern_name 790
+2026-02-04 21:21:04,167 - INFO - Building stim pattern for pattern_name 1985
+2026-02-04 21:21:04,178 - INFO - Building stim pattern for pattern_name 2311
+2026-02-04 21:21:04,196 - INFO - Building stim pattern for pattern_name 2427
+2026-02-04 21:21:04,207 - INFO - Building stim pattern for pattern_name 3419
+2026-02-04 21:21:04,219 - INFO - Building stim pattern for pattern_name 3412
+2026-02-04 21:21:04,228 - INFO - Building stim pattern for pattern_name 1897
+2026-02-04 21:21:04,239 - INFO - Building stim pattern for pattern_name 910
+2026-02-04 21:21:04,250 - INFO - Building stim pattern for pattern_name 702
+2026-02-04 21:21:04,262 - INFO - Building stim pattern for pattern_name 551
+2026-02-04 21:21:04,275 - INFO - Building stim pattern for pattern_name 3025
+2026-02-04 21:21:04,293 - INFO - Building stim pattern for pattern_name 1867
+2026-02-04 21:21:04,303 - INFO - Building stim pattern for pattern_name 2745
+2026-02-04 21:21:04,315 - INFO - Building stim pattern for pattern_name 1839
+2026-02-04 21:21:04,327 - INFO - Building stim pattern for pattern_name 3263
+2026-02-04 21:21:04,338 - INFO - Building stim pattern for pattern_name 1099
+2026-02-04 21:21:04,349 - INFO - Building stim pattern for pattern_name 2802
+2026-02-04 21:21:04,360 - INFO - Building stim pattern for pattern_name 4007
+2026-02-04 21:21:04,371 - INFO - Building stim pattern for pattern_name 1947
+2026-02-04 21:21:04,383 - INFO - Building stim pattern for pattern_name 2747
+2026-02-04 21:21:04,403 - INFO - Building stim pattern for pattern_name 148
+2026-02-04 21:21:04,416 - INFO - Building stim pattern for pattern_name 106
+2026-02-04 21:21:04,434 - INFO - Building stim pattern for pattern_name 3953
+2026-02-04 21:21:04,446 - INFO - Building stim pattern for pattern_name 1562
+2026-02-04 21:21:04,468 - INFO - Building stim pattern for pattern_name 4042
+2026-02-04 21:21:04,495 - INFO - Building stim pattern for pattern_name 963
+2026-02-04 21:21:04,510 - INFO - Building stim pattern for pattern_name 174
+2026-02-04 21:21:04,522 - INFO - Building stim pattern for pattern_name 1116
+2026-02-04 21:21:04,535 - INFO - Building stim pattern for pattern_name 253
+2026-02-04 21:21:04,547 - INFO - Building stim pattern for pattern_name 3767
+2026-02-04 21:21:04,558 - INFO - Building stim pattern for pattern_name 302
+2026-02-04 21:21:04,569 - INFO - Building stim pattern for pattern_name 2480
+2026-02-04 21:21:04,581 - INFO - Building stim pattern for pattern_name 2069
+2026-02-04 21:21:04,592 - INFO - Building stim pattern for pattern_name 1419
+2026-02-04 21:21:04,604 - INFO - Building stim pattern for pattern_name 2520
+2026-02-04 21:21:04,616 - INFO - Building stim pattern for pattern_name 2254
+2026-02-04 21:21:04,626 - INFO - Building stim pattern for pattern_name 2152
+2026-02-04 21:21:04,637 - INFO - Building stim pattern for pattern_name 1153
+2026-02-04 21:21:04,648 - INFO - Building stim pattern for pattern_name 2331
+2026-02-04 21:21:04,666 - INFO - Building stim pattern for pattern_name 1428
+2026-02-04 21:21:04,677 - INFO - Building stim pattern for pattern_name 2424
+2026-02-04 21:21:04,697 - INFO - Building stim pattern for pattern_name 2526
+2026-02-04 21:21:04,718 - INFO - Building stim pattern for pattern_name 3031
+2026-02-04 21:21:04,729 - INFO - Building stim pattern for pattern_name 1940
+2026-02-04 21:21:04,741 - INFO - Building stim pattern for pattern_name 994
+2026-02-04 21:21:04,753 - INFO - Building stim pattern for pattern_name 1753
+2026-02-04 21:21:04,763 - INFO - Building stim pattern for pattern_name 3823
+2026-02-04 21:21:04,774 - INFO - Building stim pattern for pattern_name 929
+2026-02-04 21:21:04,785 - INFO - Building stim pattern for pattern_name 2096
+2026-02-04 21:21:04,797 - INFO - Building stim pattern for pattern_name 73
+2026-02-04 21:21:04,807 - INFO - Building stim pattern for pattern_name 3865
+2026-02-04 21:21:04,817 - INFO - Building stim pattern for pattern_name 4009
+2026-02-04 21:21:04,828 - INFO - Building stim pattern for pattern_name 402
+2026-02-04 21:21:04,847 - INFO - Building stim pattern for pattern_name 2232
+2026-02-04 21:21:04,858 - INFO - Building stim pattern for pattern_name 2353
+2026-02-04 21:21:04,872 - INFO - Building stim pattern for pattern_name 1453
+2026-02-04 21:21:04,884 - INFO - Building stim pattern for pattern_name 2913
+2026-02-04 21:21:04,902 - INFO - Building stim pattern for pattern_name 2355
+2026-02-04 21:21:04,913 - INFO - Building stim pattern for pattern_name 190
+2026-02-04 21:21:04,932 - INFO - Building stim pattern for pattern_name 1034
+2026-02-04 21:21:04,942 - INFO - Building stim pattern for pattern_name 2822
+2026-02-04 21:21:04,963 - INFO - Building stim pattern for pattern_name 2968
+2026-02-04 21:21:04,972 - INFO - Building stim pattern for pattern_name 2506
+2026-02-04 21:21:04,992 - INFO - Building stim pattern for pattern_name 648
+2026-02-04 21:21:05,003 - INFO - Building stim pattern for pattern_name 3202
+2026-02-04 21:21:05,015 - INFO - Building stim pattern for pattern_name 2669
+2026-02-04 21:21:05,035 - INFO - Building stim pattern for pattern_name 1953
+2026-02-04 21:21:05,050 - INFO - Building stim pattern for pattern_name 2070
+2026-02-04 21:21:05,063 - INFO - Building stim pattern for pattern_name 1716
+2026-02-04 21:21:05,074 - INFO - Building stim pattern for pattern_name 1266
+2026-02-04 21:21:05,083 - INFO - Building stim pattern for pattern_name 1335
+2026-02-04 21:21:05,094 - INFO - Building stim pattern for pattern_name 2146
+2026-02-04 21:21:05,111 - INFO - Building stim pattern for pattern_name 1330
+2026-02-04 21:21:05,123 - INFO - Building stim pattern for pattern_name 3730
+2026-02-04 21:21:05,140 - INFO - Building stim pattern for pattern_name 563
+2026-02-04 21:21:05,151 - INFO - Building stim pattern for pattern_name 3954
+2026-02-04 21:21:05,162 - INFO - Building stim pattern for pattern_name 2651
+2026-02-04 21:21:05,176 - INFO - Building stim pattern for pattern_name 1859
+2026-02-04 21:21:05,191 - INFO - Building stim pattern for pattern_name 3210
+2026-02-04 21:21:05,206 - INFO - Building stim pattern for pattern_name 2648
+2026-02-04 21:21:05,220 - INFO - Building stim pattern for pattern_name 2033
+2026-02-04 21:21:05,231 - INFO - Building stim pattern for pattern_name 3337
+2026-02-04 21:21:05,243 - INFO - Building stim pattern for pattern_name 1831
+2026-02-04 21:21:05,255 - INFO - Building stim pattern for pattern_name 715
+2026-02-04 21:21:05,267 - INFO - Building stim pattern for pattern_name 431
+2026-02-04 21:21:05,278 - INFO - Building stim pattern for pattern_name 3816
+2026-02-04 21:21:05,290 - INFO - Building stim pattern for pattern_name 2989
+2026-02-04 21:21:05,303 - INFO - Building stim pattern for pattern_name 573
+2026-02-04 21:21:05,314 - INFO - Building stim pattern for pattern_name 2643
+2026-02-04 21:21:05,326 - INFO - Building stim pattern for pattern_name 3599
+2026-02-04 21:21:05,339 - INFO - Building stim pattern for pattern_name 1040
+2026-02-04 21:21:05,350 - INFO - Building stim pattern for pattern_name 655
+2026-02-04 21:21:05,363 - INFO - Building stim pattern for pattern_name 775
+2026-02-04 21:21:05,376 - INFO - Building stim pattern for pattern_name 3986
+2026-02-04 21:21:05,397 - INFO - Building stim pattern for pattern_name 11
+2026-02-04 21:21:05,424 - INFO - Building stim pattern for pattern_name 3878
+2026-02-04 21:21:05,446 - INFO - Building stim pattern for pattern_name 1652
+2026-02-04 21:21:05,476 - INFO - Building stim pattern for pattern_name 374
+2026-02-04 21:21:05,491 - INFO - Building stim pattern for pattern_name 3635
+2026-02-04 21:21:05,514 - INFO - Building stim pattern for pattern_name 189
+2026-02-04 21:21:05,527 - INFO - Building stim pattern for pattern_name 3295
+2026-02-04 21:21:05,538 - INFO - Building stim pattern for pattern_name 271
+2026-02-04 21:21:05,550 - INFO - Building stim pattern for pattern_name 1710
+2026-02-04 21:21:05,578 - INFO - Building stim pattern for pattern_name 697
+2026-02-04 21:21:05,592 - INFO - Building stim pattern for pattern_name 115
+2026-02-04 21:21:05,608 - INFO - Building stim pattern for pattern_name 490
+2026-02-04 21:21:05,620 - INFO - Building stim pattern for pattern_name 473
+2026-02-04 21:21:05,631 - INFO - Building stim pattern for pattern_name 837
+2026-02-04 21:21:05,645 - INFO - Building stim pattern for pattern_name 152
+2026-02-04 21:21:05,669 - INFO - Building stim pattern for pattern_name 2813
+2026-02-04 21:21:05,681 - INFO - Building stim pattern for pattern_name 1212
+2026-02-04 21:21:05,694 - INFO - Building stim pattern for pattern_name 1879
+2026-02-04 21:21:05,711 - INFO - Building stim pattern for pattern_name 442
+2026-02-04 21:21:05,738 - INFO - Building stim pattern for pattern_name 1175
+2026-02-04 21:21:05,751 - INFO - Building stim pattern for pattern_name 3581
+2026-02-04 21:21:05,764 - INFO - Building stim pattern for pattern_name 3360
+2026-02-04 21:21:05,801 - INFO - Building stim pattern for pattern_name 4024
+2026-02-04 21:21:05,812 - INFO - Building stim pattern for pattern_name 1396
+2026-02-04 21:21:05,830 - INFO - Building stim pattern for pattern_name 3562
+2026-02-04 21:21:05,842 - INFO - Building stim pattern for pattern_name 2982
+2026-02-04 21:21:05,861 - INFO - Building stim pattern for pattern_name 2812
+2026-02-04 21:21:05,874 - INFO - Building stim pattern for pattern_name 2866
+2026-02-04 21:21:05,892 - INFO - Building stim pattern for pattern_name 2893
+2026-02-04 21:21:05,911 - INFO - Building stim pattern for pattern_name 307
+2026-02-04 21:21:05,922 - INFO - Building stim pattern for pattern_name 1961
+2026-02-04 21:21:05,933 - INFO - Building stim pattern for pattern_name 3576
+2026-02-04 21:21:05,956 - INFO - Building stim pattern for pattern_name 3465
+2026-02-04 21:21:05,978 - INFO - Building stim pattern for pattern_name 1962
+2026-02-04 21:21:05,992 - INFO - Building stim pattern for pattern_name 2607
+2026-02-04 21:21:06,005 - INFO - Building stim pattern for pattern_name 3184
+2026-02-04 21:21:06,017 - INFO - Building stim pattern for pattern_name 1142
+2026-02-04 21:21:06,029 - INFO - Building stim pattern for pattern_name 1619
+2026-02-04 21:21:06,048 - INFO - Building stim pattern for pattern_name 2605
+2026-02-04 21:21:06,060 - INFO - Building stim pattern for pattern_name 647
+2026-02-04 21:21:06,071 - INFO - Building stim pattern for pattern_name 162
+2026-02-04 21:21:06,085 - INFO - Building stim pattern for pattern_name 1972
+2026-02-04 21:21:06,099 - INFO - Building stim pattern for pattern_name 2844
+2026-02-04 21:21:06,126 - INFO - Building stim pattern for pattern_name 2671
+2026-02-04 21:21:06,138 - INFO - Building stim pattern for pattern_name 1423
+2026-02-04 21:21:06,164 - INFO - Building stim pattern for pattern_name 13
+2026-02-04 21:21:06,178 - INFO - Building stim pattern for pattern_name 2945
+2026-02-04 21:21:06,192 - INFO - Building stim pattern for pattern_name 2296
+2026-02-04 21:21:06,203 - INFO - Building stim pattern for pattern_name 2645
+2026-02-04 21:21:06,215 - INFO - Building stim pattern for pattern_name 2201
+2026-02-04 21:21:06,227 - INFO - Building stim pattern for pattern_name 2423
+2026-02-04 21:21:06,238 - INFO - Building stim pattern for pattern_name 2939
+2026-02-04 21:21:06,250 - INFO - Building stim pattern for pattern_name 3693
+2026-02-04 21:21:06,261 - INFO - Building stim pattern for pattern_name 1233
+2026-02-04 21:21:06,273 - INFO - Building stim pattern for pattern_name 2114
+2026-02-04 21:21:06,285 - INFO - Building stim pattern for pattern_name 1604
+2026-02-04 21:21:06,296 - INFO - Building stim pattern for pattern_name 3617
+2026-02-04 21:21:06,307 - INFO - Building stim pattern for pattern_name 437
+2026-02-04 21:21:06,319 - INFO - Building stim pattern for pattern_name 3869
+2026-02-04 21:21:06,330 - INFO - Building stim pattern for pattern_name 1387
+2026-02-04 21:21:06,342 - INFO - Building stim pattern for pattern_name 3882
+2026-02-04 21:21:06,353 - INFO - Building stim pattern for pattern_name 642
+2026-02-04 21:21:06,364 - INFO - Building stim pattern for pattern_name 1083
+2026-02-04 21:21:06,376 - INFO - Building stim pattern for pattern_name 1796
+2026-02-04 21:21:06,387 - INFO - Building stim pattern for pattern_name 3568
+2026-02-04 21:21:06,399 - INFO - Building stim pattern for pattern_name 1678
+2026-02-04 21:21:06,412 - INFO - Building stim pattern for pattern_name 730
+2026-02-04 21:21:06,429 - INFO - Building stim pattern for pattern_name 3315
+2026-02-04 21:21:06,440 - INFO - Building stim pattern for pattern_name 3668
+2026-02-04 21:21:06,453 - INFO - Building stim pattern for pattern_name 757
+2026-02-04 21:21:06,471 - INFO - Building stim pattern for pattern_name 278
+2026-02-04 21:21:06,482 - INFO - Building stim pattern for pattern_name 1998
+2026-02-04 21:21:06,501 - INFO - Building stim pattern for pattern_name 2344
+2026-02-04 21:21:06,518 - INFO - Building stim pattern for pattern_name 3305
+2026-02-04 21:21:06,530 - INFO - Building stim pattern for pattern_name 2378
+2026-02-04 21:21:06,544 - INFO - Building stim pattern for pattern_name 3067
+2026-02-04 21:21:06,558 - INFO - Building stim pattern for pattern_name 1625
+2026-02-04 21:21:06,572 - INFO - Building stim pattern for pattern_name 2872
+2026-02-04 21:21:06,621 - INFO - Building stim pattern for pattern_name 3731
+2026-02-04 21:21:06,784 - INFO - Building stim pattern for pattern_name 638

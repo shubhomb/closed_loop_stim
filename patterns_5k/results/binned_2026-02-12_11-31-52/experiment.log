@@ -1,0 +1,245 @@
+2026-02-12 11:31:52,261 - INFO - ==================================================
+2026-02-12 11:31:52,261 - INFO - Experiment run directory: results/binned_2026-02-12_11-31-52
+2026-02-12 11:31:52,262 - INFO - Config file: config.yaml (copied to results/binned_2026-02-12_11-31-52/config.yaml)
+2026-02-12 11:31:52,262 - INFO - Inference mode: False
+2026-02-12 11:31:52,262 - INFO - Random seed: 42
+2026-02-12 11:31:52,263 - INFO - ==================================================
+2026-02-12 11:31:52,263 - INFO - Total trials: 5000
+2026-02-12 11:31:52,276 - INFO - Oracle trials: 1000 (50 patterns × 10 trials)
+2026-02-12 11:31:52,277 - INFO - Sample trials: 4000
+2026-02-12 11:31:52,278 - INFO - Train: 3400, Val: 600, Test: 1000
+2026-02-12 11:31:52,278 - INFO - Dataset config: input_bin_size=10ms, output_bin_size=10ms, n_input_bins=60, n_output_bins=60, output_offset=0, encoding_mode=current
+2026-02-12 11:32:08,797 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-12 11:32:08,798 - INFO -   input_bin_size_ms=10, output_bin_size_ms=10
+2026-02-12 11:32:08,799 - INFO -   n_input_bins=60, n_output_bins=60
+2026-02-12 11:32:08,799 - INFO -   output_offset=0, total_bins_input=60, total_bins_output=60
+2026-02-12 11:32:08,799 - INFO -   Valid start positions per trial: 0 to 0
+2026-02-12 11:32:08,800 - INFO -   Total samples: 3400 (3400 trials × 1 positions)
+2026-02-12 11:32:23,912 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-12 11:32:23,913 - INFO -   input_bin_size_ms=10, output_bin_size_ms=10
+2026-02-12 11:32:23,913 - INFO -   n_input_bins=60, n_output_bins=60
+2026-02-12 11:32:23,913 - INFO -   output_offset=0, total_bins_input=60, total_bins_output=60
+2026-02-12 11:32:23,914 - INFO -   Valid start positions per trial: 0 to 0
+2026-02-12 11:32:23,914 - INFO -   Total samples: 600 (600 trials × 1 positions)
+2026-02-12 11:32:39,034 - INFO - BinnedStimSpikeDataset initialized:
+2026-02-12 11:32:39,035 - INFO -   input_bin_size_ms=10, output_bin_size_ms=10
+2026-02-12 11:32:39,036 - INFO -   n_input_bins=60, n_output_bins=60
+2026-02-12 11:32:39,036 - INFO -   output_offset=0, total_bins_input=60, total_bins_output=60
+2026-02-12 11:32:39,037 - INFO -   Valid start positions per trial: 0 to 0
+2026-02-12 11:32:39,037 - INFO -   Total samples: 1000 (1000 trials × 1 positions)
+2026-02-12 11:32:39,038 - INFO - Train samples: 3400, Val samples: 600, Test samples: 1000
+2026-02-12 11:32:39,039 - INFO - Train batches: 213, Val batches: 38, Test batches: 63
+2026-02-12 11:32:39,039 - INFO - Number of stimulation channels: 42
+2026-02-12 11:32:39,040 - INFO - Number of recorded neurons: 63
+2026-02-12 11:32:39,065 - INFO - Using Apple Silicon MPS acceleration
+2026-02-12 11:32:39,066 - INFO - PyTorch version: 2.10.0.dev20251124
+2026-02-12 11:32:39,066 - INFO - Device: mps
+2026-02-12 11:32:39,068 - INFO - Saved experiment config to results/binned_2026-02-12_11-31-52/summary_config.json
+2026-02-12 11:32:39,191 - INFO - Model: CNN
+2026-02-12 11:32:39,192 - INFO -   Embedding: 5 categories -> 0-dim vectors
+2026-02-12 11:32:39,193 - INFO -   Hidden layers: [128]
+2026-02-12 11:32:39,193 - INFO -   Dropout: 0.2
+2026-02-12 11:32:39,194 - INFO -   Total parameters: 372,159
+2026-02-12 11:32:39,195 - INFO -   Trainable parameters: 372,159
+2026-02-12 11:32:39,406 - INFO - Input shape: torch.Size([16, 42, 60]), dtype: torch.float32
+2026-02-12 11:32:39,406 - INFO - Output shape: torch.Size([16, 63, 60])
+2026-02-12 11:32:39,407 - INFO - Target shape: torch.Size([16, 63, 60])
+2026-02-12 11:32:39,407 - INFO - ✓ Output and target shapes match!
+2026-02-12 11:32:39,407 - INFO - Sample model inputs (first batch):
+2026-02-12 11:32:39,408 - INFO - Sample model outputs (first batch):
+2026-02-12 11:32:39,412 - INFO - Sample 0 target (neuron 4, all output bins): [0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 1.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+2026-02-12 11:32:39,412 - INFO - Sample 1 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+2026-02-12 11:32:39,413 - INFO - Sample 2 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 1. 0. 1. 0. 1. 0. 0. 0. 0. 1. 0. 1.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+2026-02-12 11:32:39,413 - INFO - Sample 3 target (neuron 4, all output bins): [0. 0. 1. 0. 0. 0. 0. 0. 1. 0. 1. 0. 0. 0. 0. 0. 0. 0. 1. 0. 1. 0. 1. 0.
+ 1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 1. 0. 1. 0.
+ 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 1.]
+2026-02-12 11:32:39,414 - INFO - Sample 4 target (neuron 4, all output bins): [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 1. 0. 0. 0. 1. 0.
+ 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 1. 0. 0. 0. 0.
+ 0. 0. 1. 0. 0. 0. 1. 0. 0. 0. 0. 0.]
+2026-02-12 11:32:39,421 - INFO - Sample 0 model output (neuron 4, all output bins): [-0.00217582  0.02123298 -0.00184774 -0.0727898  -0.13984902 -0.06286117
+  0.03806096 -0.06271097 -0.23674254  0.06077883 -0.09604897 -0.0453032
+ -0.50206417  0.1468812  -0.29918665  0.06163045 -0.36867362 -0.11623837
+ -0.28801984 -0.08746269 -0.2873243  -0.3795194  -0.31609315 -0.14989199
+ -0.09723553 -0.137016   -0.3914023  -0.338566   -0.2533102   0.10568672
+ -0.00186465 -0.16734436 -0.31602746 -0.01722448 -0.40957874 -0.30335057
+ -0.46047026 -0.17836227 -0.17826705 -0.56847847  0.01203717 -0.2660992
+ -0.06003607 -0.38543594 -0.47100127 -0.3067636  -0.3580274  -0.29790217
+ -0.49595636 -0.28266132 -0.50633544 -0.49458665  0.07150705 -0.10481074
+ -0.07903155 -0.26258898 -0.03462657 -0.23459698 -0.03652456 -0.69142425]
+2026-02-12 11:32:39,422 - INFO - Sample 1 model output (neuron 4, all output bins): [-3.1955592e-02 -3.3105738e-02 -1.0217354e-04 -2.5192652e-02
+ -3.7890837e-02 -2.1933205e-03 -6.2436424e-03 -4.6701282e-03
+ -3.0923836e-02 -2.1572262e-03 -9.3387328e-03 -3.8061790e-02
+ -5.8378913e-03 -3.2516181e-02 -2.1566443e-02 -2.8405562e-03
+ -2.1891724e-02 -2.8045606e-02 -1.1659017e-01 -1.0420506e-01
+ -2.4760906e-02 -4.4787198e-02 -1.0887320e-01 -1.6168115e-01
+ -1.4720142e-01 -1.0860565e-01 -7.0899837e-02 -1.0881513e-01
+ -7.7818558e-02 -6.8574250e-03 -4.5556389e-02 -1.1452466e-02
+ -4.7095329e-02 -2.9916897e-02 -2.8595924e-02 -6.5763757e-02
+  4.9694758e-02 -1.1261718e-01 -3.5213411e-01 -2.7684826e-01
+ -2.1064980e-01 -2.2595178e-01 -2.3820896e-01 -1.1828016e-01
+ -3.4017342e-01 -4.0252663e-02 -9.7560436e-02 -2.4677666e-01
+ -2.9566221e-02 -5.4260176e-01  2.6055116e-02 -3.2656312e-01
+ -1.9602725e-01 -3.3459312e-01  1.3869169e-01 -4.3594003e-01
+ -3.1347382e-01 -1.2973537e-01 -2.2550195e-02 -3.3953744e-01]
+2026-02-12 11:32:39,423 - INFO - Sample 2 model output (neuron 4, all output bins): [-0.10440823  0.02858024 -0.07825796  0.0126751  -0.09843607 -0.17697147
+ -0.08855843 -0.24136971 -0.21960111 -0.02895931 -0.12951252 -0.02122336
+ -0.17476949 -0.0016913  -0.23852156 -0.115747   -0.18098448 -0.34462082
+ -0.3023489  -0.09536053 -0.31470233 -0.27935493 -0.6684325  -0.06539307
+ -0.5622954  -0.35023445 -0.24880801 -0.37389982 -0.37189853 -0.7302166
+ -0.5204857  -0.57109004 -0.3024928  -0.46666652 -0.37164927 -0.24343683
+ -0.05757733 -0.22663052 -0.5949709  -0.05950389 -0.0111752  -0.12404419
+ -0.20342845 -0.67919314 -0.42021745  0.01752234 -0.326478   -0.20931453
+ -0.42763323 -0.40582162 -0.15798593 -0.7597635   0.02321396 -0.5839512
+ -0.3430134  -0.40737134  0.1119353   0.11851856 -0.392511   -0.3259822 ]
+2026-02-12 11:32:39,423 - INFO - Sample 3 model output (neuron 4, all output bins): [-2.0253943e-01 -5.1473968e-02 -2.3653995e-01 -3.2420114e-02
+ -2.9513943e-01 -1.8414775e-01 -7.3250353e-02 -2.0116383e-01
+ -1.1643998e-01 -3.0347872e-01 -4.1057348e-01 -2.7828157e-01
+ -2.7003223e-01  1.5595047e-02 -2.7618384e-01 -2.9258186e-01
+ -2.6653355e-01 -3.3165777e-01 -1.9935052e-01 -1.8778367e-01
+ -5.8819568e-01 -4.2974703e-02 -7.7023762e-01 -6.9304243e-02
+ -2.2446106e-01 -2.9621884e-02 -5.6541777e-01 -2.2194523e-02
+ -7.4703020e-01 -1.2528840e-01 -5.2054459e-01 -6.1227095e-01
+ -2.1511959e-01 -4.8134303e-01 -1.7462872e-01 -6.5098095e-01
+ -4.3831694e-01 -2.0139536e-01 -5.3635609e-01 -2.3033156e-01
+ -7.7339494e-01 -2.1144223e-01 -5.5200231e-01 -7.5905919e-01
+ -2.9652220e-01 -1.8447465e-01 -8.4952080e-01 -3.7664533e-01
+ -2.2858031e-01  1.1064473e-01 -1.5308331e-01 -5.5064633e-04
+ -3.8128543e-01 -4.4664311e-01 -4.8726171e-01 -4.6402258e-01
+ -1.8477830e-01 -8.4387314e-01 -1.4522643e-01  1.8496534e-01]
+2026-02-12 11:32:39,424 - INFO - Sample 4 model output (neuron 4, all output bins): [-0.03639682 -0.10307091 -0.03251117 -0.12400474  0.00331125 -0.16817957
+ -0.03114891 -0.1490633  -0.25133336 -0.2150238  -0.63151747 -0.07489903
+ -0.4262939  -0.30065918 -0.5433586  -0.30605537 -0.49991328 -0.3821305
+ -0.35515493 -0.17685215 -0.6704242  -0.14089948 -0.38182843 -0.23083885
+ -0.32220268 -0.22033347 -0.428689   -0.27126122 -0.3174013  -0.447796
+ -0.02951336 -0.43978292  0.03983379 -0.20623682 -0.2438796  -0.11774506
+ -0.1620476   0.04116818 -0.09788595 -0.44182426  0.02464578 -0.33523345
+ -0.18719025 -0.23780967 -0.243831   -0.06786631 -0.20394535 -0.09815714
+ -0.73077565 -0.18717754 -0.17562494 -0.69816405 -0.14849563 -0.42236507
+ -0.10737246 -0.13878177 -0.6304674  -0.19045368 -0.14790654 -0.0702037 ]
+2026-02-12 11:32:40,096 - INFO - Starting training...
+2026-02-12 11:32:40,096 - INFO - ==================================================
+2026-02-12 11:32:44,857 - INFO - Epoch   1/50 | Train Loss: 0.238534 | Val Loss: 0.200937 | Val Corr: 0.158134 | LR: 1.00e-03
+2026-02-12 11:32:44,874 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:32:49,207 - INFO - Epoch   2/50 | Train Loss: 0.198783 | Val Loss: 0.197845 | Val Corr: 0.177409 | LR: 1.00e-03
+2026-02-12 11:32:49,226 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:32:53,658 - INFO - Epoch   3/50 | Train Loss: 0.195224 | Val Loss: 0.195816 | Val Corr: 0.190112 | LR: 1.00e-03
+2026-02-12 11:32:53,677 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:32:57,994 - INFO - Epoch   4/50 | Train Loss: 0.192699 | Val Loss: 0.194122 | Val Corr: 0.202344 | LR: 1.00e-03
+2026-02-12 11:32:58,013 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:02,422 - INFO - Epoch   5/50 | Train Loss: 0.190402 | Val Loss: 0.192152 | Val Corr: 0.214322 | LR: 1.00e-03
+2026-02-12 11:33:02,434 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:06,690 - INFO - Epoch   6/50 | Train Loss: 0.188293 | Val Loss: 0.190657 | Val Corr: 0.226084 | LR: 1.00e-03
+2026-02-12 11:33:06,702 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:10,950 - INFO - Epoch   7/50 | Train Loss: 0.186158 | Val Loss: 0.188883 | Val Corr: 0.234826 | LR: 1.00e-03
+2026-02-12 11:33:10,964 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:15,264 - INFO - Epoch   8/50 | Train Loss: 0.184545 | Val Loss: 0.187962 | Val Corr: 0.240285 | LR: 1.00e-03
+2026-02-12 11:33:15,281 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:19,825 - INFO - Epoch   9/50 | Train Loss: 0.183274 | Val Loss: 0.186798 | Val Corr: 0.246711 | LR: 1.00e-03
+2026-02-12 11:33:19,862 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:24,159 - INFO - Epoch  10/50 | Train Loss: 0.182001 | Val Loss: 0.186252 | Val Corr: 0.251397 | LR: 1.00e-03
+2026-02-12 11:33:24,171 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:28,251 - INFO - Epoch  11/50 | Train Loss: 0.181150 | Val Loss: 0.185813 | Val Corr: 0.254680 | LR: 1.00e-03
+2026-02-12 11:33:28,262 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:32,587 - INFO - Epoch  12/50 | Train Loss: 0.180185 | Val Loss: 0.185606 | Val Corr: 0.256392 | LR: 1.00e-03
+2026-02-12 11:33:32,601 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:37,066 - INFO - Epoch  13/50 | Train Loss: 0.179433 | Val Loss: 0.185467 | Val Corr: 0.258647 | LR: 1.00e-03
+2026-02-12 11:33:37,084 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:41,427 - INFO - Epoch  14/50 | Train Loss: 0.178766 | Val Loss: 0.185409 | Val Corr: 0.260485 | LR: 1.00e-03
+2026-02-12 11:33:41,444 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:45,785 - INFO - Epoch  15/50 | Train Loss: 0.178125 | Val Loss: 0.184728 | Val Corr: 0.262180 | LR: 1.00e-03
+2026-02-12 11:33:45,795 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:50,131 - INFO - Epoch  16/50 | Train Loss: 0.177434 | Val Loss: 0.184334 | Val Corr: 0.264391 | LR: 1.00e-03
+2026-02-12 11:33:50,148 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:54,532 - INFO - Epoch  17/50 | Train Loss: 0.176767 | Val Loss: 0.184353 | Val Corr: 0.264856 | LR: 1.00e-03
+2026-02-12 11:33:54,545 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:33:58,581 - INFO - Epoch  18/50 | Train Loss: 0.176338 | Val Loss: 0.184177 | Val Corr: 0.266673 | LR: 1.00e-03
+2026-02-12 11:33:58,592 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:02,679 - INFO - Epoch  19/50 | Train Loss: 0.175883 | Val Loss: 0.184764 | Val Corr: 0.268165 | LR: 1.00e-03
+2026-02-12 11:34:02,692 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:06,972 - INFO - Epoch  20/50 | Train Loss: 0.175294 | Val Loss: 0.183843 | Val Corr: 0.269856 | LR: 1.00e-03
+2026-02-12 11:34:06,982 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:11,161 - INFO - Epoch  21/50 | Train Loss: 0.174809 | Val Loss: 0.184303 | Val Corr: 0.269662 | LR: 1.00e-03
+2026-02-12 11:34:15,353 - INFO - Epoch  22/50 | Train Loss: 0.174325 | Val Loss: 0.184251 | Val Corr: 0.270190 | LR: 1.00e-03
+2026-02-12 11:34:15,363 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:19,614 - INFO - Epoch  23/50 | Train Loss: 0.173980 | Val Loss: 0.183937 | Val Corr: 0.271434 | LR: 1.00e-03
+2026-02-12 11:34:19,628 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:24,218 - INFO - Epoch  24/50 | Train Loss: 0.173586 | Val Loss: 0.184315 | Val Corr: 0.271831 | LR: 1.00e-03
+2026-02-12 11:34:24,230 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:28,342 - INFO - Epoch  25/50 | Train Loss: 0.173220 | Val Loss: 0.183780 | Val Corr: 0.271984 | LR: 1.00e-03
+2026-02-12 11:34:28,353 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:32,508 - INFO - Epoch  26/50 | Train Loss: 0.172804 | Val Loss: 0.184185 | Val Corr: 0.272895 | LR: 1.00e-03
+2026-02-12 11:34:32,526 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:36,623 - INFO - Epoch  27/50 | Train Loss: 0.172516 | Val Loss: 0.184213 | Val Corr: 0.273433 | LR: 1.00e-03
+2026-02-12 11:34:36,633 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:40,837 - INFO - Epoch  28/50 | Train Loss: 0.172101 | Val Loss: 0.184022 | Val Corr: 0.273879 | LR: 1.00e-03
+2026-02-12 11:34:40,881 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:44,883 - INFO - Epoch  29/50 | Train Loss: 0.171856 | Val Loss: 0.184214 | Val Corr: 0.273264 | LR: 1.00e-03
+2026-02-12 11:34:48,901 - INFO - Epoch  30/50 | Train Loss: 0.171598 | Val Loss: 0.184058 | Val Corr: 0.274178 | LR: 1.00e-03
+2026-02-12 11:34:48,911 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:53,043 - INFO - Epoch  31/50 | Train Loss: 0.171308 | Val Loss: 0.184058 | Val Corr: 0.274384 | LR: 5.00e-04
+2026-02-12 11:34:53,054 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:34:57,236 - INFO - Epoch  32/50 | Train Loss: 0.170019 | Val Loss: 0.184123 | Val Corr: 0.275206 | LR: 5.00e-04
+2026-02-12 11:34:57,247 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:35:01,428 - INFO - Epoch  33/50 | Train Loss: 0.169537 | Val Loss: 0.184144 | Val Corr: 0.275444 | LR: 5.00e-04
+2026-02-12 11:35:01,440 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:35:05,674 - INFO - Epoch  34/50 | Train Loss: 0.169355 | Val Loss: 0.184397 | Val Corr: 0.275697 | LR: 5.00e-04
+2026-02-12 11:35:05,686 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:35:09,816 - INFO - Epoch  35/50 | Train Loss: 0.169148 | Val Loss: 0.184573 | Val Corr: 0.275186 | LR: 5.00e-04
+2026-02-12 11:35:14,125 - INFO - Epoch  36/50 | Train Loss: 0.168993 | Val Loss: 0.184510 | Val Corr: 0.275815 | LR: 5.00e-04
+2026-02-12 11:35:14,135 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:35:18,234 - INFO - Epoch  37/50 | Train Loss: 0.168907 | Val Loss: 0.184684 | Val Corr: 0.275413 | LR: 2.50e-04
+2026-02-12 11:35:22,453 - INFO - Epoch  38/50 | Train Loss: 0.168264 | Val Loss: 0.184867 | Val Corr: 0.275650 | LR: 2.50e-04
+2026-02-12 11:35:26,479 - INFO - Epoch  39/50 | Train Loss: 0.168010 | Val Loss: 0.184897 | Val Corr: 0.275807 | LR: 2.50e-04
+2026-02-12 11:35:30,601 - INFO - Epoch  40/50 | Train Loss: 0.167878 | Val Loss: 0.184665 | Val Corr: 0.276037 | LR: 2.50e-04
+2026-02-12 11:35:30,611 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:35:34,608 - INFO - Epoch  41/50 | Train Loss: 0.167827 | Val Loss: 0.184623 | Val Corr: 0.275786 | LR: 2.50e-04
+2026-02-12 11:35:38,868 - INFO - Epoch  42/50 | Train Loss: 0.167687 | Val Loss: 0.184869 | Val Corr: 0.275746 | LR: 2.50e-04
+2026-02-12 11:35:42,923 - INFO - Epoch  43/50 | Train Loss: 0.167588 | Val Loss: 0.184966 | Val Corr: 0.276037 | LR: 1.25e-04
+2026-02-12 11:35:42,933 - INFO - Saved best model to results/binned_2026-02-12_11-31-52/best_stim_spike_model.pt
+2026-02-12 11:35:47,039 - INFO - Epoch  44/50 | Train Loss: 0.167284 | Val Loss: 0.184939 | Val Corr: 0.275842 | LR: 1.25e-04
+2026-02-12 11:35:51,200 - INFO - Epoch  45/50 | Train Loss: 0.167159 | Val Loss: 0.184977 | Val Corr: 0.275941 | LR: 1.25e-04
+2026-02-12 11:35:55,421 - INFO - Epoch  46/50 | Train Loss: 0.167082 | Val Loss: 0.185346 | Val Corr: 0.275514 | LR: 1.25e-04
+2026-02-12 11:35:59,655 - INFO - Epoch  47/50 | Train Loss: 0.167004 | Val Loss: 0.184828 | Val Corr: 0.275796 | LR: 1.25e-04
+2026-02-12 11:36:03,809 - INFO - Epoch  48/50 | Train Loss: 0.166967 | Val Loss: 0.184950 | Val Corr: 0.275587 | LR: 1.25e-04
+2026-02-12 11:36:07,901 - INFO - Epoch  49/50 | Train Loss: 0.166981 | Val Loss: 0.185179 | Val Corr: 0.275376 | LR: 6.25e-05
+2026-02-12 11:36:11,964 - INFO - Epoch  50/50 | Train Loss: 0.166764 | Val Loss: 0.184937 | Val Corr: 0.275341 | LR: 6.25e-05
+2026-02-12 11:36:11,965 - INFO - ==================================================
+2026-02-12 11:36:11,969 - INFO - Training complete! Best validation correlation: 0.276037
+2026-02-12 11:36:11,974 - INFO - Saved training history to results/binned_2026-02-12_11-31-52/training_history.json
+2026-02-12 11:36:13,290 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9948, p=3.47e-62
+2026-02-12 11:36:13,778 - INFO - LOO baseline correlation: r=1.0000 (p=0.00e+00)
+2026-02-12 11:36:13,779 - INFO - Model correlation:        r=0.9948
+2026-02-12 11:36:13,779 - INFO - Model underperforms vs leave-one-out average baseline
+2026-02-12 11:36:14,101 - INFO - 
+Per-pattern analysis:
+2026-02-12 11:36:23,478 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9948, p=3.47e-62
+2026-02-12 11:36:23,964 - INFO - LOO baseline correlation: r=1.0000 (p=0.00e+00)
+2026-02-12 11:36:23,964 - INFO - Model correlation:        r=0.9948
+2026-02-12 11:36:23,965 - INFO - Model underperforms vs leave-one-out average baseline
+2026-02-12 11:36:24,847 - INFO - 
+Per-pattern analysis:
+2026-02-12 11:36:26,266 - INFO - Pattern selectivity summary:
+2026-02-12 11:36:26,266 - INFO -   Mean correlation across neurons: 0.4895
+2026-02-12 11:36:26,267 - INFO -   Median correlation: 0.4983
+2026-02-12 11:36:26,267 - INFO -   Neurons with r > 0.5: 31 / 63
+2026-02-12 11:36:26,267 - INFO -   Neurons with r > 0.3: 55 / 63
+2026-02-12 11:36:26,396 - INFO - 
+Pattern selectivity summary:
+2026-02-12 11:36:26,397 - INFO -   Mean correlation across neurons: 0.4895
+2026-02-12 11:36:26,397 - INFO -   Median correlation: 0.4983
+2026-02-12 11:36:26,397 - INFO -   Neurons with r > 0.5: 31 / 63
+2026-02-12 11:36:26,398 - INFO -   Neurons with r > 0.3: 55 / 63
+2026-02-12 11:36:35,042 - INFO - 
+============================================================
+2026-02-12 11:36:35,044 - INFO - Single-Sample Pattern Selectivity (per-neuron Pearson r):
+2026-02-12 11:36:35,044 - INFO -   Model   — Mean r: 0.2775, Median: 0.2600
+2026-02-12 11:36:35,044 - INFO -   LOO Avg — Mean r: 0.4728, Median: 0.4910
+2026-02-12 11:36:35,045 - INFO -   Neurons where model > LOO: 3 / 63
+2026-02-12 11:36:35,045 - INFO -   Mean Δr (model − LOO): -0.1952
+2026-02-12 11:36:35,046 - INFO - ============================================================
