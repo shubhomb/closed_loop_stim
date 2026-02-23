@@ -22,6 +22,7 @@ output_offset: 0      # Offset from input start to output start (0 = same window
 max_time_ms: 600       # Maximum time to consider after trial start
 encoding_mode: 'current' # 'categorical' or 'current'
 history: 0  # Number of previous output bins to include in input (for RNN) 
+n_initial_state_bins: 1
 
 
 # DataLoader settings
@@ -40,17 +41,16 @@ embedding_dim: 0
 dropout: 0.2
 
 # MLP-specific settings
-hidden_dims: [128, 64]
+hidden_dims: [128]
 
 # CNN-specific settings
 conv_channels: [128]
 kernel_sizes: [60]
-pooling: "max"
+pooling: "none"
 fc_dims: [256]
 
 # RNN-specific settings
 latent_dim: 32
-n_initial_state_bins: 1
 num_gru_layers: 1
 init_state: false
 

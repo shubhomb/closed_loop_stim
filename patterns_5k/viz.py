@@ -214,7 +214,7 @@ def plot_test_prediction_comparison(all_preds, all_targets, savepath=None, logge
                 label='Predicted', alpha=0.8, capsize=3)
     axes[1].set_xlabel('Neuron Index')
     axes[1].set_ylabel('Average Spike Count per Bin')
-    axes[1].set_title(f'First {n_show} Neurons: Actual vs Predicted')
+    axes[1].set_title(f'First {n_show} Neurons: Actual vs Predicted Means')
     axes[1].legend()
     axes[1].set_xticks(x)
     axes[1].grid(True, alpha=0.3)
@@ -412,11 +412,26 @@ def plot_pattern_selectivity(pattern_names, pat_true, pat_pred, savepath=None, l
     
     return fig, axes, neuron_correlations
 
+def compute_avg_spikes_across_trials(timing_indices, spike_responses_dict, bin_size_ms, max_time_ms):
+    """Compute average number of spikes across trials for each neuron in each bin."""
+    n_trials = len(timing_indices)
+    if n_trials == 0:
+        raise ValueError("No timing indices provided for averaging spikes.")
+    spike_sum = None
+
+    for i, timing_idx in enumerate(timing_indices):
+        binned = bin_spike_response(spike_responses_dict[timing_idx], bin_size_ms, max_time_ms, remainder="append")
+        if spike_sum is None:
+            spike_sum = np.zeros_like(binned, dtype=np.float32)
+        spike_sum += binned
+
+    return spike_sum / n_trials
+
 
 def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_responses, pattern_polarities,
                                    output_bin_size_ms, n_input_bins, n_output_bins, output_offset, max_time_ms,
                                    n_neurons, device, out_base, input_bin_size_ms=None, logger=None, pattern_limit=None,
-                                   use_init_state=False, n_initial_state_bins=None, history=0):
+                                   use_init_state=False, n_initial_state_bins=None, history=0, init_state=False):
     """
     Generate per-pattern visualizations for oracle trials.
     
@@ -462,20 +477,6 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
         logger.info(f"Using input_bin_size={input_bin_size_ms}ms, output_bin_size={output_bin_size_ms}ms, n_input_bins={n_input_bins}, n_output_bins={n_output_bins}, output_offset={output_offset}")
     
     
-    def compute_avg_spikes_across_trials(timing_indices, spike_responses_dict, bin_size_ms, max_time_ms):
-        """Compute average number of spikes across trials for each neuron in each bin."""
-        n_trials = len(timing_indices)
-        if n_trials == 0:
-            raise ValueError("No timing indices provided for averaging spikes.")
-        spike_sum = None
-
-        for i, timing_idx in enumerate(timing_indices):
-            binned = bin_spike_response(spike_responses_dict[timing_idx], bin_size_ms, max_time_ms, remainder="append")
-            if spike_sum is None:
-                spike_sum = np.zeros_like(binned, dtype=np.float32)
-            spike_sum += binned
-    
-        return spike_sum / n_trials
     
     # Calculate number of bins at each resolution
     total_input_bins = max_time_ms // input_bin_size_ms   # e.g., 600 // 10 = 60
@@ -644,6 +645,15 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
                         pred_sum = np.zeros((n_neurons, total_output_bins), dtype=np.float32)
                         pred_counts = np.zeros(total_output_bins, dtype=np.float32)
                         
+                        # Build init_state spike data once for this trial (if needed)
+                        _init_spikes_for_viz = None
+                        if init_state and n_initial_state_bins and n_initial_state_bins > 0:
+                            prev_idx = timing_idx - 1
+                            if prev_idx in test_dataset.spike_responses_binned:
+                                _init_spikes_for_viz = test_dataset.spike_responses_binned[prev_idx][:, -n_initial_state_bins:]
+                            else:
+                                _init_spikes_for_viz = np.zeros((n_neurons, n_initial_state_bins), dtype=np.float32)
+                        
                         for t in range(max_valid_start + 1):
                             # Stim input: (n_channels, n_input_bins)
                             stim_end = t + n_input_bins
@@ -657,11 +667,23 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
                                     x_stim[:, :available] = stim_binned[:, t:t + available]
                             
                             # Spike history: shift actual spikes by `history` bins
-                            y_history = np.zeros((n_neurons, x_stim.shape[1]), dtype=np.float32)
-                            out_start = t + output_offset
-                            y_slice = actual_spikes_binned[:, out_start:out_start + n_output_bins]
-                            if y_slice.shape[1] == n_output_bins and y_slice.shape[1] > history:
-                                y_history[:, history:history + y_slice.shape[1] - history] = y_slice[:, :-history]
+                            # When init_state is active, prepend previous trial spike data
+                            # so the valid conv has enough context.
+                            if init_state and _init_spikes_for_viz is not None:
+                                x_stim = np.pad(x_stim, ((0, 0), (n_initial_state_bins, 0)),
+                                                mode='constant', constant_values=0)
+                                spikes_for_lag = np.concatenate([
+                                    _init_spikes_for_viz,
+                                    actual_spikes_binned[:, t:t + n_input_bins]
+                                ], axis=1)
+                            else:
+                                spikes_for_lag = actual_spikes_binned[:, t:t + n_input_bins]
+                            
+                            total_time = x_stim.shape[1]
+                            y_history = np.zeros((n_neurons, total_time), dtype=np.float32)
+                            if total_time > history:
+                                src = spikes_for_lag[:, :total_time - history]
+                                y_history[:, history:history + src.shape[1]] = src
                             
                             # Concatenate stim + spike history along channel dim
                             x_combined = np.concatenate([x_stim.astype(np.float32), y_history], axis=0)
@@ -680,6 +702,9 @@ def plot_oracle_trials_by_pattern(model, test_dataset, pattern_df, spike_respons
                     else:
                         # Simple non-history model: single forward pass
                         x = stim_binned[:, :n_input_bins]  # (n_channels, n_input_bins)
+                        if init_state and n_initial_state_bins and n_initial_state_bins > 0:
+                            x = np.pad(x, ((0, 0), (n_initial_state_bins, 0)),
+                                       mode='constant', constant_values=0)
                         batch_x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)
                         preds = model(batch_x).cpu().numpy()  # (1, n_neurons, n_output_bins)
                         
@@ -1154,3 +1179,147 @@ def plot_stimulation_polarity_frame_res_alpha(pattern_name, pattern_df, savepath
     save_file = os.path.join(savepath,f"{pattern_name}_all_trials_alpha.png")
     plt.savefig(save_file, dpi=150, bbox_inches='tight')
     plt.close(fig)
+
+
+# ── PSTH: model vs ground-truth per neuron ──────────────────────────
+
+def plot_psth_per_neuron(
+    model,
+    test_dataset,
+    device,
+    out_dir,
+    output_bin_size_ms=10,
+    use_init_state=False,
+    logger=None,
+):
+    """Generate per-neuron PSTH figures comparing model predictions to ground truth.
+
+    For each oracle pattern the ground-truth firing rate is the trial-averaged
+    spike count per output bin (i.e. the mean across the ~20 oracle repeats).
+    Model predictions are also averaged across the same set of samples.
+
+    One PNG is saved per neuron inside *out_dir*, with one subplot per oracle
+    pattern.
+
+    Parameters
+    ----------
+    model : nn.Module
+    test_dataset : BinnedStimSpikeDataset
+    device : torch.device
+    out_dir : str
+        Directory to write per-neuron PNGs into.
+    output_bin_size_ms : int
+        Bin width in ms (used for x-axis labels).
+    use_init_state : bool
+    logger : logging.Logger, optional
+    """
+    os.makedirs(out_dir, exist_ok=True)
+    _log = logger.info if logger else (lambda m: None)
+
+    n_neurons = test_dataset.n_neurons
+    n_output_bins = test_dataset.n_output_bins
+
+    # ── 1. Collect model predictions (batched) ──
+    model.eval()
+    loader = DataLoader(test_dataset, batch_size=256, shuffle=False)
+
+    # pred_all shape: (n_samples, n_neurons, n_output_bins)
+    pred_chunks = []
+    with torch.no_grad():
+        for batch in loader:
+            if use_init_state and len(batch) == 3:
+                bx, _, bi = batch
+                bx = bx.to(device)
+                pred = torch.exp(model(bx)).cpu().numpy()
+            else:
+                bx = batch[0].to(device)
+                pred = torch.exp(model(bx)).cpu().numpy()
+            pred_chunks.append(pred)
+    pred_all = np.concatenate(pred_chunks, axis=0)  # (N_samples, neurons, bins)
+
+    # ── 2. Group samples by pattern name ──
+    #   For each pattern collect indices into pred_all / test_dataset.samples
+    from collections import defaultdict
+    pattern_to_sample_idxs = defaultdict(list)
+    for i, (timing_idx, t) in enumerate(test_dataset.samples):
+        pname = test_dataset.timing_to_pattern[timing_idx]
+        pattern_to_sample_idxs[pname].append(i)
+
+    pattern_names = sorted(pattern_to_sample_idxs.keys())
+    n_patterns = len(pattern_names)
+    _log(f"PSTH: {n_patterns} patterns, {n_neurons} neurons, {n_output_bins} bins")
+
+    # ── 3. Compute per-pattern averages ──
+    # true_avg[p]  -> (n_neurons, n_output_bins)
+    # pred_avg[p]  -> (n_neurons, n_output_bins)
+    # true_sem[p]  -> (n_neurons, n_output_bins)
+    true_avg = {}
+    pred_avg = {}
+    true_sem = {}
+    for pname in pattern_names:
+        idxs = pattern_to_sample_idxs[pname]
+        # ground-truth spikes from the dataset
+        true_stack = np.stack(
+            [
+                test_dataset.spike_responses_binned[test_dataset.samples[i][0]][
+                    :,
+                    test_dataset.samples[i][1]
+                    + test_dataset.output_offset : test_dataset.samples[i][1]
+                    + test_dataset.output_offset
+                    + n_output_bins,
+                ]
+                for i in idxs
+            ],
+            axis=0,
+        )  # (n_trials, n_neurons, n_output_bins)
+        pred_stack = pred_all[idxs]  # (n_trials, n_neurons, n_output_bins)
+
+        true_avg[pname] = true_stack.mean(axis=0)
+        true_sem[pname] = true_stack.std(axis=0) / np.sqrt(true_stack.shape[0])
+        pred_avg[pname] = pred_stack.mean(axis=0)
+
+    # ── 4. Plot one figure per neuron ──
+    time_axis = np.arange(n_output_bins) * output_bin_size_ms  # ms
+
+    ncols = min(10, n_patterns)
+    nrows = (n_patterns + ncols - 1) // ncols
+
+    for nidx in range(n_neurons):
+        fig, axes = plt.subplots(
+            nrows, ncols,
+            figsize=(2.4 * ncols, 2.0 * nrows),
+            sharex=True, sharey=True,
+        )
+        axes_flat = np.atleast_1d(axes).flatten()
+
+        for pidx, pname in enumerate(pattern_names):
+            ax = axes_flat[pidx]
+            true_mean_n = true_avg[pname][nidx]
+            true_sem_n = true_sem[pname][nidx]
+            pred_mean_n = pred_avg[pname][nidx]
+
+            ax.fill_between(
+                time_axis,
+                true_mean_n - true_sem_n,
+                true_mean_n + true_sem_n,
+                color="steelblue", alpha=0.25,
+            )
+            ax.plot(time_axis, true_mean_n, color="steelblue", linewidth=1, label="True")
+            ax.plot(time_axis, pred_mean_n, color="coral", linewidth=1, label="Model")
+            ax.set_title(pname, fontsize=6, pad=2)
+            ax.tick_params(labelsize=5)
+
+        # Hide unused axes
+        for j in range(n_patterns, len(axes_flat)):
+            axes_flat[j].set_visible(False)
+
+        # Shared legend & labels
+        axes_flat[0].legend(fontsize=5, loc="upper right")
+        fig.supxlabel("Time (ms)", fontsize=8)
+        fig.supylabel("Firing rate (spikes / bin)", fontsize=8)
+        fig.suptitle(f"PSTH — Neuron {nidx}", fontsize=10)
+        fig.tight_layout(rect=[0.02, 0.02, 1, 0.96])
+        fig.savefig(os.path.join(out_dir, f"neuron_{nidx:03d}.png"), dpi=120)
+        plt.close(fig)
+
+    _log(f"PSTH figures saved to {out_dir} ({n_neurons} neurons)")

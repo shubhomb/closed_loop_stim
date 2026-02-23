@@ -1,0 +1,137 @@
+# =====================================================================
+# Hyperparameter Sweep Configuration
+# =====================================================================
+#
+# This file defines the search space for automated hyperparameter sweeps.
+# Each experiment inherits from `base_config` and overrides specific params.
+#
+# Supported search strategies:
+#   - grid     : exhaustive grid over all combinations
+#   - random   : random sampling from distributions (n_trials controls count)
+#   - optuna   : Bayesian optimization via Optuna (n_trials controls budget)
+#
+# Usage:
+#   python run_sweep.py                              # uses this file
+#   python run_sweep.py --sweep-config my_sweep.yaml
+#   python run_sweep.py --dry-run                    # preview configs only
+# =====================================================================
+
+# ----- Sweep-level settings -------------------------------------------
+sweep_name: "icms150_hyperparam_search"
+strategy: "grid"          # grid | random | optuna
+n_trials: 50              # only used for random / optuna
+n_parallel: 1             # concurrent experiments (set ≤ CPU/GPU count)
+metric: "test_corr"       # metric to optimize (from summary_metrics.json)
+direction: "maximize"     # maximize | minimize
+seed: 42
+
+# ----- Base config (defaults for every experiment) --------------------
+# Any key from config.yaml can go here. These are merged first, then
+# individual search-space values override them.
+base_config:
+  datadir: "data/oracle_ICMS_150/"
+  problematic_neurons: [19, 104, 201, 211, 300, 310, 311, 312]
+  inference_mode: false
+  artifact_path: null
+  seed: 42
+  split_mode: "oracle"
+  input_bin_size_ms: 10
+  output_bin_size_ms: 10
+  n_input_bins: 60
+  n_output_bins: 60
+  output_offset: 0
+  max_time_ms: 600
+  encoding_mode: "current"
+  history: 0
+  batch_size: 16
+  embedding_dim: 0
+  dropout: 0.2
+  init_bias: null
+  linear: false
+  pooling: "max"
+  num_epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0
+  weight_loss: 1
+  sum_loss: false
+  patience: 10
+  criterion_fn: "poisson"
+  pattern_limit: 50
+  init_state: false
+  n_initial_state_bins: 1
+  num_gru_layers: 1
+  latent_dim: 32
+
+# ----- Search space ---------------------------------------------------
+# For `grid`: each key maps to a list of values. All combos are tried.
+# For `random`/`optuna`: values can be distributions (see examples below).
+#
+# Supported distribution specs (random/optuna only):
+#   categorical: [val1, val2, ...]
+#   int_uniform: [low, high]
+#   float_uniform: [low, high]
+#   log_uniform: [low, high]          (samples in log space)
+#   float_log_uniform: [low, high]    (alias)
+# =====================================================================
+
+search_space:
+  # --- Model architecture ---
+  model_type:
+    type: categorical
+    values: ["cnn", "mlp"]
+
+  # --- CNN settings (ignored when model_type != cnn) ---
+  conv_channels:
+    type: categorical
+    values:
+      - [64]
+      - [128]
+      - [64, 32]
+      - [128, 64]
+
+  kernel_sizes:
+    type: categorical
+    values:
+      - [30]
+      - [60]
+
+  fc_dims:
+    type: categorical
+    values:
+      - [128]
+      - [256]
+
+  # --- MLP settings (ignored when model_type != mlp) ---
+  hidden_dims:
+    type: categorical
+    values:
+      - [128, 64]
+      - [256, 128]
+      - [512, 256]
+
+  # --- Training ---
+  learning_rate:
+    type: log_uniform
+    low: 0.0001
+    high: 0.01
+
+  dropout:
+    type: categorical
+    values: [0.1, 0.2, 0.3]
+
+  weight_decay:
+    type: categorical
+    values: [0, 0.0001, 0.001]
+
+  batch_size:
+    type: categorical
+    values: [16, 32]
+
+  # --- Dataset ---
+  init_state:
+    type: categorical
+    values: [false, true]
+
+  history:
+    type: categorical
+    values: [0, 5, 10]

@@ -25,6 +25,7 @@ Usage:
 
 import argparse
 import copy
+import hashlib
 import itertools
 import json
 import logging
@@ -44,14 +45,34 @@ import yaml
 # ---------------------------------------------------------------------------
 
 def _flatten_grid(search_space: dict) -> list[dict]:
-    """Expand a grid search space into a list of flat config dicts."""
+    """Expand a grid search space into a list of flat config dicts.
+    
+    For distribution-style specs (log_uniform, float_uniform, int_uniform)
+    that lack explicit ``values``, a sensible set of grid points is generated
+    automatically so that grid search still works.
+    """
     keys, value_lists = [], []
     for k, spec in search_space.items():
         keys.append(k)
-        if isinstance(spec, dict):
-            value_lists.append(spec["values"])
-        elif isinstance(spec, list):
+        if isinstance(spec, list):
             value_lists.append(spec)
+        elif isinstance(spec, dict):
+            if "values" in spec:
+                value_lists.append(spec["values"])
+            else:
+                # Distribution spec without explicit grid values — auto-generate
+                stype = spec.get("type", "categorical")
+                lo, hi = spec.get("low", 0), spec.get("high", 1)
+                n_pts = spec.get("n_grid_points", 3)  # default 3 points for grid
+                if stype in ("log_uniform", "float_log_uniform"):
+                    pts = np.logspace(np.log10(lo), np.log10(hi), n_pts).tolist()
+                    value_lists.append([round(p, 8) for p in pts])
+                elif stype == "float_uniform":
+                    value_lists.append(np.linspace(lo, hi, n_pts).tolist())
+                elif stype == "int_uniform":
+                    value_lists.append(list(range(lo, hi + 1)))
+                else:
+                    value_lists.append([lo])
         else:
             value_lists.append([spec])
 
@@ -133,12 +154,57 @@ def _build_optuna_search_space(search_space: dict):
 
 
 # ---------------------------------------------------------------------------
+# Checkpointing helpers
+# ---------------------------------------------------------------------------
+
+def _config_hash(sweep_config_path: str) -> str:
+    """SHA-256 of the sweep config file for change detection."""
+    with open(sweep_config_path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def _save_checkpoint(sweep_dir: str, results: list, config_hash: str):
+    """Write incremental checkpoint after each trial."""
+    ckpt = {"config_hash": config_hash, "results": results}
+    ckpt_path = os.path.join(sweep_dir, "_checkpoint.json")
+    tmp_path = ckpt_path + ".tmp"
+    with open(tmp_path, "w") as f:
+        json.dump(ckpt, f, indent=2, default=str)
+    os.replace(tmp_path, ckpt_path)  # atomic on POSIX
+
+
+def _load_checkpoint(sweep_dir: str, config_hash: str, logger):
+    """Load checkpoint if it exists and config hash matches.
+
+    Returns the list of prior results, or an empty list if no valid
+    checkpoint is found.
+    """
+    ckpt_path = os.path.join(sweep_dir, "_checkpoint.json")
+    if not os.path.exists(ckpt_path):
+        return []
+    with open(ckpt_path, "r") as f:
+        ckpt = json.load(f)
+    if ckpt.get("config_hash") != config_hash:
+        logger.error(
+            "Sweep config has changed since the last run!\n"
+            f"  Expected hash: {ckpt.get('config_hash')}\n"
+            f"  Current hash:  {config_hash}\n"
+            "Cannot safely resume. Start a new sweep or restore the original config."
+        )
+        sys.exit(1)
+    prior = ckpt.get("results", [])
+    logger.info(f"Loaded checkpoint with {len(prior)} completed trials")
+    return prior
+
+
+# ---------------------------------------------------------------------------
 # Grid / Random sweep runner
 # ---------------------------------------------------------------------------
 
-def run_grid_or_random_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
+def run_grid_or_random_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False,
+                             config_hash: str = ""):
     """Run grid or random sweep without Optuna dependency."""
-    from run_experiment import run_experiment
+    from run_experiment import run_experiment, load_raw_data
 
     strategy = sweep_cfg.get("strategy", "grid")
     base_config = sweep_cfg.get("base_config", {})
@@ -156,14 +222,28 @@ def run_grid_or_random_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = Fa
     logger = logging.getLogger("sweep")
     logger.info(f"Strategy: {strategy} — {len(override_list)} experiments to run")
 
-    results = []
+    # Load raw data once and reuse across all experiments
+    logger.info("Pre-loading raw data for all experiments …")
+    preloaded_data = load_raw_data(base_config, logger=logger)
+
+    # Resume from checkpoint if available
+    results = _load_checkpoint(sweep_dir, config_hash, logger)
+    completed_names = {r["experiment"] for r in results if r.get("status") in ("completed", "failed")}
+    if completed_names:
+        logger.info(f"Resuming — skipping {len(completed_names)} already-finished trials")
+
     for idx, overrides in enumerate(override_list):
         exp_name = _make_experiment_name(idx, overrides)
         exp_dir = os.path.join(sweep_dir, exp_name)
 
+        if exp_name in completed_names:
+            logger.info(f"[{idx+1}/{len(override_list)}] {exp_name} — already done, skipping")
+            continue
+
         # Merge base + overrides
         cfg = copy.deepcopy(base_config)
         cfg.update(overrides)
+        cfg["skip_oracle_plots"] = True  # skip per-trial; do best-only at end
 
         logger.info(f"\n{'='*70}")
         logger.info(f"[{idx+1}/{len(override_list)}] {exp_name}")
@@ -176,7 +256,7 @@ def run_grid_or_random_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = Fa
             continue
 
         try:
-            summary = run_experiment(cfg, exp_dir)
+            summary = run_experiment(cfg, exp_dir, preloaded_data=preloaded_data)
             summary["experiment"] = exp_name
             summary["status"] = "completed"
             summary.update(overrides)
@@ -186,7 +266,10 @@ def run_grid_or_random_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = Fa
             traceback.print_exc()
             results.append({"experiment": exp_name, "status": "failed", "error": str(e), **overrides})
 
-    return results
+        # Save checkpoint after every trial
+        _save_checkpoint(sweep_dir, results, config_hash)
+
+    return results, preloaded_data
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +287,7 @@ def run_optuna_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
         sweep_cfg["strategy"] = "random"
         return run_grid_or_random_sweep(sweep_cfg, sweep_dir, dry_run)
 
-    from run_experiment import run_experiment
+    from run_experiment import run_experiment, load_raw_data
 
     base_config = sweep_cfg.get("base_config", {})
     search_space = sweep_cfg.get("search_space", {})
@@ -215,6 +298,10 @@ def run_optuna_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
 
     suggest_fn = _build_optuna_search_space(search_space)
     logger = logging.getLogger("sweep")
+
+    # Load raw data once and reuse across all experiments
+    logger.info("Pre-loading raw data for all experiments …")
+    preloaded_data = load_raw_data(base_config, logger=logger)
 
     results = []
     trial_counter = [0]  # mutable counter for closure
@@ -229,6 +316,7 @@ def run_optuna_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
 
         cfg = copy.deepcopy(base_config)
         cfg.update(overrides)
+        cfg["skip_oracle_plots"] = True  # skip per-trial; do best-only at end
 
         logger.info(f"\n{'='*70}")
         logger.info(f"[Optuna trial {trial.number}] {exp_name}")
@@ -239,7 +327,7 @@ def run_optuna_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
             return 0.0
 
         try:
-            summary = run_experiment(cfg, exp_dir)
+            summary = run_experiment(cfg, exp_dir, preloaded_data=preloaded_data)
             summary["experiment"] = exp_name
             summary["status"] = "completed"
             summary.update(overrides)
@@ -276,7 +364,7 @@ def run_optuna_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
     logger.info(f"\nBest trial: {best.number} — {metric}={best.value:.6f}")
     logger.info(f"  Params: {best.params}")
 
-    return results
+    return results, preloaded_data
 
 
 # ---------------------------------------------------------------------------
@@ -295,6 +383,8 @@ def main():
                         help="Override number of trials (random/optuna)")
     parser.add_argument("--output-dir", type=str, default=None,
                         help="Override the sweep output directory")
+    parser.add_argument("--resume", type=str, default=None, metavar="SWEEP_DIR",
+                        help="Resume an interrupted sweep from an existing output directory")
     args = parser.parse_args()
 
     # Load sweep config
@@ -306,10 +396,18 @@ def main():
     if args.n_trials:
         sweep_cfg["n_trials"] = args.n_trials
 
-    # Create sweep output directory
+    # Compute hash of the sweep config for change detection
+    config_hash = _config_hash(args.sweep_config)
+
+    # Create or reuse sweep output directory
     sweep_name = sweep_cfg.get("sweep_name", "sweep")
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    if args.output_dir:
+    if args.resume:
+        sweep_dir = args.resume
+        if not os.path.isdir(sweep_dir):
+            print(f"ERROR: --resume directory does not exist: {sweep_dir}")
+            sys.exit(1)
+    elif args.output_dir:
         sweep_dir = args.output_dir
     else:
         sweep_dir = os.path.join("results", f"{sweep_name}_{timestamp}")
@@ -339,9 +437,10 @@ def main():
     # Dispatch
     strategy = sweep_cfg.get("strategy", "grid")
     if strategy in ("grid", "random"):
-        results = run_grid_or_random_sweep(sweep_cfg, sweep_dir, dry_run=args.dry_run)
+        results, preloaded_data = run_grid_or_random_sweep(
+            sweep_cfg, sweep_dir, dry_run=args.dry_run, config_hash=config_hash)
     elif strategy == "optuna":
-        results = run_optuna_sweep(sweep_cfg, sweep_dir, dry_run=args.dry_run)
+        results, preloaded_data = run_optuna_sweep(sweep_cfg, sweep_dir, dry_run=args.dry_run)
     else:
         raise ValueError(f"Unknown strategy: {strategy}")
 
@@ -373,6 +472,16 @@ def main():
                 if os.path.exists(best_config_src):
                     shutil.copy(best_config_src, os.path.join(sweep_dir, "best_config.yaml"))
                     logger.info(f"Best config saved to {os.path.join(sweep_dir, 'best_config.yaml')}")
+
+                # Re-run best experiment with oracle plots enabled
+                try:
+                    from run_experiment import run_experiment
+                    best_cfg = yaml.safe_load(open(best_config_src))
+                    best_cfg["skip_oracle_plots"] = False
+                    logger.info(f"Re-running best model with oracle plots in {best_exp_dir} …")
+                    run_experiment(best_cfg, best_exp_dir, preloaded_data=preloaded_data)
+                except Exception as e:
+                    logger.warning(f"Could not re-run best model for oracle plots: {e}")
 
     logger.info(f"\nSweep complete! All results under: {sweep_dir}")
 

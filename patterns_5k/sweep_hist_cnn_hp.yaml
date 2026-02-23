@@ -1,0 +1,67 @@
+sweep_name: "hist_cnn_initstate_v4"
+strategy: "grid"
+metric: "test_corr"
+direction: "maximize"
+seed: 42
+
+base_config:
+  datadir: "data/oracle_ICMS_150/"
+  problematic_neurons: [19, 104, 201, 211, 300, 310, 311, 312]
+  inference_mode: false
+  artifact_path: null
+  seed: 42
+  split_mode: "oracle"
+  input_bin_size_ms: 10
+  output_bin_size_ms: 10
+  n_input_bins: 60
+  n_output_bins: 60
+  output_offset: 0
+  max_time_ms: 600
+  encoding_mode: "current"
+  batch_size: 16
+  model_type: "cnn"
+  embedding_dim: 0
+  dropout: 0.2
+  conv_channels: [256]
+  fc_dims: [256]
+  pooling: "none"
+  init_bias: null
+  init_state: true
+  num_epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0
+  weight_loss: 1
+  sum_loss: false
+  patience: 10
+  criterion_fn: "poisson"
+  pattern_limit: 50
+  skip_oracle_plots: true
+
+search_space:
+  kernel_sizes:
+    type: categorical
+    values:
+      - [3]
+      - [5]
+      - [10]
+      - [20]
+  weight_decay:
+    type: log_uniform
+    low: 0.00001
+    high: 0.001
+    values: [0, 0.0001]
+
+  conv_channels:
+    type: categorical
+    values:
+      - [256]
+  history:
+    type: categorical
+    values:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 10
+      - 20

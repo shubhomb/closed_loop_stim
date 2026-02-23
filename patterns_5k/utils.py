@@ -13,20 +13,56 @@ DELAY_MODE_TO_INDEX = {0: 0, 1: 1, -1: 2, 2: 3}  # delay_mode -> category index
 NO_STIM_INDEX = 4  # Category for no stimulation
 NUM_STIM_LEVELS = 5  # Total categories: 4 delay modes + 1 no-stim
 
+import torch
+import numpy as np
+from scipy.stats import pearsonr
 
-
-def compute_correlation(pred_log_rates, target_spikes):
+def compute_correlation(pred_log_rates, target_spikes, dim=1):
     """
-    Computes Pearson correlation between predicted rates and actual spike counts.
-    Input shapes: (batch, n_neurons, n_bins)
-    """
-    pred_rates = torch.exp(pred_log_rates).detach().cpu().numpy().flatten()
-    targets = target_spikes.detach().cpu().numpy().flatten()
+    Computes Pearson correlation coefficient.
     
-    if np.std(pred_rates) == 0 or np.std(targets) == 0:
-        return 0.0
+    Args:
+        pred_log_rates: (batch, n_neurons, ...) or (batch, ...)
+        target_spikes: (batch, n_neurons, ...) or (batch, ...)
+        dim: The dimension representing neurons/features. 
+             Usually, inputs are (batch, n_neurons, time). 
+             We want correlation over (batch, time) for EACH neuron.
+    
+    Returns:
+        Mean correlation across the specified dimension (e.g., mean across neurons).
+    """
+    # 1. Convert log rates to rates
+    pred_rates = torch.exp(pred_log_rates).detach().cpu().numpy()
+    targets = target_spikes.detach().cpu().numpy()
+    
+    # 2. Reshape to (n_neurons, everything_else)
+    # Assuming input is (Batch, Neurons, Time) or (Batch, Neurons)    
+    n_neurons = pred_rates.shape[dim]
+    
+    # Transpose to put neurons first: (Neurons, Batch, Time)
+    pred_rates = pred_rates.transpose(dim, 0, 2) if pred_rates.ndim == 3 else pred_rates.transpose(dim, 0)
+    targets = targets.transpose(dim, 0, 2) if targets.ndim == 3 else targets.transpose(dim, 0)
+    
+    # Flatten the remaining dimensions for each neuron
+    pred_flat = pred_rates.reshape(n_neurons, -1)
+    targets_flat = targets.reshape(n_neurons, -1)
+    
+    corrs = []
+    for i in range(n_neurons):
+        p = pred_flat[i]
+        t = targets_flat[i]
         
-    return np.corrcoef(pred_rates, targets)[0, 1]
+        # Handle constant input (std=0) to avoid NaN
+        if np.std(p) < 1e-6 or np.std(t) < 1e-6:
+            corrs.append(1.0)
+        else:
+            # pearsonr returns (correlation, p-value), we want index 0
+            corrs.append(np.corrcoef(p, t)[0, 1])
+            
+    # Return the average correlation across all neurons
+    return np.mean(corrs)
+
+
 
 def make_spikes_responses_df(spkVecs_file):
     """
@@ -197,7 +233,6 @@ def trial_breakout_spikes_and_patterns(spikes_df, pattern_df, channel_to_index, 
         n_channels = len(channel_to_index)
         # Build stim pattern (same for all trials of same pattern, only compute once)
         if pattern_name not in pattern_stims: 
-            logging.info(f"Building stim pattern for pattern_name {pattern_name}")
             pattern_subset = pattern_df[pattern_df['pattern_name'] == pattern_name].drop_duplicates(subset=['step_index', 'channel', 'delay_mode'])
             stim = np.zeros((n_channels, stim_time_ms))  # 44 channels, 600 ms duration
             polarity = np.zeros((n_channels, stim_time_ms))  # Track polarity: -1 for delay_mode -1, +1 otherwise
@@ -341,8 +376,6 @@ class BinnedStimSpikeDataset(Dataset):
                  input_bin_size_ms=10, output_bin_size_ms=60, n_input_bins=1, n_output_bins=1,
                  max_time_ms=2000, output_offset=0, init_state=False, n_initial_state_bins=1, history=None, logger=None):
         
-        if history and history > 0 and init_state:
-            raise ValueError("history and init_state cannot both be enabled. Use one or the other.")
         
         if trial_indices is None:
             trial_indices = list(spike_responses.keys())
@@ -386,12 +419,13 @@ class BinnedStimSpikeDataset(Dataset):
             if self.init_state and timing_idx - 1 not in trial_indices: # need response spikes for part of a previous trial
                 if timing_idx == 0:
                     # repeat first bin as initial state if gl first trial
-                    self.spike_responses_binned[timing_idx - 1] = self._bin_spikes(spike_responses[timing_idx][:, :max_time_ms], output_bin_size_ms)
+                    self.spike_responses_binned[timing_idx - 1] = self._bin_spikes(spike_responses[timing_idx], output_bin_size_ms)
                 else:
-                    self.spike_responses_binned[timing_idx - 1] = self._bin_spikes(spike_responses[timing_idx - 1][:, :max_time_ms], output_bin_size_ms)
-                print ("Added init state spikes for trial ", timing_idx - 1, " from non-specified set of trials")
+                    self.spike_responses_binned[timing_idx - 1] = self._bin_spikes(spike_responses[timing_idx - 1], output_bin_size_ms)
+                print ("Added init state spikes for trial ", timing_idx - 1, " from non-specified set of trials for full trial length number of output bins")
+                print ("This is needed to provide initial state for the first few bins of trial ", timing_idx, " when init_state is True but the previous trial's response spikes are not included in the dataset (e.g., when trial_indices does not include all trials or when timing_idx - 1 is not in trial_indices)")
                 non_specified += 1
-        print (f"{non_specified} trials were added in spike responses")
+        print (f"{non_specified} trials were added in spike responses for initial state that were not in the specified trial_indices")
         
         # Calculate valid starting positions for each trial
         # Output ends at: t + output_offset + n_output_bins
@@ -404,7 +438,7 @@ class BinnedStimSpikeDataset(Dataset):
         # Generate (trial_idx, time_bin) pairs for all samples
         self.samples = []
         for timing_idx in trial_indices:
-            for t in range(max_valid_start + 1):
+            for t in range(max_valid_start + 1): # because you can have a sample starting at multiple valid time bins within the same trial
                 self.samples.append((timing_idx, t))
         
         # Get neuron count from first trial
@@ -505,51 +539,64 @@ class BinnedStimSpikeDataset(Dataset):
     
     def __getitem__(self, idx):
         timing_idx, t = self.samples[idx]
-        pattern_name = self.timing_to_pattern[timing_idx]
-        
-        # Extract input: stim bins [t, t + n_input_bins)
-        stim_full = self.pattern_stims[pattern_name]
-        x = stim_full[:, t : t + self.n_input_bins].copy()  # (n_channels, n_input_bins)
-        
-        # Extract output: spike bins [t + output_offset, t + output_offset + n_output_bins)
-        spikes_full = self.spike_responses_binned[timing_idx]
-        out_start = t + self.output_offset
-        y = spikes_full[:, out_start : out_start + self.n_output_bins]  # (n_neurons, n_output_bins)
-        if self.history is not None and self.history >= 0:
-            # If history is specified, we want to include the previous history bins as part of the input
-            # We will concatenate these to the input x, and the model can learn to use them as needed
-            if self.history == 0:
-                print("History of 0 specified, so output will be fed as input! Make sure this is intentional.")
-            y_history = np.zeros((y.shape[0], x.shape[1]), dtype=np.float32) # in neurons dimension (one for each neuron) of output and time dimension of which matches input
-            if self.history > 0: 
-                # given self.history param, I want to paste y to y_history with DELAY as the offset, so that the model can learn to use the history of spikes to predict current spikes
-                y_history[:, self.history:] = y[:, :-self.history]
-                return torch.cat([torch.tensor(x, dtype=torch.float32), torch.tensor(y_history, dtype=torch.float32)], dim=0), torch.tensor(y, dtype=torch.float32)
-            elif self.history == 0:
-                return torch.cat([torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)], dim=0), torch.tensor(y, dtype=torch.float32)
-        elif not self.init_state:
-            if self.encoding_mode == "categorical": 
-                return torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.float32)
-            else:
-                return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
-        elif self.init_state:
-            # Get initial state from previous trial's last bins
-            # Handle edge case where timing_idx - 1 may not exist
-            prev_idx = timing_idx - 1
-            if prev_idx in self.spike_responses_binned:
-                # Get the last n_initial_state_bins from previous trial as initial state
-                init_state = self.spike_responses_binned[prev_idx][:, -self.n_initial_state_bins:]
-            else:
-                # Use zeros if no previous trial exists
-                init_state = np.zeros((self.n_neurons, self.n_initial_state_bins), dtype=np.float32)
+        stim_full = self.pattern_stims[self.timing_to_pattern[timing_idx]]  # (n_channels, total_bins_input)
+        trial_spikes = self.spike_responses_binned[timing_idx]  # (n_neurons, total_bins_output)
 
-            if self.encoding_mode == "categorical": 
-                return torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.float32), torch.tensor(init_state, dtype=torch.float32)
+        # Determine how many previous-trial spike bins to prepend.
+        # For valid conv context we need n_initial_state_bins = sum(k-1).
+        # For history lookback we need an additional self.history bins so
+        # that even the first output bin has real (non-zero) history data.
+        history_val = self.history if (self.history is not None and self.history > 0) else 0
+
+        if self.init_state:
+            # Stim: pad with n_initial_state_bins zeros (valid-conv context only)
+            stim_full = np.pad(stim_full, ((0, 0), (self.n_initial_state_bins, 0)),
+                               mode='constant', constant_values=0)
+
+            # Spikes: prepend extra bins for history lookback on top of conv context
+            spike_prepend = self.n_initial_state_bins + history_val
+            prev_trial = self.spike_responses_binned[timing_idx - 1]
+            available = prev_trial.shape[1]
+            if spike_prepend <= available:
+                previous_trial_spikes = prev_trial[:, -spike_prepend:]
             else:
-                return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32), torch.tensor(init_state, dtype=torch.float32)
-            raise ValueError("init_state must be True or False")
+                previous_trial_spikes = np.zeros((self.n_neurons, spike_prepend), dtype=np.float32)
+                previous_trial_spikes[:, -available:] = prev_trial
+            spikes_full = np.concatenate([previous_trial_spikes, trial_spikes], axis=1)
+
+            x_width = self.n_initial_state_bins + self.n_input_bins
+            # Offset between spike and stim indexing
+            # stim_full[k] aligns with spikes_full[k + history_val]
+            spike_offset = history_val
         else:
-            raise ValueError("init_state must be True or False")
+            spikes_full = trial_spikes
+            x_width = self.n_input_bins
+            spike_offset = 0
+
+        x = stim_full[:, t : t + x_width].copy()  # (n_channels, x_width)
+        out_start = t + self.output_offset + self.n_initial_state_bins + spike_offset if self.init_state else t + self.output_offset
+        y = spikes_full[:, out_start : out_start + self.n_output_bins]  # (n_neurons, n_output_bins)
+
+        if self.history is not None and self.history > 0:
+            # Lagged spike history aligned with x's time positions.
+            # With spike_offset, lag_start lands at valid indices in spikes_full
+            # even at t=0 when init_state provides extra previous-trial context.
+            n_time = x_width
+            lag_start = t + spike_offset - self.history
+            y_history = np.zeros((self.n_neurons, n_time), dtype=np.float32)
+            if lag_start >= 0:
+                y_history[:] = spikes_full[:, lag_start : lag_start + n_time]
+            else:
+                valid_from = -lag_start
+                y_history[:, valid_from:] = spikes_full[:, 0 : n_time - valid_from]
+
+            return (
+                torch.cat([torch.tensor(x, dtype=torch.float32),
+                           torch.tensor(y_history, dtype=torch.float32)], dim=0),
+                torch.tensor(y, dtype=torch.float32)
+            )
+        else:
+            return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
         
 
  
@@ -618,4 +665,225 @@ class BinnedStimSpikeDataset(Dataset):
             'mean_zero_frac': float(per_sample_zero_frac.mean()),
             'std_zero_frac': float(per_sample_zero_frac.std())
         }
+
+    def visualize_sample(self, idx, cfg=None, ax=None):
+        """Visualize the input (X) and output (Y) produced by __getitem__ for a given index.
+
+        Shows two vertically-aligned heatmaps:
+          - Top: stimulation input channels over input bins
+          - Bottom: spike output neurons over output bins
+        If the model uses spike history, the input panel shows stim channels
+        in the upper rows and history channels in the lower rows, separated
+        by a horizontal line.
+
+        When *cfg* is provided, overlays the convolutional receptive field
+        (RF) for a few representative output bins so you can verify that
+        the convolution is causal and that predictions align with the
+        lagged input.
+
+        Args:
+            idx: sample index (0 to len-1)
+            cfg: optional model config dict (must contain 'kernel_sizes';
+                 'init_state' is read to choose valid-conv vs causal-pad mode).
+            ax: optional pair of matplotlib Axes ``(ax_input, ax_output)``.
+                If *None* a new figure is created.
+
+        Returns:
+            fig: the matplotlib Figure (or *None* when *ax* was provided)
+        """
+        import matplotlib.pyplot as plt
+        from matplotlib.patches import Rectangle
+
+        timing_idx, t = self.samples[idx]
+        pattern_name = self.timing_to_pattern[timing_idx]
+        sample = self[idx]          # returns (x, y) or (x, y, init)
+        x = sample[0].numpy()      # (channels, time_x)
+        y = sample[1].numpy()      # (neurons, n_output_bins)
+
+        has_history = self.history is not None and self.history > 0
+        n_stim_channels = self.n_channels
+        n_time_x = x.shape[1]
+
+        # Time axes in ms
+        x_bin_ms = self.input_bin_size
+        y_bin_ms = self.output_bin_size
+        history_lag = self.history if has_history else 0
+
+        # Stim time extent
+        stim_time_start = t * x_bin_ms
+        if self.init_state:
+            stim_time_start -= self.n_initial_state_bins * x_bin_ms
+        stim_time_end = stim_time_start + n_time_x * x_bin_ms
+
+        # History time extent — each column is shifted left by history bins
+        hist_time_start = stim_time_start - history_lag * x_bin_ms
+        hist_time_end = stim_time_end - history_lag * x_bin_ms
+
+        # Backwards-compat aliases used by RF overlay code
+        x_time_start = stim_time_start
+        x_time_end = stim_time_end
+
+        out_start_bin = t + self.output_offset
+        y_time_start = out_start_bin * y_bin_ms
+        y_time_end = y_time_start + self.n_output_bins * y_bin_ms
+
+        created_fig = ax is None
+        if created_fig:
+            fig, ax = plt.subplots(2, 1, figsize=(10, 5), constrained_layout=True)
+        else:
+            fig = None
+
+        ax_in, ax_out = ax[0], ax[1]
+
+        # --- Input panel ---
+        if has_history:
+            # Show stim and history channels with separate time extents
+            # so each is displayed at its true temporal position.
+            stim_part = x[:n_stim_channels, :]
+            hist_part = x[n_stim_channels:, :]
+
+            ax_in.imshow(stim_part, aspect='auto', interpolation='nearest',
+                         cmap='binary', vmin=0,
+                         extent=[stim_time_start, stim_time_end,
+                                 n_stim_channels, 0])
+            ax_in.imshow(hist_part, aspect='auto', interpolation='nearest',
+                         cmap='binary', vmin=0,
+                         extent=[hist_time_start, hist_time_end,
+                                 x.shape[0], n_stim_channels])
+
+            # Reset axis limits so both imshow calls are visible
+            combined_xlo = min(stim_time_start, hist_time_start)
+            combined_xhi = max(stim_time_end, hist_time_end)
+            ax_in.set_xlim(combined_xlo, combined_xhi)
+            ax_in.set_ylim(x.shape[0], 0)
+
+            ax_in.axhline(y=n_stim_channels, color='red', ls='--', lw=1,
+                          label='stim | history')
+            ax_in.legend(loc='lower right', fontsize=7)
+        else:
+            ax_in.imshow(x, aspect='auto', interpolation='nearest',
+                         cmap='binary', vmin=0,
+                         extent=[stim_time_start, stim_time_end, x.shape[0], 0])
+            
+        ax_in.set_ylabel('Channel' if not has_history else 'Stim / History ch')
+        ax_in.set_title(
+            f'Input  —  sample {idx}  (timing_idx={timing_idx}, t={t}, '
+            f'pattern={pattern_name})')
+
+        # --- Output panel ---
+        # Swapped to 'binary' and added vmin=0
+        ax_out.imshow(y, aspect='auto', interpolation='nearest',
+                      cmap='binary', vmin=0,
+                      extent=[y_time_start, y_time_end, y.shape[0], 0])
+                      
+        ax_out.set_ylabel('Neuron')
+        ax_out.set_xlabel('Time (ms)')
+        ax_out.set_title(
+            f'Output  —  {self.n_output_bins} bins × {y_bin_ms}ms  '
+            f'(offset={self.output_offset})')
+        # --- Receptive-field overlay (when cfg is provided) ---
+        if cfg is not None:
+            from matplotlib.patches import ConnectionPatch
+            kernel_sizes = cfg.get('kernel_sizes', [3])
+            use_init_state = cfg.get('init_state', False)
+            history_lag = self.history if has_history else 0
+            RF = 1 + sum(k - 1 for k in kernel_sizes)  # receptive field in bins
+            n_out = self.n_output_bins
+
+            # Pick a few output bins to highlight (up to 3)
+            if n_out <= 3:
+                highlight_bins = list(range(n_out))
+            else:
+                highlight_bins = np.linspace(0, n_out - 1, 3, dtype=int).tolist()
+
+            cmap_hl = plt.cm.tab10
+
+            for i, o in enumerate(highlight_bins):
+                color = cmap_hl(i / max(len(highlight_bins) - 1, 1))
+
+                if use_init_state:
+                    rf_lo = o
+                    rf_hi = o + RF
+                else:
+                    rf_lo = o - RF + 1
+                    rf_hi = o + 1
+
+                # Convert bin indices to ms in the input panel's coordinate frame
+                rf_lo_ms = x_time_start + rf_lo * x_bin_ms
+                rf_hi_ms = x_time_start + rf_hi * x_bin_ms
+
+                # Output vertical line position — at bin end to align with RF right edge
+                out_end_ms = y_time_start + (o + 1) * y_bin_ms
+
+                if has_history and history_lag > 0:
+                    # --- Stim channels: RF at input column positions ---
+                    rect_stim = Rectangle(
+                        (rf_lo_ms, 0), rf_hi_ms - rf_lo_ms, n_stim_channels,
+                        linewidth=1.5, edgecolor=color, facecolor=color, alpha=0.15)
+                    ax_in.add_patch(rect_stim)
+
+                    # --- History channels: displaced left by history * bin_ms ---
+                    hist_offset_ms = history_lag * x_bin_ms
+                    hist_rf_lo_ms = rf_lo_ms - hist_offset_ms
+                    hist_rf_hi_ms = rf_hi_ms - hist_offset_ms
+                    rect_hist = Rectangle(
+                        (hist_rf_lo_ms, n_stim_channels),
+                        hist_rf_hi_ms - hist_rf_lo_ms,
+                        x.shape[0] - n_stim_channels,
+                        linewidth=1.5, edgecolor=color, facecolor=color,
+                        alpha=0.15, linestyle='--')
+                    ax_in.add_patch(rect_hist)
+
+                else:
+                    # No history — single rectangle spanning all channels
+                    rect = Rectangle(
+                        (rf_lo_ms, 0), rf_hi_ms - rf_lo_ms, x.shape[0],
+                        linewidth=1.5, edgecolor=color, facecolor=color, alpha=0.12)
+                    ax_in.add_patch(rect)
+
+                # Matching vertical line on output panel at this output bin
+                ax_out.axvline(out_end_ms, color=color, ls='--', lw=1.2, alpha=0.6)
+
+                # Connecting line: right edge of stim RF (bottom of input) → output line (top of output)
+                con_stim = ConnectionPatch(
+                    xyA=(rf_hi_ms, x.shape[0]), coordsA=ax_in.transData,
+                    xyB=(out_end_ms, 0), coordsB=ax_out.transData,
+                    color=color, lw=1, alpha=0.5, ls=':')
+                fig.add_artist(con_stim)
+
+                # Connecting line: right edge of history RF → output line
+                if has_history and history_lag > 0:
+                    con_hist = ConnectionPatch(
+                        xyA=(hist_rf_hi_ms, x.shape[0]), coordsA=ax_in.transData,
+                        xyB=(out_end_ms, 0), coordsB=ax_out.transData,
+                        color=color, lw=1, alpha=0.5, ls='--')
+                    fig.add_artist(con_hist)
+
+                # Small tick label at top of input panel
+                ax_in.annotate(
+                    f'o={o}', xy=(rf_hi_ms, 0), fontsize=6, color=color,
+                    ha='right', va='bottom', rotation=90)
+
+            # Align x-axes — extend left to include history data extent
+            xlim_lo = min(x_time_start, y_time_start)
+            if has_history and history_lag > 0:
+                xlim_lo = min(xlim_lo, hist_time_start)
+            xlim_hi = max(x_time_end, y_time_end)
+            ax_in.set_xlim(xlim_lo, xlim_hi)
+            ax_out.set_xlim(xlim_lo, xlim_hi)
+
+            mode_str = 'valid (init_state)' if use_init_state else 'causal pad'
+            hist_str = ''
+            if has_history:
+                hist_str = (f', history={history_lag} '
+                            f'(lag={history_lag * x_bin_ms}ms)')
+            ax_in.set_title(
+                f'Input  —  sample {idx}  (timing_idx={timing_idx}, t={t}, '
+                f'pattern={pattern_name})\n'
+                f'RF={RF} bins ({RF * x_bin_ms}ms), '
+                f'kernels={kernel_sizes}, mode={mode_str}{hist_str}')
+
+        if created_fig:
+            plt.show()
+        return fig
 
