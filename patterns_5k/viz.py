@@ -11,6 +11,13 @@ from io import BytesIO
 import pandas as pd
 from PIL import Image
 from utils import bin_spike_response
+from sklearn.decomposition import FactorAnalysis
+from sklearn.model_selection import train_test_split
+from collections import defaultdict
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from metrics import _coarsen
+
 
 
 # Colormap for polarity: index mapping is vmin=-1, vmax=1 so
@@ -1323,3 +1330,568 @@ def plot_psth_per_neuron(
         plt.close(fig)
 
     _log(f"PSTH figures saved to {out_dir} ({n_neurons} neurons)")
+
+
+
+def plot_neuron_pattern_traces(neuron_idx, pattern_name, model_tuple, cfg, raw_data, test_loader,
+                                coarse_factor=1, coarse_method='mean', save_dir=None):
+    """
+    Two-panel figure for one neuron × one oracle pattern.
+
+    Top: mean ± SEM spike response across trials + mean model prediction.
+    Bottom: all individual trial traces (vertically offset) + model prediction
+            traces overlaid.
+
+    Args:
+        neuron_idx: int, neuron index (0-based)
+        pattern_name: pattern identifier
+        model_tuple: (model, cfg_unused, device)
+        cfg: model config dict
+        raw_data: output of load_raw_data
+        test_loader: DataLoader (only .dataset used)
+        coarse_factor: temporal coarsening factor (1 = no coarsening)
+        coarse_method: 'mean' or 'sum'
+        save_dir: if not None, save figure there and close it
+
+    Returns:
+        fig (or None if saved and closed)
+    """
+    model, _, device = model_tuple
+    test_dataset = test_loader.dataset
+    pattern_df = raw_data["pattern_df"]
+    spike_responses = raw_data["spike_responses"]
+
+    output_bin_size_ms = cfg['output_bin_size_ms']
+    max_time_ms = cfg['max_time_ms']
+    n_input_bins = cfg['n_input_bins']
+    n_output_bins = cfg['n_output_bins']
+    output_offset = cfg.get('output_offset', 0)
+    history = cfg.get('history', 0)
+    init_state_flag = cfg.get('init_state', False)
+    n_neurons_total = test_dataset.n_neurons
+    n_initial_state_bins = getattr(test_dataset, 'n_initial_state_bins', 0)
+
+    total_output_bins = max_time_ms // output_bin_size_ms
+
+    def _bin_1d(arr, factor, method):
+        if factor <= 1:
+            return arr
+        n = len(arr)
+        coarse = n // factor
+        reshaped = arr[:coarse * factor].reshape(coarse, factor)
+        return reshaped.sum(axis=1) if method == 'sum' else reshaped.mean(axis=1)
+
+    def _sliding_window_predict_single(mdl, dev, stim_src, spikes_src, spike_binned_dict,
+                                        timing):
+        """Sliding-window teacher-forced prediction → (n_neurons, total_output_bins)."""
+        tot_out = max_time_ms // output_bin_size_ms
+        tot_in = max_time_ms // cfg['input_bin_size_ms']
+        max_s = min(tot_out - output_offset - n_output_bins, tot_in - n_input_bins)
+
+        p_sum = np.zeros((n_neurons_total, tot_out), dtype=np.float32)
+        p_cnt = np.zeros(tot_out, dtype=np.float32)
+
+        _init = None
+        if init_state_flag and n_initial_state_bins > 0:
+            prev = timing - 1
+            if prev in spike_binned_dict:
+                _init = spike_binned_dict[prev][:, -n_initial_state_bins:]
+            else:
+                _init = np.zeros((n_neurons_total, n_initial_state_bins), dtype=np.float32)
+
+        mdl.eval()
+        with torch.no_grad():
+            for t in range(max_s + 1):
+                se = t + n_input_bins
+                actual_bins = stim_src.shape[1]
+                if se <= actual_bins:
+                    xs = stim_src[:, t:se].copy()
+                else:
+                    xs = np.zeros((stim_src.shape[0], n_input_bins), dtype=np.float32)
+                    av = max(0, actual_bins - t)
+                    if av > 0:
+                        xs[:, :av] = stim_src[:, t:t+av]
+
+                if init_state_flag and _init is not None:
+                    xs = np.pad(xs, ((0, 0), (n_initial_state_bins, 0)), mode='constant')
+
+                if history > 0:
+                    if init_state_flag and _init is not None:
+                        sfl = np.concatenate([_init, spikes_src[:, t:t + n_input_bins]], axis=1)
+                    else:
+                        sfl = spikes_src[:, t:t + n_input_bins]
+                    tt = xs.shape[1]
+                    yh = np.zeros((n_neurons_total, tt), dtype=np.float32)
+                    if tt > history:
+                        src = sfl[:, :tt - history]
+                        yh[:, history:history + src.shape[1]] = src
+                    xs = np.concatenate([xs.astype(np.float32), yh], axis=0)
+
+                bx = torch.tensor(xs, dtype=torch.float32).unsqueeze(0).to(dev)
+                pr = mdl(bx).cpu().numpy()
+                for o in range(n_output_bins):
+                    tb = t + output_offset + o
+                    if tb < tot_out:
+                        p_sum[:, tb] += pr[0, :, o]
+                        p_cnt[tb] += 1
+
+        msk = p_cnt > 0
+        pa = np.zeros_like(p_sum)
+        pa[:, msk] = p_sum[:, msk] / p_cnt[msk]
+        return np.exp(pa)
+
+    # --- Gather all trials for this pattern ---
+    unique_trials = pattern_df[['pattern_timing_index', 'pattern_name', 'is_oracle']].drop_duplicates()
+    timing_list = sorted(
+        unique_trials[unique_trials['pattern_name'] == pattern_name]['pattern_timing_index'].tolist()
+    )
+    n_trials = len(timing_list)
+
+    stim_binned = test_dataset.pattern_stims[pattern_name]
+
+    all_actual = []   # list of 1-d arrays (coarse_bins,)
+    all_pred   = []
+
+    for timing_idx in timing_list:
+        # Actual binned spikes for this neuron
+        actual_full = bin_spike_response(spike_responses[timing_idx],
+                                         output_bin_size_ms, max_time_ms, remainder="append")
+        actual_neuron = actual_full[neuron_idx]  # (total_output_bins,)
+
+        # Model prediction for this trial
+        pred_full = _sliding_window_predict_single(
+            model, device, stim_binned, actual_full,
+            test_dataset.spike_responses_binned, timing_idx)
+        pred_neuron = pred_full[neuron_idx]
+
+        all_actual.append(_bin_1d(actual_neuron, coarse_factor, coarse_method))
+        all_pred.append(_bin_1d(pred_neuron, coarse_factor, coarse_method))
+
+    all_actual = np.array(all_actual)  # (n_trials, coarse_bins)
+    all_pred   = np.array(all_pred)
+
+    n_bins = all_actual.shape[1]
+    coarse_bin_ms = output_bin_size_ms * coarse_factor
+    time_ms = np.arange(n_bins) * coarse_bin_ms + coarse_bin_ms / 2  # bin centres
+
+    actual_mean = all_actual.mean(axis=0)
+    actual_sem  = all_actual.std(axis=0) / np.sqrt(n_trials)
+    pred_mean   = all_pred.mean(axis=0)
+    pred_sem    = all_pred.std(axis=0) / np.sqrt(n_trials)
+
+    # --- Plot ---
+    fig, axes = plt.subplots(2, 1, figsize=(10, 6), constrained_layout=True)
+
+    # Top: Mean ± SEM
+    axes[0].plot(time_ms, actual_mean, color='black', lw=1.5, label='Actual (mean)')
+    axes[0].fill_between(time_ms, actual_mean - actual_sem, actual_mean + actual_sem,
+                         color='black', alpha=0.15)
+    axes[0].plot(time_ms, pred_mean, color='tab:red', lw=1.5, label='Model pred (mean)')
+    axes[0].fill_between(time_ms, pred_mean - pred_sem, pred_mean + pred_sem,
+                         color='tab:red', alpha=0.15)
+    axes[0].set_ylabel('Spike count / rate')
+    axes[0].set_title(f'Neuron {neuron_idx} — Pattern {pattern_name}  '
+                      f'({n_trials} trials, {coarse_bin_ms}ms bins)')
+    axes[0].legend(fontsize=8)
+    axes[0].axvline(x=600, color='gray', ls='--', lw=0.8)
+    axes[0].set_xlim(time_ms[0] - coarse_bin_ms / 2, time_ms[-1] + coarse_bin_ms / 2)
+
+    # Bottom: individual traces offset
+    for k in range(n_trials):
+        axes[1].plot(time_ms, all_actual[k], color='black', lw=0.6, alpha=0.7)
+        axes[1].plot(time_ms, all_pred[k], color='tab:red', lw=0.6, alpha=0.7)
+
+    axes[1].set_ylabel('Firing rate')
+    axes[1].set_xlabel('Time (ms)')
+    axes[1].set_title('Individual trial traces (black=actual, red=model)')
+    axes[1].axvline(x=600, color='gray', ls='--', lw=0.8)
+    axes[1].set_xlim(time_ms[0] - coarse_bin_ms / 2, time_ms[-1] + coarse_bin_ms / 2)
+
+    if save_dir is not None:
+        os.makedirs(save_dir, exist_ok=True)
+        fname = os.path.join(save_dir, f'neuron{neuron_idx:03d}_pattern{pattern_name}.png')
+        fig.savefig(fname, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        return None
+    plt.show()
+    return fig
+
+
+def generate_all_neuron_pattern_plots(model_tuple, cfg, raw_data, test_loader,
+                                       coarse_factor=1, coarse_method='mean',
+                                       save_dir='results/neuron_pattern_traces',
+                                       neuron_indices=None):
+    """
+    Generate per-neuron per-pattern trace figures for all oracle patterns.
+
+    Args:
+        neuron_indices: list of neuron indices, or None → all neurons.
+        Other args: same as plot_neuron_pattern_traces.
+    """
+    pattern_df = raw_data["pattern_df"]
+    unique_trials = pattern_df[['pattern_name', 'is_oracle']].drop_duplicates()
+    oracle_patterns = sorted(unique_trials[unique_trials['is_oracle']]['pattern_name'].unique())
+
+    n_neurons_total = test_loader.dataset.n_neurons
+    if neuron_indices is None:
+        neuron_indices = list(range(n_neurons_total))
+
+    total = len(neuron_indices) * len(oracle_patterns)
+    print(f"Generating {total} figures ({len(neuron_indices)} neurons × {len(oracle_patterns)} patterns) → {save_dir}/")
+
+    for count, neuron_idx in enumerate(neuron_indices):
+        for pat in oracle_patterns:
+            plot_neuron_pattern_traces(
+                neuron_idx, pat, model_tuple, cfg, raw_data, test_loader,
+                coarse_factor=coarse_factor, coarse_method=coarse_method,
+                save_dir=save_dir)
+        done = (count + 1) * len(oracle_patterns)
+        print(f"  Neuron {neuron_idx:>3d} done  ({done}/{total})")
+
+    print("All figures saved.")
+
+
+def plot_single_oracle_trial(pattern_name, trial_idx, model_tuple, cfg, raw_data, test_loader,
+                              coarse_factor=1, coarse_method='mean',
+                              nonhistory_model_tuple=None, nonhistory_cfg=None,
+                              nonhistory_test_loader=None,
+                              save_path=None):
+    """Plot a single oracle trial comparing model predictions.
+
+    Panels (top → bottom):
+      1. Stimulation polarity
+      2. Actual spikes
+      3. History model, teacher-forced (ground-truth history)
+      4. History model, autoregressive  *(only if history > 0)*
+      5. No-history model prediction    *(only if provided)*
+      6. LOO trial average
+
+    Parameters
+    ----------
+    pattern_name : int/str
+    trial_idx : int          – index within this pattern's oracle trials
+    model_tuple : tuple      – ``(model, cfg_or_crit, device)``
+    cfg : dict               – experiment config
+    raw_data : dict          – from ``load_raw_data``
+    test_loader : DataLoader
+    coarse_factor, coarse_method : int, str – temporal coarsening
+    nonhistory_model_tuple, nonhistory_cfg, nonhistory_test_loader : optional
+        Second (no-history) model to compare.
+    save_path : str or None  – save figure here; if None the path is derived.
+
+    Returns
+    -------
+    fig
+    """
+    from matplotlib.colors import PowerNorm
+    from models import sliding_window_predict_trial, sliding_window_predict_trial_ar
+    from utils import coarsen_2d
+
+    model, _, device = model_tuple
+    test_dataset = test_loader.dataset
+    pattern_df   = raw_data["pattern_df"]
+    spike_responses    = raw_data["spike_responses"]
+    pattern_polarities = raw_data["pattern_polarities"]
+
+    output_bin_size_ms = cfg['output_bin_size_ms']
+    max_time_ms        = cfg['max_time_ms']
+    history            = cfg.get('history', 0)
+    n_neurons          = test_dataset.n_neurons
+
+    # --- timing index ---
+    unique_trials = pattern_df[['pattern_timing_index', 'pattern_name', 'is_oracle']].drop_duplicates()
+    timing_list = sorted(
+        unique_trials[unique_trials['pattern_name'] == pattern_name]['pattern_timing_index'].tolist()
+    )
+    if trial_idx >= len(timing_list):
+        raise ValueError(f"Trial {trial_idx} out of range (pattern {pattern_name} has {len(timing_list)} trials)")
+    timing_idx = timing_list[trial_idx]
+
+    # --- actual response ---
+    actual_response = bin_spike_response(spike_responses[timing_idx],
+                                         output_bin_size_ms, max_time_ms, remainder="append")
+
+    # --- LOO average ---
+    other_timings = [t for t in timing_list if t != timing_idx]
+    loo_avg = compute_avg_spikes_across_trials(other_timings, spike_responses,
+                                                output_bin_size_ms, max_time_ms)
+
+    # --- teacher-forced prediction ---
+    pred_rates = sliding_window_predict_trial(model_tuple, cfg, test_loader, timing_idx)
+
+    # --- autoregressive prediction (if history > 0) ---
+    ar_pred_rates = None
+    if history and history > 0:
+        ar_pred_rates = sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx)
+
+    # --- non-history model prediction ---
+    nohist_pred_rates = None
+    if nonhistory_model_tuple is not None and nonhistory_cfg is not None:
+        nohist_pred_rates = sliding_window_predict_trial(
+            nonhistory_model_tuple, nonhistory_cfg,
+            nonhistory_test_loader or test_loader, timing_idx)
+
+    # --- coarsen ---
+    actual_response = coarsen_2d(actual_response, coarse_factor, coarse_method)
+    loo_avg         = coarsen_2d(loo_avg, coarse_factor, coarse_method)
+    pred_rates      = coarsen_2d(pred_rates, coarse_factor, coarse_method)
+    if ar_pred_rates is not None:
+        ar_pred_rates = coarsen_2d(ar_pred_rates, coarse_factor, coarse_method)
+    if nohist_pred_rates is not None:
+        nohist_pred_rates = coarsen_2d(nohist_pred_rates, coarse_factor, coarse_method)
+
+    coarse_bin_ms     = output_bin_size_ms * coarse_factor
+    coarse_total_bins = actual_response.shape[1]
+    display_max_ms    = coarse_total_bins * coarse_bin_ms
+
+    # --- polarity heatmap ---
+    polarity_600 = pattern_polarities[pattern_name]
+    polarity_base = np.zeros((polarity_600.shape[0], max_time_ms))
+    polarity_base[:, :min(600, max_time_ms)] = polarity_600[:, :min(600, max_time_ms)]
+    polarity_plot = np.zeros_like(polarity_base)
+    for shift in range(10):
+        polarity_plot[:, shift:] += polarity_base[:, :max_time_ms - shift] if shift > 0 else polarity_base
+
+    # --- figure ---
+    spike_vmax = 3.4
+    pnorm = PowerNorm(gamma=0.5, vmin=0, vmax=spike_vmax)
+    spike_cmap = plt.cm.Greys
+    bright_polarity_cmap = ListedColormap(["#1E8FFF", '#FFFFFF', "#D02525"])
+
+    agg_label = coarse_method if coarse_factor > 1 else ""
+    bin_label = f"{coarse_bin_ms}ms bins" + (f", {agg_label}" if agg_label else "")
+
+    n_panels = 3  # stim + actual + teacher-forced
+    if ar_pred_rates is not None:
+        n_panels += 1
+    if nohist_pred_rates is not None:
+        n_panels += 1
+    n_panels += 1  # LOO
+
+    fig, axes = plt.subplots(n_panels, 1, figsize=(6, 2 * n_panels), constrained_layout=True)
+
+    # Panel 0: stimulation
+    axes[0].imshow(polarity_plot, aspect='auto', cmap=bright_polarity_cmap, vmin=-1, vmax=1,
+                   interpolation='nearest', extent=[0, max_time_ms, polarity_plot.shape[0], 0])
+    axes[0].set_title(f"Pattern {pattern_name} – Trial {trial_idx} – Stimulation")
+    axes[0].set_ylabel('Channel')
+    axes[0].axvline(x=600, color='gray', linestyle='--', linewidth=1)
+
+    # Panel 1: actual spikes
+    axes[1].imshow(actual_response, aspect='auto', cmap=spike_cmap, norm=pnorm,
+                   interpolation='nearest', extent=[0, display_max_ms, n_neurons, 0])
+    axes[1].set_title(f'Actual spikes ({bin_label})')
+    axes[1].set_ylabel('Neuron')
+    axes[1].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+
+    # Panel 2: teacher-forced
+    hist_label = f" (history={history})" if history and history > 0 else ""
+    im2 = axes[2].imshow(pred_rates, aspect='auto', cmap=spike_cmap, norm=pnorm,
+                   interpolation='nearest', extent=[0, display_max_ms, n_neurons, 0])
+    axes[2].set_title(f'Ground Truth Observed History prediction{hist_label} ({bin_label})')
+    axes[2].set_ylabel('Neuron')
+    axes[2].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+
+    panel_idx = 3
+
+    # Panel: AR
+    if ar_pred_rates is not None:
+        axes[panel_idx].imshow(ar_pred_rates, aspect='auto', cmap=spike_cmap, norm=pnorm,
+                       interpolation='nearest', extent=[0, display_max_ms, n_neurons, 0])
+        axes[panel_idx].set_title(f'Self Generated (AR) History Prediction (history={history}) ({bin_label})')
+        axes[panel_idx].set_ylabel('Neuron')
+        axes[panel_idx].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+        panel_idx += 1
+
+    # Panel: non-history model
+    if nohist_pred_rates is not None:
+        axes[panel_idx].imshow(nohist_pred_rates, aspect='auto', cmap=spike_cmap, norm=pnorm,
+                       interpolation='nearest', extent=[0, display_max_ms, n_neurons, 0])
+        axes[panel_idx].set_title(f'No History (Stim only) Model Prediction ({bin_label})')
+        axes[panel_idx].set_ylabel('Neuron')
+        axes[panel_idx].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+        panel_idx += 1
+
+    # Panel: LOO
+    axes[panel_idx].imshow(loo_avg, aspect='auto', cmap=spike_cmap, norm=pnorm,
+                   interpolation='nearest', extent=[0, display_max_ms, n_neurons, 0])
+    axes[panel_idx].set_title(f'LOO avg over {len(other_timings)} other trials ({bin_label})')
+    axes[panel_idx].set_ylabel('Neuron')
+    axes[panel_idx].set_xlabel('Time (ms)')
+    axes[panel_idx].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+
+    fig.colorbar(im2, ax=axes[1:].tolist(), orientation='vertical', shrink=0.8, label='Spike count')
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight', transparent=False)
+    plt.close()
+    return fig
+
+
+def fa_input_output(model_tuple, cfg, raw_data, model_label='',
+                    n_trajectories_per_split=20, seed_vis=0,
+                    output_coarse_factor=6, n_factors=10):
+    """Factor Analysis point-cloud plots (top 3 of n_factors) on model inputs
+    and outputs, colored by train/val/test.
+
+    - Inputs: all time bins (no subsampling).
+    - Outputs: coarsened spike counts via _coarsen.
+    - Only start (o) and end (x) points are plotted per trial.
+    - Axes annotated with shared variance (sum of squared loadings / total variance).
+    """
+    model, _, device = model_tuple
+    model.eval()
+
+    # --- Reconstruct train / val / test trial indices ---
+    pattern_df = raw_data["pattern_df"]
+    unique_trials_info = pattern_df[["pattern_timing_index", "pattern_name", "is_oracle"]].drop_duplicates()
+    oracle_timing = unique_trials_info[unique_trials_info["is_oracle"]]["pattern_timing_index"].tolist()
+    sample_timing = unique_trials_info[~unique_trials_info["is_oracle"]]["pattern_timing_index"].tolist()
+    exp_seed = cfg.get("seed", 42)
+    train_indices, val_indices = train_test_split(sample_timing, test_size=0.15, random_state=exp_seed)
+    test_indices = oracle_timing
+
+    # Auto-compute n_initial_state_bins
+    n_initial_state_bins = cfg.get('n_initial_state_bins', 1)
+    if cfg.get('init_state', False) and cfg.get('model_type', 'cnn') == 'cnn':
+        _ks = cfg.get('kernel_sizes', [60])
+        n_initial_state_bins = sum(k - 1 for k in _ks)
+
+    ds_kwargs = dict(
+        pattern_df=raw_data["pattern_df"],
+        spike_responses=raw_data["spike_responses"],
+        channel_to_index=raw_data["channel_to_index"],
+        timing_to_pattern=raw_data["timing_to_pattern"],
+        input_bin_size_ms=cfg['input_bin_size_ms'],
+        output_bin_size_ms=cfg['output_bin_size_ms'],
+        n_input_bins=cfg['n_input_bins'],
+        n_output_bins=cfg['n_output_bins'],
+        max_time_ms=cfg['max_time_ms'],
+        output_offset=cfg.get('output_offset', 0),
+        encoding_mode=cfg.get('encoding_mode', 'current'),
+        init_state=cfg.get('init_state', False),
+        n_initial_state_bins=n_initial_state_bins,
+        history=cfg.get('history', 0),
+        logger=None,
+    )
+
+    # --- Collect per-trial data ---
+    splits = {'Train': train_indices, 'Val': val_indices, 'Test': test_indices}
+    in_rows, out_rows = [], []
+    traj_info = []
+    cumulative_in = 0
+    cumulative_out = 0
+
+    with torch.no_grad():
+        for split_name, indices in splits.items():
+            ds = BinnedStimSpikeDataset(trial_indices=indices, **ds_kwargs)
+            for i in range(len(ds)):
+                x, y = ds[i]
+                x_tensor = x.unsqueeze(0).to(device)
+                pred = torch.exp(model(x_tensor)).cpu().numpy().squeeze(0)
+
+                x_t = x.numpy().T   # (T_in, C)
+                T_in = x_t.shape[0]
+
+                pred_3d = pred[np.newaxis, :, :]
+                pred_coarse = _coarsen(pred_3d, factor=output_coarse_factor)
+                p_t = pred_coarse.squeeze(0).T  # (T_coarse, neurons)
+                T_out = p_t.shape[0]
+
+                in_rows.append(x_t)
+                out_rows.append(p_t)
+                traj_info.append({
+                    'split': split_name,
+                    'in_start': cumulative_in,
+                    'in_end': cumulative_in + T_in,
+                    'out_start': cumulative_out,
+                    'out_end': cumulative_out + T_out,
+                })
+                cumulative_in += T_in
+                cumulative_out += T_out
+
+    all_in  = np.concatenate(in_rows, axis=0)
+    all_out = np.concatenate(out_rows, axis=0)
+
+    print(f"[{model_label}] FA input matrix: {all_in.shape}  (timepoints x features)")
+    print(f"[{model_label}] FA output matrix: {all_out.shape}  (coarsened timepoints x neurons)")
+
+    # --- Factor Analysis ---
+    fa_in  = FactorAnalysis(n_components=n_factors, random_state=0).fit(all_in)
+    fa_out = FactorAnalysis(n_components=n_factors, random_state=0).fit(all_out)
+    fc_in  = fa_in.transform(all_in)
+    fc_out = fa_out.transform(all_out)
+
+    def _shared_variance_ratios(fa_obj):
+        """Shared variance per factor as fraction of total variance."""
+        loadings = fa_obj.components_  # (n_factors, n_features)
+        factor_var = (loadings ** 2).sum(axis=1)  # per factor
+        total_var = factor_var.sum() + fa_obj.noise_variance_.sum()
+        return factor_var / total_var
+
+    sv_in  = _shared_variance_ratios(fa_in)
+    sv_out = _shared_variance_ratios(fa_out)
+    print(f"[{model_label}] Input shared variance (top 3): "
+          f"{sv_in[0]*100:.1f}%, {sv_in[1]*100:.1f}%, {sv_in[2]*100:.1f}%  "
+          f"(total shared: {sv_in.sum()*100:.1f}%)")
+    print(f"[{model_label}] Output shared variance (top 3): "
+          f"{sv_out[0]*100:.1f}%, {sv_out[1]*100:.1f}%, {sv_out[2]*100:.1f}%  "
+          f"(total shared: {sv_out.sum()*100:.1f}%)")
+
+    # --- Subsample trials per split ---
+    rng = np.random.RandomState(seed_vis)
+    colors = {'Train': 'tab:blue', 'Val': 'tab:orange', 'Test': 'tab:green'}
+
+    split_indices = defaultdict(list)
+    for idx, info in enumerate(traj_info):
+        split_indices[info['split']].append(idx)
+
+    selected = {}
+    for s in ['Train', 'Val', 'Test']:
+        idxs = split_indices[s]
+        if len(idxs) > n_trajectories_per_split:
+            chosen = rng.choice(len(idxs), n_trajectories_per_split, replace=False)
+            selected[s] = [idxs[c] for c in chosen]
+        else:
+            selected[s] = idxs
+
+    # --- 3D point-cloud helper (start + end only, no trajectories) ---
+    def _plot(fc_data, sv, title_prefix, key_start, key_end):
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        for split_name in ['Train', 'Val', 'Test']:
+            c = colors[split_name]
+            starts, ends = [], []
+            for idx in selected[split_name]:
+                info = traj_info[idx]
+                s, e = info[key_start], info[key_end]
+                seg = fc_data[s:e]
+                if seg.shape[0] == 0:
+                    continue
+                starts.append(seg[0, :3])
+                ends.append(seg[-1, :3])
+            if starts:
+                starts = np.array(starts)
+                ends = np.array(ends)
+                ax.scatter(starts[:, 0], starts[:, 1], starts[:, 2],
+                           color=c, marker='o', s=25, alpha=0.6,
+                           label=f'{split_name} start ({len(starts)})')
+                ax.scatter(ends[:, 0], ends[:, 1], ends[:, 2],
+                           color=c, marker='x', s=25, alpha=0.6,
+                           label=f'{split_name} end')
+
+        ax.set_xlabel(f'F1 ({sv[0]*100:.1f}% shared)')
+        ax.set_ylabel(f'F2 ({sv[1]*100:.1f}% shared)')
+        ax.set_zlabel(f'F3 ({sv[2]*100:.1f}% shared)')
+        title = title_prefix
+        if model_label:
+            title += f' — {model_label}'
+        ax.set_title(title)
+        ax.legend(fontsize=8)
+        plt.tight_layout()
+        plt.show()
+        return fig
+
+    fig1 = _plot(fc_in,  sv_in,  'FA Point Cloud — Model Inputs',  'in_start',  'in_end')
+    fig2 = _plot(fc_out, sv_out, 'FA Point Cloud — Model Outputs (coarse)',  'out_start', 'out_end')
+
+    return fig1, fig2, fa_in, fa_out

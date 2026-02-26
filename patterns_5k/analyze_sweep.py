@@ -8,12 +8,12 @@ Usage:
     # From Python / notebook:
     from analyze_sweep import SweepAnalyzer
     sa = SweepAnalyzer("results/cnn_history_sweep_2026-02-13_12-47-14")
-    sa.plot_metric_vs_param("history", "test_corr")
+    sa.plot_metric_vs_param("history", "all_test_corr")
     sa.plot_all()
 
     # CLI:
     python analyze_sweep.py results/cnn_history_sweep_*
-    python analyze_sweep.py results/cnn_kernel_sweep_* --params kernel_sizes --metrics test_corr neurons_model_beats_loo
+    python analyze_sweep.py results/cnn_kernel_sweep_* --params kernel_sizes --metrics all_test_corr neurons_model_beats_loo
 """
 
 import argparse
@@ -33,18 +33,25 @@ import yaml
 
 # ── Metric display names ────────────────────────────────────────────
 METRIC_LABELS = {
-    "test_corr": "Test Correlation",
-    "best_val_corr": "Best Val Correlation",
-    "test_loss": "Test Loss",
+    "batch_avg_test_corr": "Batch-Avg Test Correlation",
+    "batch_avg_test_loss": "Batch-Avg Test Loss",
+    "all_test_fve": "Test FVE (all samples)",
+    "all_test_corr": "Test Temporal Correlation (all samples)",
+    "AR_FVE": "AR FVE",
+    "AR_test_correlation": "AR Test Correlation",
+    "best_val_corr": "Best Val Correlation during Training",
     "mean_pattern_corr": "Mean Pattern Selectivity (r)",
-    # New (split) LOO keys
-    "model_avg_mean_corr": "Model Avg-Rate Mean Corr",
+    # LOO keys
+    "model_avg_mean_corr": "Average Correlation over Neurons",
     "loo_avg_mean_corr": "LOO Avg-Rate Mean Corr",
     "neurons_model_beats_loo_avg": "# Neurons Model > LOO (Avg Rate)",
-    "model_temporal_mean_corr": "Model Temporal Mean Corr",
     "loo_temporal_mean_corr": "LOO Temporal Mean Corr",
     "neurons_model_beats_loo_temporal": "# Neurons Model > LOO (Temporal)",
     # Legacy keys (older runs)
+    "test_corr": "Test Correlation (legacy)",
+    "test_loss": "Test Loss (legacy)",
+    "test_fve": "Test FVE (legacy)",
+    "model_temporal_mean_corr": "Model Temporal Mean Corr (legacy)",
     "model_sample_mean_corr": "Model Sample-Level Mean Corr",
     "loo_mean_corr": "LOO Baseline Mean Corr",
     "neurons_model_beats_loo": "# Neurons Model > LOO",
@@ -125,13 +132,19 @@ class SweepAnalyzer:
         """Detect which columns are swept parameters vs fixed metrics."""
         # Standard metric columns (always present from summary_metrics.json)
         metric_cols = {
-            "run_dir", "model_type", "test_loss", "test_corr", "best_val_corr",
+            "run_dir", "model_type",
+            # Current metric names
+            "batch_avg_test_loss", "batch_avg_test_corr",
+            "all_test_fve", "all_test_corr",
+            "AR_FVE", "AR_test_correlation",
+            "best_val_corr",
             "total_params", "trainable_params", "epochs_trained",
             "mean_pattern_corr",
-            # New LOO keys
+            # LOO keys
             "model_avg_mean_corr", "loo_avg_mean_corr", "neurons_model_beats_loo_avg",
-            "model_temporal_mean_corr", "loo_temporal_mean_corr", "neurons_model_beats_loo_temporal",
-            # Legacy LOO keys
+            "loo_temporal_mean_corr", "neurons_model_beats_loo_temporal",
+            # Legacy keys (older runs)
+            "test_loss", "test_corr", "test_fve", "model_temporal_mean_corr",
             "loo_mean_corr", "model_sample_mean_corr", "neurons_model_beats_loo",
             "experiment", "status",
             "sweep_dir", "sweep_name",
@@ -252,11 +265,14 @@ class SweepAnalyzer:
         """
         if metrics is None:
             metrics = [
-                "test_corr", "best_val_corr", "test_loss",
+                "all_test_corr", "batch_avg_test_corr", "all_test_fve",
+                "AR_test_correlation", "AR_FVE",
+                "best_val_corr", "batch_avg_test_loss",
                 "mean_pattern_corr",
                 "neurons_model_beats_loo_avg", "neurons_model_beats_loo_temporal",
-                "model_avg_mean_corr", "model_temporal_mean_corr",
+                "model_avg_mean_corr",
                 # Legacy fallbacks
+                "test_corr", "model_temporal_mean_corr",
                 "neurons_model_beats_loo", "model_sample_mean_corr",
             ]
         # Only keep metrics that exist
@@ -367,8 +383,11 @@ class SweepAnalyzer:
         metric gets its own y-axis panel for readability.
         """
         if metrics is None:
-            metrics = ["test_corr", "mean_pattern_corr", "neurons_model_beats_loo_avg",
-                      "neurons_model_beats_loo_temporal", "neurons_model_beats_loo"]
+            metrics = ["all_test_corr", "batch_avg_test_corr", "AR_test_correlation",
+                      "mean_pattern_corr", "neurons_model_beats_loo_avg",
+                      "neurons_model_beats_loo_temporal",
+                      # Legacy fallbacks
+                      "test_corr", "neurons_model_beats_loo"]
         metrics = [m for m in metrics if m in self.df.columns]
         if not metrics:
             print("No matching metrics found")
@@ -430,7 +449,7 @@ class SweepAnalyzer:
 
     def plot_multi_sweep_comparison(
         self,
-        metric: str = "test_corr",
+        metric: str = "all_test_corr",
         savepath: Optional[str] = None,
     ) -> plt.Figure:
         """
@@ -511,7 +530,7 @@ class SweepAnalyzer:
 
     def generate_best_loo_figures(
         self,
-        metric: str = "test_corr",
+        metric: str = "all_test_corr",
         savedir: Optional[str] = None,
     ):
         """Load the best model and generate LOO comparison figures.

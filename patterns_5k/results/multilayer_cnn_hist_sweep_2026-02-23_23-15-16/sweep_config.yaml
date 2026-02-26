@@ -1,0 +1,86 @@
+sweep_name: "multilayer_cnn_hist_sweep"
+strategy: "grid"
+metric: "test_corr"
+direction: "maximize"
+seed: 42
+
+base_config:
+  datadir: "data/oracle_ICMS_150/"
+  problematic_neurons: [19, 104, 201, 211, 300, 310, 311, 312]
+  inference_mode: false
+  artifact_path: null
+  seed: 42
+  split_mode: "oracle"
+  input_bin_size_ms: 10
+  output_bin_size_ms: 10
+  n_input_bins: 60
+  n_output_bins: 60
+  output_offset: 0
+  max_time_ms: 600
+  encoding_mode: "current"
+  history: 0
+  batch_size: 16
+  model_type: "cnn"
+  embedding_dim: 0
+  dropout: 0.2
+  pooling: "none"
+  init_bias: null
+  init_state: true
+  learning_rate: 0.001
+  num_epochs: 50
+  weight_loss: 1
+  sum_loss: false
+  patience: 10
+  criterion_fn: "poisson"
+  pattern_limit: 50
+  skip_oracle_plots: true
+
+search_space:
+  # Bundle kernel_sizes + conv_channels so lengths always match.
+  # Each entry is unpacked into separate config keys at runtime.
+  _arch:
+    type: categorical
+    values:
+      - { kernel_sizes: [3, 3], conv_channels: [256, 128], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [5, 5], conv_channels: [256, 128], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [10, 10], conv_channels: [256, 128], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [3, 5], conv_channels: [256, 128], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [5, 10], conv_channels: [256, 128], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [3, 3], conv_channels: [128, 64], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [5, 5], conv_channels: [128, 64], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [10, 10], conv_channels: [128, 64], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [3, 5], conv_channels: [128, 64], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [5, 10], conv_channels: [128, 64], fc_dims: [256], history: 1 }
+      - { kernel_sizes: [3, 3], conv_channels: [256, 128], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [5, 5], conv_channels: [256, 128], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [10, 10], conv_channels: [256, 128], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [3, 5], conv_channels: [256, 128], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [5, 10], conv_channels: [256, 128], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [3, 3], conv_channels: [128, 64], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [5, 5], conv_channels: [128, 64], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [10, 10], conv_channels: [128, 64], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [3, 5], conv_channels: [128, 64], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [5, 10], conv_channels: [128, 64], fc_dims: [256], history: 2 }
+      - { kernel_sizes: [3, 3], conv_channels: [256, 128], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [5, 5], conv_channels: [256, 128], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [10, 10], conv_channels: [256, 128], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [3, 5], conv_channels: [256, 128], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [5, 10], conv_channels: [256, 128], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [3, 3], conv_channels: [128, 64], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [5, 5], conv_channels: [128, 64], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [10, 10], conv_channels: [128, 64], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [3, 5], conv_channels: [128, 64], fc_dims: [256], history: 5 }
+      - { kernel_sizes: [5, 10], conv_channels: [128, 64], fc_dims: [256], history: 5 }
+      
+      - { kernel_sizes: [3, 3], conv_channels: [256, 128], fc_dims: [256], history: 10 }
+      - { kernel_sizes: [5, 5], conv_channels: [256, 128], fc_dims: [256], history: 10 } 
+      - { kernel_sizes: [10, 10], conv_channels: [256, 128], fc_dims: [256], history: 10 }
+      - { kernel_sizes: [3, 5], conv_channels: [256, 128], fc_dims: [256], history: 10 }
+      - { kernel_sizes: [5, 10], conv_channels: [256, 128], fc_dims: [256], history: 10 }
+      - { kernel_sizes: [3, 3], conv_channels: [128, 64], fc_dims: [256], history: 10 }
+      - { kernel_sizes: [5, 5], conv_channels: [128, 64], fc_dims: [256], history: 10 }
+      - { kernel_sizes: [10, 10], conv_channels: [128, 64], fc_dims: [256], history: 10 }
+      - { kernel_sizes: [3, 5], conv_channels: [128, 64], fc_dims: [256], history: 10 }
+      - { kernel_sizes: [5, 10], conv_channels: [128, 64], fc_dims: [256], history: 10 }
+      
+

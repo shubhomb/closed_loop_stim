@@ -107,10 +107,18 @@ def _sample_random(search_space: dict, rng: random.Random) -> dict:
 def _make_experiment_name(trial_idx: int, overrides: dict) -> str:
     """Create a readable experiment sub-folder name."""
     parts = [f"trial_{trial_idx:04d}"]
+    # Flatten any bundled dict-valued overrides for naming
+    flat = {}
+    for k, v in overrides.items():
+        if isinstance(v, dict):
+            flat.update(v)
+        else:
+            flat[k] = v
     # Include a few key params for readability
-    for key in ("model_type", "learning_rate", "dropout", "init_state", "history"):
-        if key in overrides:
-            val = overrides[key]
+    for key in ("model_type", "learning_rate", "dropout", "init_state", "history",
+                "kernel_sizes", "conv_channels", "fc_dims"):
+        if key in flat:
+            val = flat[key]
             if isinstance(val, float):
                 parts.append(f"{key}={val:.1e}" if val < 0.01 else f"{key}={val}")
             elif isinstance(val, list):
@@ -130,10 +138,10 @@ def _build_optuna_search_space(search_space: dict):
             elif isinstance(spec, dict):
                 stype = spec.get("type", "categorical")
                 if stype == "categorical":
-                    # Optuna needs hashable choices — convert lists to tuples
+                    # Optuna needs hashable choices — convert lists/dicts to JSON strings
                     choices = spec["values"]
-                    has_lists = any(isinstance(v, list) for v in choices)
-                    if has_lists:
+                    has_unhashable = any(isinstance(v, (list, dict)) for v in choices)
+                    if has_unhashable:
                         str_choices = [json.dumps(v) for v in choices]
                         picked = trial.suggest_categorical(k, str_choices)
                         cfg[k] = json.loads(picked)
@@ -243,6 +251,10 @@ def run_grid_or_random_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = Fa
         # Merge base + overrides
         cfg = copy.deepcopy(base_config)
         cfg.update(overrides)
+        # Unpack any bundled dict-valued overrides (e.g. _arch → kernel_sizes, conv_channels)
+        for _k in list(cfg.keys()):
+            if isinstance(cfg[_k], dict):
+                cfg.update(cfg.pop(_k))
         cfg["skip_oracle_plots"] = True  # skip per-trial; do best-only at end
 
         logger.info(f"\n{'='*70}")
@@ -292,7 +304,7 @@ def run_optuna_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
     base_config = sweep_cfg.get("base_config", {})
     search_space = sweep_cfg.get("search_space", {})
     n_trials = sweep_cfg.get("n_trials", 20)
-    metric = sweep_cfg.get("metric", "test_corr")
+    metric = sweep_cfg.get("metric", "all_test_corr")
     direction = sweep_cfg.get("direction", "maximize")
     seed = sweep_cfg.get("seed", 42)
 
@@ -316,6 +328,10 @@ def run_optuna_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
 
         cfg = copy.deepcopy(base_config)
         cfg.update(overrides)
+        # Unpack any bundled dict-valued overrides (e.g. _arch → kernel_sizes, conv_channels)
+        for _k in list(cfg.keys()):
+            if isinstance(cfg[_k], dict):
+                cfg.update(cfg.pop(_k))
         cfg["skip_oracle_plots"] = True  # skip per-trial; do best-only at end
 
         logger.info(f"\n{'='*70}")
@@ -432,7 +448,7 @@ def main():
     logger.info(f"Sweep: {sweep_name}")
     logger.info(f"Strategy: {sweep_cfg.get('strategy', 'grid')}")
     logger.info(f"Output: {sweep_dir}")
-    logger.info(f"Metric: {sweep_cfg.get('metric', 'test_corr')} ({sweep_cfg.get('direction', 'maximize')})")
+    logger.info(f"Metric: {sweep_cfg.get('metric', 'all_test_corr')} ({sweep_cfg.get('direction', 'maximize')})")
 
     # Dispatch
     strategy = sweep_cfg.get("strategy", "grid")
@@ -454,7 +470,7 @@ def main():
         # Print leaderboard
         completed = df[df["status"] == "completed"]
         if not completed.empty:
-            metric = sweep_cfg.get("metric", "test_corr")
+            metric = sweep_cfg.get("metric", "all_test_corr")
             if metric in completed.columns:
                 ascending = sweep_cfg.get("direction", "maximize") == "minimize"
                 leaderboard = completed.sort_values(metric, ascending=ascending)

@@ -32,6 +32,7 @@ from tqdm import tqdm
 
 from models import (
     SimpleCausalSpikeCNN,
+    HistoryCacheCausalCNN,
     train_epoch,
     validate,
 )
@@ -44,6 +45,8 @@ from utils import (
     preprocess_pattern_stimulations_df,
     read_pattern_json,
     trial_breakout_spikes_and_patterns,
+    load_model_from_run_dir,
+    load_raw_data
 )
 from viz import (
     analyze_pattern_responses_by_pattern_name,
@@ -53,6 +56,8 @@ from viz import (
     plot_spike_bin_distribution,
     plot_test_prediction_comparison,
 )
+
+from metrics import compute_correlation, fraction_variance_explained
 
 
 # ---------------------------------------------------------------------------
@@ -90,90 +95,6 @@ def make_device(logger: logging.Logger) -> torch.device:
     return device
 
 
-def load_model_from_run_dir(run_dir, n_stim_channels, n_neurons, device=None):
-    """Load a trained model from an experiment run directory.
-
-    Parameters
-    ----------
-    run_dir : str
-        Path to the experiment directory containing ``config.yaml`` and
-        ``best_stim_spike_model.pt``.
-    n_stim_channels : int
-        Number of stimulation channels (from dataset / raw data).
-    n_neurons : int
-        Number of neurons (from dataset / raw data).
-    device : torch.device, optional
-        Device to place the model on.  Defaults to CPU.
-
-    Returns
-    -------
-    model : nn.Module
-        The loaded model in eval mode.
-    cfg : dict
-        The experiment config.
-    device : torch.device
-    """
-    cfg_path = os.path.join(run_dir, "config.yaml")
-    with open(cfg_path) as f:
-        cfg = yaml.safe_load(f)
-
-    if device is None:
-        device = torch.device("cpu")
-
-    # --- Derive model input channels ---
-    ENCODING_MODE = cfg.get("encoding_mode", "current")
-    HISTORY = cfg.get("history", 0)
-    INIT_STATE = cfg.get("init_state", False)
-    N_INPUT_BINS = cfg["n_input_bins"]
-    N_OUTPUT_BINS = cfg["n_output_bins"]
-    N_INITIAL_STATE_BINS = cfg.get("n_initial_state_bins", 1)
-
-    if ENCODING_MODE == "current" and HISTORY is not None and HISTORY > 0:
-        n_model_input_channels = n_stim_channels + n_neurons
-    else:
-        n_model_input_channels = n_stim_channels
-
-    MODEL_TYPE = cfg.get("model_type", "cnn")
-
-    # For CNN + init_state: auto-compute n_initial_state_bins
-    # Only the valid-conv reduction; history lookback is handled in __getitem__
-    if INIT_STATE and MODEL_TYPE == "cnn":
-        _kernel_sizes = cfg.get("kernel_sizes", [60])
-        N_INITIAL_STATE_BINS = sum(k - 1 for k in _kernel_sizes)
-
-    # --- Build model ---
-    EMBEDDING_DIM = cfg.get("embedding_dim", 0)
-    DROPOUT = cfg.get("dropout", 0.2)
-    CONV_CHANNELS = cfg.get("conv_channels", [128])
-    KERNEL_SIZES = cfg.get("kernel_sizes", [60])
-    FC_DIMS = cfg.get("fc_dims", [256])
-
-    if MODEL_TYPE == "cnn":
-        model = SimpleCausalSpikeCNN(
-            n_stim_channels=n_model_input_channels,
-            n_neurons=n_neurons,
-            n_input_bins=N_INPUT_BINS,
-            n_output_bins=N_OUTPUT_BINS,
-            embedding_dim=EMBEDDING_DIM,
-            conv_channels=CONV_CHANNELS,
-            kernel_sizes=KERNEL_SIZES,
-            fc_dims=FC_DIMS,
-            dropout=DROPOUT,
-            num_stim_levels=NUM_STIM_LEVELS,
-            use_init_state=INIT_STATE,
-        )
-    else:
-        raise ValueError(f"Unknown model_type: {MODEL_TYPE}")
-
-    # --- Load weights ---
-    weights_path = os.path.join(run_dir, "best_stim_spike_model.pt")
-    model.load_state_dict(torch.load(weights_path, weights_only=True, map_location=device))
-    model = model.to(device)
-    model.eval()
-
-    return model, cfg, device
-
-
 # ---------------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------------
@@ -186,66 +107,6 @@ _DATASET_CONFIG_KEYS = frozenset([
     "output_offset", "max_time_ms", "encoding_mode", "init_state",
     "n_initial_state_bins", "history", "batch_size",
 ])
-
-
-def load_raw_data(cfg: dict, logger=None) -> dict:
-    """Load and preprocess the raw spike / pattern data.
-
-    This is the expensive I/O step (~45 s).  The result can be reused
-    across experiments that share the same *datadir* and
-    *problematic_neurons*.
-
-    Returns a dict with:
-        pattern_df, spike_responses, pattern_stims, pattern_polarities,
-        channel_to_index, timing_to_pattern, unique_trials,
-        spiking_neurons, n_stim_channels, n_neurons
-    """
-    _log = logger.info if logger else print
-
-    datadir = cfg["datadir"]
-    problematic_neurons = cfg.get("problematic_neurons", [])
-
-    _log("Loading data …")
-    spikes_df = make_spikes_responses_df(os.path.join(datadir, "spkVecs.npy"))
-    spikes_df = spikes_df[~spikes_df["neuron_id"].isin(problematic_neurons)]
-    _log(f"{spikes_df['neuron_id'].nunique()} unique neurons after dropping problematic neurons")
-
-    pattern_registrations_path = os.path.join(datadir, "pattern_registrations.pkl")
-    pattern_df, min_pattern_timestamp = preprocess_pattern_stimulations_df(
-        read_pattern_json(pattern_registrations_path), align_to_stim=True
-    )
-
-    channel_to_index = {ch: idx for idx, ch in enumerate(sorted(pattern_df["channel"].dropna().unique()))}
-    spiking_neurons = spikes_df["neuron_id"].unique()
-    spiking_neuron_to_index = {neuron: idx for idx, neuron in enumerate(spiking_neurons)}
-    spiking_neurons.sort()
-
-    _log(f"Stimulation channels: {len(channel_to_index)}, Spiking neurons: {len(spiking_neurons)}")
-
-    pattern_stims, pattern_polarities, spike_responses, timing_to_pattern, unique_trials = (
-        trial_breakout_spikes_and_patterns(
-            spikes_df,
-            pattern_df,
-            channel_to_index,
-            spiking_neurons=spiking_neurons,
-            spiking_neuron_to_index=spiking_neuron_to_index,
-        )
-    )
-    _log(f"Unique patterns: {len(pattern_stims)}, Total trials: {len(spike_responses)}")
-
-    return {
-        "pattern_df": pattern_df,
-        "spike_responses": spike_responses,
-        "pattern_stims": pattern_stims,
-        "pattern_polarities": pattern_polarities,
-        "channel_to_index": channel_to_index,
-        "timing_to_pattern": timing_to_pattern,
-        "unique_trials": unique_trials,
-        "spiking_neurons": spiking_neurons,
-        "n_stim_channels": len(channel_to_index),
-        "n_neurons": len(spiking_neurons),
-    }
-
 
 def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict:
     """
@@ -299,7 +160,13 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
     # For CNN with valid convolution + init_state: auto-compute n_initial_state_bins
     # Only the valid-conv reduction; history lookback is handled in __getitem__
     _model_type = cfg.get("model_type", "cnn")
-    if INIT_STATE and _model_type in ("cnn",):
+    if _model_type == "cache_cnn":
+        # Cache model manages its own spike history via the cache — force
+        # history=0 (stim-only dataset) and init_state=False (causal padding).
+        HISTORY = 0
+        INIT_STATE = False
+        N_INITIAL_STATE_BINS = 0
+    elif INIT_STATE and _model_type in ("cnn",):
         _kernel_sizes = cfg.get("kernel_sizes", [60])
         N_INITIAL_STATE_BINS = sum(k - 1 for k in _kernel_sizes)
 
@@ -423,6 +290,24 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
             num_stim_levels=NUM_STIM_LEVELS,
             use_init_state=INIT_STATE,
         ).to(device)
+    elif MODEL_TYPE == "cache_cnn":
+        CACHE_SIZE = cfg.get("cache_size", 5)
+        CACHE_EMBED_DIM = cfg.get("cache_embed_dim", 8)
+        USE_BATCH_NORM = cfg.get("use_batch_norm", True)
+        model = HistoryCacheCausalCNN(
+            n_stim_channels=n_stim_channels,
+            n_neurons=n_neurons,
+            n_input_bins=N_INPUT_BINS,
+            n_output_bins=N_OUTPUT_BINS,
+            conv_channels=CONV_CHANNELS,
+            kernel_sizes=KERNEL_SIZES,
+            fc_dims=FC_DIMS,
+            dropout=DROPOUT,
+            cache_size=CACHE_SIZE,
+            cache_embed_dim=CACHE_EMBED_DIM,
+            use_batch_norm=USE_BATCH_NORM,
+            use_init_state=False,  # always causal padding
+        ).to(device)
     elif MODEL_TYPE == "rnn":
         LATENT_DIM = cfg.get("latent_dim", 128)
         NUM_GRU_LAYERS = cfg.get("num_gru_layers", 1)
@@ -451,7 +336,7 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
     # ================================================================
     NUM_EPOCHS = cfg.get("num_epochs", 50)
     LEARNING_RATE = cfg.get("learning_rate", 0.001)
-    WEIGHT_DECAY = cfg.get("weight_decay", 0)
+    WEIGHT_DECAY = float(cfg.get("weight_decay", 0))  # guard against YAML parsing as string
     WEIGHT_LOSS = cfg.get("weight_loss", 1)
     PATIENCE = cfg.get("patience", 10)
     CRITERION_FN = cfg.get("criterion_fn", "poisson")
@@ -471,17 +356,22 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
     patience_counter = 0
     model_save_path = os.path.join(run_dir, "best_stim_spike_model.pt")
 
+    IS_CACHE_MODEL = MODEL_TYPE == "cache_cnn"
+    CACHE_TRAIN_MODE = cfg.get("cache_train_mode", "teacher_forcing")
+
     logger.info("Starting training …")
     for epoch in tqdm(range(NUM_EPOCHS), desc="Epochs"):
         train_loss = train_epoch(
             model, train_loader, criterion, optimizer, device,
             sum_loss=SUM_LOSS, grad_clip=False, weight_loss=WEIGHT_LOSS,
             use_init_state=USE_INIT_STATE,
+            is_cache_model=IS_CACHE_MODEL, cache_mode=CACHE_TRAIN_MODE,
         )
         val_loss, val_corr = validate(
             model, val_loader, criterion, device,
             sum_loss=SUM_LOSS, weight_loss=WEIGHT_LOSS,
             use_init_state=USE_INIT_STATE,
+            is_cache_model=IS_CACHE_MODEL, cache_mode=CACHE_TRAIN_MODE,
         )
 
         scheduler.step(val_loss)
@@ -520,6 +410,7 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
         model, test_loader, criterion, device,
         sum_loss=SUM_LOSS, weight_loss=WEIGHT_LOSS,
         use_init_state=USE_INIT_STATE,
+        is_cache_model=IS_CACHE_MODEL, cache_mode=CACHE_TRAIN_MODE,
     )
     logger.info(f"Test loss: {test_loss:.6f}, Test corr: {test_corr:.6f}")
 
@@ -532,6 +423,10 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
                 bx, by, bi = batch
                 bx = bx.to(device)
                 preds = model(bx)
+            elif IS_CACHE_MODEL:
+                bx, by = batch
+                bx, by_dev = bx.to(device), by.to(device)
+                preds = model(bx, by_dev, mode=CACHE_TRAIN_MODE)
             else:
                 bx, by = batch
                 bx = bx.to(device)
@@ -541,6 +436,42 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
 
     all_preds = torch.cat(all_preds, dim=0).numpy()
     all_targets = torch.cat(all_targets, dim=0).numpy()
+
+    # Convert log-rates to rates for FVE (model outputs log-rates for PoissonNLLLoss)
+    all_preds_rates = np.exp(all_preds)
+
+    # Fraction of variance explained (global variance)
+    _, fve_mean = fraction_variance_explained(all_targets, all_preds_rates, global_variance=True)
+    logger.info(f"Fraction of variance explained (FVE): {fve_mean:.6f}")
+
+    # ── Autoregressive (AR) inference ──
+    if HISTORY is not None and HISTORY > 0:
+        logger.info("Computing autoregressive (AR) test predictions …")
+        ar_preds, ar_targets = _compute_ar_test_predictions(
+            model, test_dataset, device, n_neurons,
+            n_input_bins=N_INPUT_BINS, n_output_bins=N_OUTPUT_BINS,
+            output_offset=OUTPUT_OFFSET, history=HISTORY,
+            init_state=INIT_STATE, n_initial_state_bins=N_INITIAL_STATE_BINS,
+            max_time_ms=MAX_TIME_MS, input_bin_size_ms=INPUT_BIN_SIZE_MS,
+            output_bin_size_ms=OUTPUT_BIN_SIZE_MS,
+        )
+        _, ar_fve_mean = fraction_variance_explained(
+            ar_targets, ar_preds, global_variance=True,
+        )
+        # Per-neuron temporal correlation (concatenated across all samples)
+        ar_corrs = []
+        for nidx in range(n_neurons):
+            true_n = ar_targets[:, nidx, :].ravel()
+            pred_n = ar_preds[:, nidx, :].ravel()
+            if true_n.std() > 1e-6 and pred_n.std() > 1e-6:
+                ar_corrs.append(pearsonr(true_n, pred_n)[0])
+            else:
+                ar_corrs.append(0.0)
+        ar_test_corr = float(np.mean(ar_corrs))
+        logger.info(f"AR FVE: {ar_fve_mean:.6f}, AR test corr: {ar_test_corr:.6f}")
+    else:
+        ar_fve_mean = float('nan')
+        ar_test_corr = float('nan')
 
     # ================================================================
     # 6. Figures
@@ -652,15 +583,31 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
     summary = {
         "run_dir": run_dir,
         "model_type": MODEL_TYPE,
-        "test_loss": float(test_loss),
-        "test_corr": float(test_corr),
+        "batch_avg_test_loss": float(test_loss),
+        "batch_avg_test_corr": float(test_corr),
+        "all_test_fve": float(fve_mean),
+        "AR_FVE": float(ar_fve_mean),
+        "AR_test_correlation": float(ar_test_corr),
         "best_val_corr": float(best_val_corr),
         "total_params": total_params,
         "trainable_params": trainable_params,
         "epochs_trained": len(history["train_loss"]),
         "mean_pattern_corr": mean_pattern_corr,
+        "history": HISTORY,
+        "init_state": INIT_STATE,
         **loo_metrics,
     }
+    # Add architecture details for CNN
+    if MODEL_TYPE == "cnn":
+        summary["kernel_sizes"] = KERNEL_SIZES
+        summary["conv_channels"] = CONV_CHANNELS
+        summary["fc_dims"] = FC_DIMS
+    elif MODEL_TYPE == "cache_cnn":
+        summary["kernel_sizes"] = KERNEL_SIZES
+        summary["conv_channels"] = CONV_CHANNELS
+        summary["fc_dims"] = FC_DIMS
+        summary["cache_size"] = CACHE_SIZE
+        summary["cache_embed_dim"] = CACHE_EMBED_DIM
 
     with open(os.path.join(run_dir, "summary_metrics.json"), "w") as f:
         json.dump(summary, f, indent=2)
@@ -914,6 +861,156 @@ def _plot_loo_comparison(
     return fig
 
 
+def _compute_ar_test_predictions(
+    model, test_dataset, device, n_neurons,
+    n_input_bins, n_output_bins, output_offset, history,
+    init_state, n_initial_state_bins,
+    max_time_ms, input_bin_size_ms, output_bin_size_ms,
+):
+    """
+    Compute autoregressive (AR) test predictions.
+
+    For each trial, processes sliding windows in temporal order, using the
+    model's own predicted rates as lagged spike history instead of ground
+    truth.  The init state (from the previous trial) remains ground truth.
+    Stimulation channels are always ground truth.
+
+    Returns
+    -------
+    ar_preds : np.ndarray (N, n_neurons, n_output_bins)
+        Predicted firing rates (exp'd) from AR inference.
+    targets : np.ndarray (N, n_neurons, n_output_bins)
+        Ground-truth spike counts (identical to teacher-forced targets).
+    """
+    total_output_bins = max_time_ms // output_bin_size_ms
+    total_input_bins = max_time_ms // input_bin_size_ms
+
+    max_s_in = total_input_bins - n_input_bins
+    max_s_out = total_output_bins - output_offset - n_output_bins
+    max_t = min(max_s_in, max_s_out) + 1
+
+    N = len(test_dataset)
+    ar_preds = np.zeros((N, n_neurons, n_output_bins), dtype=np.float32)
+    targets = np.zeros((N, n_neurons, n_output_bins), dtype=np.float32)
+
+    # (timing_idx, t) → dataset sample index
+    sample_lookup = {}
+    for sample_idx, (timing_idx, t) in enumerate(test_dataset.samples):
+        sample_lookup[(timing_idx, t)] = sample_idx
+
+    # Unique trials
+    trial_indices = sorted(set(ti for ti, _ in test_dataset.samples))
+    n_trials = len(trial_indices)
+
+    # Pre-compute init states (ground truth from previous trial)
+    trial_init = {}
+    if init_state and n_initial_state_bins > 0:
+        for timing_idx in trial_indices:
+            prev = timing_idx - 1
+            if prev in test_dataset.spike_responses_binned:
+                trial_init[timing_idx] = (
+                    test_dataset.spike_responses_binned[prev][:, -n_initial_state_bins:]
+                )
+            else:
+                trial_init[timing_idx] = np.zeros(
+                    (n_neurons, n_initial_state_bins), dtype=np.float32,
+                )
+
+    # Per-trial AR buffers: accumulate predicted rates over time
+    ar_sum = {ti: np.zeros((n_neurons, total_output_bins), dtype=np.float32)
+              for ti in trial_indices}
+    ar_cnt = {ti: np.zeros(total_output_bins, dtype=np.float32)
+              for ti in trial_indices}
+
+    model.eval()
+    with torch.no_grad():
+        for t in range(max_t):
+            # -- Build one input per trial at this time position --
+            batch_xs = []
+            for timing_idx in trial_indices:
+                pattern_name = test_dataset.timing_to_pattern[timing_idx]
+                stim_src = test_dataset.pattern_stims[pattern_name]
+
+                # Stim channels
+                se = t + n_input_bins
+                if se <= stim_src.shape[1]:
+                    xs = stim_src[:, t:se].copy()
+                else:
+                    xs = np.zeros((stim_src.shape[0], n_input_bins), dtype=np.float32)
+                    av = max(0, stim_src.shape[1] - t)
+                    if av > 0:
+                        xs[:, :av] = stim_src[:, t:t + av]
+
+                # Valid-conv context padding
+                if init_state and n_initial_state_bins > 0:
+                    xs = np.pad(xs, ((0, 0), (n_initial_state_bins, 0)),
+                                mode='constant')
+
+                # History channels from AR buffer (replaces ground truth)
+                if history > 0:
+                    _s = ar_sum[timing_idx]
+                    _c = ar_cnt[timing_idx]
+                    curr_ar = np.zeros((n_neurons, total_output_bins),
+                                       dtype=np.float32)
+                    msk = _c > 0
+                    if msk.any():
+                        curr_ar[:, msk] = _s[:, msk] / _c[msk]
+
+                    ar_slice = curr_ar[:, t:t + n_input_bins]
+                    if ar_slice.shape[1] < n_input_bins:
+                        ar_slice = np.pad(
+                            ar_slice,
+                            ((0, 0), (0, n_input_bins - ar_slice.shape[1])),
+                        )
+
+                    _init = trial_init.get(timing_idx)
+                    if init_state and _init is not None:
+                        sfl = np.concatenate([_init, ar_slice], axis=1)
+                    else:
+                        sfl = ar_slice
+
+                    tt = xs.shape[1]
+                    yh = np.zeros((n_neurons, tt), dtype=np.float32)
+                    if tt > history:
+                        src = sfl[:, :tt - history]
+                        yh[:, history:history + src.shape[1]] = src
+                    xs = np.concatenate([xs.astype(np.float32), yh], axis=0)
+
+                batch_xs.append(xs)
+
+            # -- Forward pass in sub-batches --
+            for c0 in range(0, n_trials, 256):
+                c1 = min(c0 + 256, n_trials)
+                chunk_xs = batch_xs[c0:c1]
+                chunk_ids = trial_indices[c0:c1]
+
+                bx = torch.tensor(np.stack(chunk_xs), dtype=torch.float32).to(device)
+                pr_batch = model(bx).cpu().numpy()
+
+                for i, timing_idx in enumerate(chunk_ids):
+                    pr = pr_batch[i]  # (n_neurons, n_output_bins)
+
+                    # Store prediction if this position is a dataset sample
+                    key = (timing_idx, t)
+                    if key in sample_lookup:
+                        sidx = sample_lookup[key]
+                        ar_preds[sidx] = np.exp(pr)
+                        trial_spikes = test_dataset.spike_responses_binned[timing_idx]
+                        out_start = t + output_offset
+                        targets[sidx] = trial_spikes[
+                            :, out_start:out_start + n_output_bins
+                        ]
+
+                    # Update AR buffer
+                    for o in range(n_output_bins):
+                        tb = t + output_offset + o
+                        if 0 <= tb < total_output_bins:
+                            ar_sum[timing_idx][:, tb] += np.exp(pr[:, o])
+                            ar_cnt[timing_idx][tb] += 1
+
+    return ar_preds, targets
+
+
 def _compute_loo_baseline(
     model, test_dataset, spike_responses, device, n_neurons,
     use_init_state, run_dir, logger,
@@ -955,7 +1052,7 @@ def _compute_loo_baseline(
         "model_avg_mean_corr": float(np.mean(model_avg)),
         "neurons_model_beats_loo_avg": int((diff_avg > 0).sum()),
         "loo_temporal_mean_corr": float(np.mean(loo_temp)),
-        "model_temporal_mean_corr": float(np.mean(model_temp)),
+        "all_test_corr": float(np.mean(model_temp)),
         "neurons_model_beats_loo_temporal": int((diff_temp > 0).sum()),
     }
 
@@ -986,4 +1083,4 @@ if __name__ == "__main__":
 
     summary = run_experiment(cfg, run_dir)
     print(f"\n✓ Done. Results in {run_dir}")
-    print(f"  test_corr={summary['test_corr']:.6f}  best_val_corr={summary['best_val_corr']:.6f}")
+    print(f"  all_test_corr={summary.get('all_test_corr', float('nan')):.6f}  best_val_corr={summary['best_val_corr']:.6f}")
