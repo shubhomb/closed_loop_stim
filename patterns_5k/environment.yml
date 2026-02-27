@@ -1,0 +1,60 @@
+# Cross-platform environment specification for patterns_5k.
+# Exported from the local macOS 3_11 environment, stripped of
+# platform-specific system libraries so it resolves on linux-64 (NOTS).
+#
+# Recreate with:
+#   conda env create -f environment.yml -p /path/to/env
+name: patterns5k_3_11
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  # --- Scientific core ---
+  - numpy=2.3.3
+  - scipy=1.16.2
+  - pandas=2.3.3
+  - scikit-learn=1.7.2
+  - matplotlib=3.10.6
+  - h5py=3.14.0
+  - networkx=3.5
+  - sympy=1.14.0
+  - cvxpy=1.7.2
+  - optuna=4.6.0
+  - tqdm=4.67.1
+  # --- Jupyter ---
+  - jupyter=1.0.0
+  - ipykernel=6.29.5
+  - ipython=9.5.0
+  - notebook=6.5.7
+  - jupyterlab=3.3.2
+  # --- I/O and web ---
+  - requests=2.32.4
+  - pyyaml=6.0.2
+  - lxml=5.3.0
+  - pillow=11.3.0
+  # --- Build / utility ---
+  - pip=25.1
+  - setuptools=78.1.1
+  - wheel=0.45.1
+  - filelock=3.17.0
+  - joblib=1.5.2
+  - psutil=7.0.0
+  # --- MPI (optional, for distributed) ---
+  - mpi4py=4.0.3
+  # --- pip-only packages ---
+  - pip:
+      - ecos==2.0.14
+      - ellipsinator==0.3.0
+      - imageio==2.37.2
+      - lazy-loader==0.4
+      - llvmlite==0.45.1
+      - numba==0.62.1
+      - phantominator==0.7.0
+      - pynndescent==0.5.13
+      - scikit-image==0.25.2
+      - ssfp==1.2.0
+      - tifffile==2025.10.16
+      - torch==2.10.0.dev20251124
+      - torchvision==0.25.0.dev20251124
+      - umap-learn==0.5.9.post2

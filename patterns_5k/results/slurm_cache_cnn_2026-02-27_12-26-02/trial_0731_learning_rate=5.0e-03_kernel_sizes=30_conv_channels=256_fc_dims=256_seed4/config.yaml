@@ -1,0 +1,48 @@
+artifact_path: null
+batch_size: 16
+cache_embed_dim: 8
+cache_size: 2
+cache_train_mode: teacher_forcing
+conv_channels:
+- 256
+criterion_fn: poisson
+datadir: data/oracle_ICMS_150/
+dropout: 0.2
+embedding_dim: 0
+encoding_mode: current
+fc_dims:
+- 256
+history: 0
+inference_mode: false
+init_bias: null
+init_state: false
+input_bin_size_ms: 10
+kernel_sizes:
+- 30
+learning_rate: 0.005
+max_time_ms: 600
+model_type: cache_cnn
+n_input_bins: 60
+n_output_bins: 60
+num_epochs: 50
+output_bin_size_ms: 10
+output_offset: 0
+patience: 10
+pattern_limit: 50
+pooling: none
+problematic_neurons:
+- 19
+- 104
+- 201
+- 211
+- 300
+- 310
+- 311
+- 312
+seed: 4
+skip_oracle_plots: true
+split_mode: oracle
+sum_loss: false
+use_batch_norm: true
+weight_decay: 1.0e-05
+weight_loss: 1
