@@ -277,7 +277,7 @@ def analyze_pattern_responses_by_pattern_name(model, dataset, device, use_init_s
     pattern_counts = np.zeros(n_patterns)
     
     # Process all samples
-    loader = DataLoader(dataset, batch_size=256, shuffle=False)
+    loader = DataLoader(dataset, batch_size=256, shuffle=False, num_workers=4, pin_memory=True)
     sample_idx = 0
     
     with torch.no_grad():
@@ -1228,7 +1228,7 @@ def plot_psth_per_neuron(
 
     # ── 1. Collect model predictions (batched) ──
     model.eval()
-    loader = DataLoader(test_dataset, batch_size=256, shuffle=False)
+    loader = DataLoader(test_dataset, batch_size=256, shuffle=False, num_workers=4, pin_memory=True)
 
     # pred_all shape: (n_samples, n_neurons, n_output_bins)
     pred_chunks = []

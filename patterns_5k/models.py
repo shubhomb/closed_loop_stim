@@ -14,6 +14,7 @@ import numpy as np
 from typing import List, Optional
 from collections import defaultdict
 from tqdm import tqdm
+from torch.amp import autocast, GradScaler
 from metrics import compute_correlation
 
         
@@ -560,7 +561,7 @@ def sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx,
 
     if stim_binned is None:
         stim_binned = ds.pattern_stims[ds.timing_to_pattern[timing_idx]]
-    gt_spikes = ds.spike_responses_binned[timing_idx]
+    gt_spikes = ds.spike_responses_binned[timing_idx] # ground truth spikes for the trial
 
     p_sum  = np.zeros((n_neurons, tot_out), dtype=np.float32)
     p_cnt  = np.zeros(tot_out, dtype=np.float32)
@@ -578,7 +579,6 @@ def sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx,
     model.eval()
     with torch.no_grad():
         for t in range(max_s + 1):
-            # -- chunk correction --
             if chunk_length is not None:
                 t_out = t + output_offset
                 if t_out > 0 and t_out % chunk_length == 0:
@@ -989,7 +989,7 @@ def perturbation_analysis(model_tuple, loader, n_stim_channels,
 # Training and Validation Functions
 # =====================
 
-def train_epoch(model, loader, criterion, optimizer, device, grad_clip=True, max_norm=1.0, sum_loss=False, weight_loss=1, use_init_state=False, is_cache_model=False, cache_mode='teacher_forcing'):
+def train_epoch(model, loader, criterion, optimizer, device, grad_clip=True, max_norm=1.0, sum_loss=False, weight_loss=1, use_init_state=False, is_cache_model=False, cache_mode='teacher_forcing', scaler=None, use_amp=False):
     """
     Train the model for one epoch.
     
@@ -1004,10 +1004,14 @@ def train_epoch(model, loader, criterion, optimizer, device, grad_clip=True, max
         use_init_state: Whether the dataset returns initial state (for RNN models)
         is_cache_model: Whether the model is a HistoryCacheCausalCNN
         cache_mode: Forward mode for cache model ('teacher_forcing', 'semi_ar', 'ar')
+        scaler: GradScaler instance for AMP (created automatically if use_amp=True and scaler is None)
+        use_amp: Whether to use automatic mixed precision
     
     Returns:
         Average loss over the epoch
     """
+    if use_amp and scaler is None:
+        scaler = GradScaler()
     
     model.train()
     total_loss = 0
@@ -1015,45 +1019,56 @@ def train_epoch(model, loader, criterion, optimizer, device, grad_clip=True, max
     for batch in pbar:
         if use_init_state:
             batch_x, batch_y, batch_init = batch
-            batch_x, batch_y, batch_init = batch_x.to(device), batch_y.to(device), batch_init.to(device)
+            batch_x, batch_y, batch_init = batch_x.to(device, non_blocking=True), batch_y.to(device, non_blocking=True), batch_init.to(device, non_blocking=True)
         else:
             batch_x, batch_y = batch
-            batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+            batch_x, batch_y = batch_x.to(device, non_blocking=True), batch_y.to(device, non_blocking=True)
             batch_init = None
         
         optimizer.zero_grad()
         
-        # Forward pass - handle models with initial_spikes argument
-        if is_cache_model:
-            predictions = model(batch_x, batch_y, mode=cache_mode)
-        elif use_init_state and hasattr(model, 'forward') and 'initial_spikes' in model.forward.__code__.co_varnames:
-            predictions = model(batch_x, initial_spikes=batch_init)
-        else:
-            predictions = model(batch_x)
+        with autocast(device.type, enabled=use_amp):
+            # Forward pass - handle models with initial_spikes argument
+            if is_cache_model:
+                predictions = model(batch_x, batch_y, mode=cache_mode)
+            elif use_init_state and hasattr(model, 'forward') and 'initial_spikes' in model.forward.__code__.co_varnames:
+                predictions = model(batch_x, initial_spikes=batch_init)
+            else:
+                predictions = model(batch_x)
+            
+            if sum_loss:
+                    # 1. Convert log-rates to rates (counts)
+                    rates = torch.exp(predictions)
+                    # 2. Sum the rates to get total predicted count
+                    summed_rates = rates.sum(dim=-1)
+                    # 3. Convert back to log-space for PoissonNLLLoss(log_input=True) w a tiny eps
+                    predictions = torch.log(summed_rates + 1e-8)
+                    batch_y = batch_y.sum(dim=-1)
+            weights = torch.ones_like(batch_y)
+            weights[batch_y > 0] = weight_loss # weight nonzeros more
+            loss = (weights * criterion(predictions, batch_y)).mean()
         
-        if sum_loss:
-                # 1. Convert log-rates to rates (counts)
-                rates = torch.exp(predictions)
-                # 2. Sum the rates to get total predicted count
-                summed_rates = rates.sum(dim=-1)
-                # 3. Convert back to log-space for PoissonNLLLoss(log_input=True) w a tiny eps
-                predictions = torch.log(summed_rates + 1e-8)
-                batch_y = batch_y.sum(dim=-1)
-        weights = torch.ones_like(batch_y)
-        weights[batch_y > 0] = weight_loss # weight nonzeros more
-        loss = (weights * criterion(predictions, batch_y)).mean()
-        # on some bin sizes, we may want to sum
-        loss.backward()
-        if grad_clip:
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm)
-        optimizer.step()        
+        # Backward pass with AMP scaling
+        if use_amp and scaler is not None:
+            scaler.scale(loss).backward()
+            if grad_clip:
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm)
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            loss.backward()
+            if grad_clip:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm)
+            optimizer.step()
+        
         total_loss += loss.item() * batch_x.size(0)
         pbar.set_postfix({'loss': loss.item()})
     
     return total_loss / len(loader.dataset)
 
 
-def validate(model, loader, criterion, device, sum_loss=False, weight_loss=1, use_init_state=False, is_cache_model=False, cache_mode='teacher_forcing'):
+def validate(model, loader, criterion, device, sum_loss=False, weight_loss=1, use_init_state=False, is_cache_model=False, cache_mode='teacher_forcing', use_amp=False):
     """
     Validate the model on a dataset.
     
@@ -1067,6 +1082,7 @@ def validate(model, loader, criterion, device, sum_loss=False, weight_loss=1, us
         use_init_state: Whether the dataset returns initial state (for RNN models)
         is_cache_model: Whether the model is a HistoryCacheCausalCNN
         cache_mode: Forward mode for cache model ('teacher_forcing', 'semi_ar', 'ar')
+        use_amp: Whether to use automatic mixed precision
     
     Returns:
         Average loss over the dataset
@@ -1080,28 +1096,29 @@ def validate(model, loader, criterion, device, sum_loss=False, weight_loss=1, us
         for batch in pbar:
             if use_init_state:
                 batch_x, batch_y, batch_init = batch
-                batch_x, batch_y, batch_init = batch_x.to(device), batch_y.to(device), batch_init.to(device)
+                batch_x, batch_y, batch_init = batch_x.to(device, non_blocking=True), batch_y.to(device, non_blocking=True), batch_init.to(device, non_blocking=True)
             else:
                 batch_x, batch_y = batch
-                batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+                batch_x, batch_y = batch_x.to(device, non_blocking=True), batch_y.to(device, non_blocking=True)
                 batch_init = None
             
-            # Forward pass - handle models with initial_spikes argument
-            if is_cache_model:
-                predictions = model(batch_x, batch_y, mode=cache_mode)
-            elif use_init_state and hasattr(model, 'forward') and 'initial_spikes' in model.forward.__code__.co_varnames:
-                predictions = model(batch_x, initial_spikes=batch_init)
-            else:
-                predictions = model(batch_x)
-            
-            if sum_loss:
-                rates = torch.exp(predictions)
-                summed_rates = rates.sum(dim=-1)
-                predictions = torch.log(summed_rates + 1e-8)
-                batch_y = batch_y.sum(dim=-1)
-            weights = torch.ones_like(batch_y)
-            weights[batch_y > 0] = weight_loss # weight nonzeros more
-            loss = (weights * criterion(predictions, batch_y)).mean()
+            with autocast(device.type, enabled=use_amp):
+                # Forward pass - handle models with initial_spikes argument
+                if is_cache_model:
+                    predictions = model(batch_x, batch_y, mode=cache_mode)
+                elif use_init_state and hasattr(model, 'forward') and 'initial_spikes' in model.forward.__code__.co_varnames:
+                    predictions = model(batch_x, initial_spikes=batch_init)
+                else:
+                    predictions = model(batch_x)
+                
+                if sum_loss:
+                    rates = torch.exp(predictions)
+                    summed_rates = rates.sum(dim=-1)
+                    predictions = torch.log(summed_rates + 1e-8)
+                    batch_y = batch_y.sum(dim=-1)
+                weights = torch.ones_like(batch_y)
+                weights[batch_y > 0] = weight_loss # weight nonzeros more
+                loss = (weights * criterion(predictions, batch_y)).mean()
 
             # Calculate correlation for this batch
             batch_corr = compute_correlation(predictions, batch_y)

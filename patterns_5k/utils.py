@@ -35,7 +35,7 @@ def load_raw_data(cfg: dict, logger=None) -> dict:
     problematic_neurons = cfg.get("problematic_neurons", [])
 
     _log("Loading data …")
-    spikes_df = make_spikes_responses_df(os.path.join(datadir, "spkVecs.npy"))
+    spikes_df = make_spikes_responses_df(os.path.join(datadir, "SpkVecs.npy"))
     spikes_df = spikes_df[~spikes_df["neuron_id"].isin(problematic_neurons)]
     _log(f"{spikes_df['neuron_id'].nunique()} unique neurons after dropping problematic neurons")
 
@@ -112,6 +112,8 @@ def read_pattern_json(pattern_registrations_pkl_path):
     df = df.explode('step_channel_delays').reset_index(drop=True)
 
     # 3. Convert the dictionaries in 'step_channel_delays' into separate columns
+    # After explode, steps with empty [] become NaN — drop those rows first
+    df = df.dropna(subset=['step_channel_delays']).reset_index(drop=True)
     delays_df = pd.json_normalize(df['step_channel_delays'])
     
     # 4. Store pattern length
@@ -174,8 +176,12 @@ def preprocess_pattern_stimulations_df(pattern_df, align_to_stim=False, center_t
             .reset_index()
             .rename(columns={'step_start_timestamp': 'first_stim_timestamp'})
         )
-        # Merge and replace pattern_flag_start_timestamp with the first stimulation timestamp
+        # Merge and replace pattern_flag_start_timestamp with the first stimulation timestamp.
+        # Fall back to original flag timestamp when step_index=0 was dropped
+        # (e.g. because that step had empty channel_delays).
         patterns = patterns.merge(first_step_timestamps, on='pattern_timing_index', how='left')
+        patterns['first_stim_timestamp'] = patterns['first_stim_timestamp'].fillna(
+            patterns['pattern_flag_start_timestamp'])
         patterns['pattern_flag_start_timestamp'] = patterns['first_stim_timestamp']
         patterns = patterns.drop(columns=['first_stim_timestamp'])
 
@@ -381,12 +387,6 @@ class BinnedStimSpikeDataset(Dataset):
     For a trial of length T bins, with n_input_bins=1 and n_output_bins=2,
     we generate samples at positions t=0, 1, ..., T-2 (output extends 2 bins from t).
     
-    Causal Mode:
-    When causal=True, the dataset returns inputs that are left-padded so that
-    only the input bins corresponding to each output bin are visible (right-aligned).
-    This enables autoregressive prediction where each output bin only sees its
-    corresponding input bins plus all previous ones.
-    
     Args:
         pattern_df: DataFrame with step-level stimulation information
         spike_responses: dict mapping pattern_timing_index -> (n_neurons, 2000) numpy array
@@ -400,7 +400,6 @@ class BinnedStimSpikeDataset(Dataset):
         n_output_bins: number of consecutive spike bins to predict (default 1)
         max_time_ms: maximum time to consider (default 2000)
         output_offset: how many bins after input start to begin output (default 0 = same window)
-        causal: if True, return left-padded inputs for causal/autoregressive prediction
         logger: optional logger instance for logging messages
     """
     def __init__(self, pattern_df, spike_responses, channel_to_index, timing_to_pattern, trial_indices=None, encoding_mode="categorical",
@@ -920,7 +919,7 @@ class BinnedStimSpikeDataset(Dataset):
 
 
 def open_model_and_data(results_dir, n_stim_channels=42, n_neurons=63):
-    model = load_model_from_run_dir(results_dir, n_stim_channels=n_stim_channels, n_neurons=n_neurons)  
+    model, _, _ = load_model_from_run_dir(results_dir, n_stim_channels=n_stim_channels, n_neurons=n_neurons)  
     with open(os.path.join(results_dir, "config.yaml"), "r") as f:
         cfg = yaml.safe_load(f)
         output_bin_size_ms = cfg['output_bin_size_ms']
@@ -958,7 +957,7 @@ def open_model_and_data(results_dir, n_stim_channels=42, n_neurons=63):
     oracle_timing = unique_trials_info[unique_trials_info["is_oracle"]]["pattern_timing_index"].tolist()
     test_indices = oracle_timing
     test_dataset = BinnedStimSpikeDataset(trial_indices=test_indices, **history_dataset_kwargs)
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=4, pin_memory=True)
     return model, cfg, raw_data, test_loader
 
 
@@ -978,10 +977,6 @@ def get_oracle_trial_response_and_loo_average(raw_data, pattern_name, output_bin
             other_trial_indices, spike_responses, output_bin_size_ms, max_time_ms
             )
     return actual_response_binned, avg_other_trials
-
-
-            
-
 
 
 def load_model_from_run_dir(run_dir, n_stim_channels, n_neurons, device=None):

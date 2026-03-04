@@ -27,6 +27,7 @@ import torch.nn as nn
 import yaml
 from scipy.stats import pearsonr
 from sklearn.model_selection import train_test_split
+from torch.amp import autocast, GradScaler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -245,9 +246,13 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
     val_dataset = BinnedStimSpikeDataset(trial_indices=val_indices, **dataset_kwargs)
     test_dataset = BinnedStimSpikeDataset(trial_indices=test_indices, **dataset_kwargs)
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+    NUM_WORKERS = cfg.get("num_workers", 4)
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,
+                              num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=NUM_WORKERS > 0)
+    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False,
+                            num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=NUM_WORKERS > 0)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False,
+                             num_workers=NUM_WORKERS, pin_memory=True, persistent_workers=NUM_WORKERS > 0)
 
     n_stim_channels = train_dataset.n_channels
     n_neurons = train_dataset.n_neurons
@@ -359,6 +364,12 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
     IS_CACHE_MODEL = MODEL_TYPE == "cache_cnn"
     CACHE_TRAIN_MODE = cfg.get("cache_train_mode", "teacher_forcing")
 
+    # AMP setup
+    USE_AMP = cfg.get("use_amp", True) and device.type == "cuda"
+    scaler = GradScaler('cuda', enabled=USE_AMP)
+    if USE_AMP:
+        logger.info("Automatic Mixed Precision (AMP) enabled")
+
     logger.info("Starting training …")
     for epoch in tqdm(range(NUM_EPOCHS), desc="Epochs"):
         train_loss = train_epoch(
@@ -366,12 +377,14 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
             sum_loss=SUM_LOSS, grad_clip=False, weight_loss=WEIGHT_LOSS,
             use_init_state=USE_INIT_STATE,
             is_cache_model=IS_CACHE_MODEL, cache_mode=CACHE_TRAIN_MODE,
+            scaler=scaler, use_amp=USE_AMP,
         )
         val_loss, val_corr = validate(
             model, val_loader, criterion, device,
             sum_loss=SUM_LOSS, weight_loss=WEIGHT_LOSS,
             use_init_state=USE_INIT_STATE,
             is_cache_model=IS_CACHE_MODEL, cache_mode=CACHE_TRAIN_MODE,
+            use_amp=USE_AMP,
         )
 
         scheduler.step(val_loss)
@@ -411,6 +424,7 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
         sum_loss=SUM_LOSS, weight_loss=WEIGHT_LOSS,
         use_init_state=USE_INIT_STATE,
         is_cache_model=IS_CACHE_MODEL, cache_mode=CACHE_TRAIN_MODE,
+        use_amp=USE_AMP,
     )
     logger.info(f"Test loss: {test_loss:.6f}, Test corr: {test_corr:.6f}")
 
@@ -421,16 +435,19 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
         for batch in test_loader:
             if USE_INIT_STATE:
                 bx, by, bi = batch
-                bx = bx.to(device)
-                preds = model(bx)
+                bx = bx.to(device, non_blocking=True)
+                with autocast('cuda', enabled=USE_AMP):
+                    preds = model(bx)
             elif IS_CACHE_MODEL:
                 bx, by = batch
-                bx, by_dev = bx.to(device), by.to(device)
-                preds = model(bx, by_dev, mode=CACHE_TRAIN_MODE)
+                bx, by_dev = bx.to(device, non_blocking=True), by.to(device, non_blocking=True)
+                with autocast('cuda', enabled=USE_AMP):
+                    preds = model(bx, by_dev, mode=CACHE_TRAIN_MODE)
             else:
                 bx, by = batch
-                bx = bx.to(device)
-                preds = model(bx)
+                bx = bx.to(device, non_blocking=True)
+                with autocast('cuda', enabled=USE_AMP):
+                    preds = model(bx)
             all_preds.append(preds.cpu())
             all_targets.append(by)
 
@@ -440,9 +457,21 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
     # Convert log-rates to rates for FVE (model outputs log-rates for PoissonNLLLoss)
     all_preds_rates = np.exp(all_preds)
 
-    # Fraction of variance explained (global variance)
-    _, fve_mean = fraction_variance_explained(all_targets, all_preds_rates, global_variance=True)
-    logger.info(f"Fraction of variance explained (FVE): {fve_mean:.6f}")
+    # FVE — global variance: denominator is per-neuron variance across ALL trials+time
+    # (how much of the across-trial/time variance does the model explain, per neuron)
+    neuron_fve_global, fve_global_mean = fraction_variance_explained(
+        all_targets, all_preds_rates, global_variance=True
+    )
+    # FVE — local variance: denominator is per-neuron variance WITHIN each trial
+    # (how much of the within-trial temporal variance does the model explain, per neuron,
+    # averaged over trials)
+    neuron_fve_local, fve_local_mean = fraction_variance_explained(
+        all_targets, all_preds_rates, global_variance=False
+    )
+    logger.info(f"FVE (global, per-neuron mean): {fve_global_mean:.6f}  "
+                f"| median: {float(np.median(neuron_fve_global)):.6f}")
+    logger.info(f"FVE (local/within-trial, per-neuron mean): {fve_local_mean:.6f}  "
+                f"| median: {float(np.median(neuron_fve_local)):.6f}")
 
     # ── Autoregressive (AR) inference ──
     if HISTORY is not None and HISTORY > 0:
@@ -585,7 +614,8 @@ def run_experiment(cfg: dict, run_dir: str, preloaded_data: dict = None) -> dict
         "model_type": MODEL_TYPE,
         "batch_avg_test_loss": float(test_loss),
         "batch_avg_test_corr": float(test_corr),
-        "all_test_fve": float(fve_mean),
+        "all_test_fve_global": float(fve_global_mean),   # per-neuron FVE, variance across all trials
+        "all_test_fve_local": float(fve_local_mean),     # per-neuron FVE, variance within each trial
         "AR_FVE": float(ar_fve_mean),
         "AR_test_correlation": float(ar_test_corr),
         "best_val_corr": float(best_val_corr),
@@ -648,7 +678,7 @@ def _compute_loo_average_rate(
 
     # -- Collect model predictions (batched) --
     model.eval()
-    loader = DataLoader(test_dataset, batch_size=256, shuffle=False)
+    loader = DataLoader(test_dataset, batch_size=256, shuffle=False, num_workers=4, pin_memory=True)
     model_idx = 0
     with torch.no_grad():
         for batch in loader:
@@ -738,7 +768,7 @@ def _compute_loo_temporal(
 
     # -- Collect model predictions (batched) --
     model.eval()
-    loader = DataLoader(test_dataset, batch_size=256, shuffle=False)
+    loader = DataLoader(test_dataset, batch_size=256, shuffle=False, num_workers=4, pin_memory=True)
     cursor = 0
     with torch.no_grad():
         for batch in loader:
