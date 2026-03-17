@@ -245,11 +245,17 @@ def submit_array_job(
 # Sweep expansion
 # ---------------------------------------------------------------------------
 
-def expand_sweep(sweep_cfg: dict, n_seeds: int, start_seed: int):
-    """Expand the sweep config into a list of (overrides, seed, name) tuples.
+def expand_sweep(sweep_cfg: dict, n_seeds: int, start_seed: int,
+                 k_cross: Optional[int] = None):
+    """Expand the sweep config into a list of experiment dicts.
 
-    Each unique hyperparameter combination is repeated ``n_seeds`` times
-    with different random seeds.
+    When *k_cross* is set (either via the sweep YAML or the CLI), each
+    unique hyperparameter combination is repeated ``k_cross`` times —
+    once per cross-validation fold — instead of across random seeds.
+    The experiment config will contain ``cv_fold`` and ``k_cross`` keys
+    so that ``run_experiment`` uses deterministic K-fold splitting.
+
+    Otherwise falls back to the original multi-seed behaviour.
     """
     strategy = sweep_cfg.get("strategy", "grid")
     search_space = sweep_cfg.get("search_space", {})
@@ -268,16 +274,29 @@ def expand_sweep(sweep_cfg: dict, n_seeds: int, start_seed: int):
     experiments = []
     for idx, overrides in enumerate(override_list):
         config_id = _config_fingerprint(overrides)
-        for seed_offset in range(n_seeds):
-            seed = start_seed + seed_offset
-            exp_name = _make_experiment_name(idx, overrides) + f"_seed{seed}"
-            experiments.append({
-                "overrides": overrides,
-                "seed": seed,
-                "name": exp_name,
-                "config_id": config_id,
-                "trial_idx": idx,
-            })
+        if k_cross is not None:
+            for fold in range(k_cross):
+                exp_name = _make_experiment_name(idx, overrides) + f"_fold{fold}"
+                experiments.append({
+                    "overrides": overrides,
+                    "seed": base_seed,
+                    "cv_fold": fold,
+                    "k_cross": k_cross,
+                    "name": exp_name,
+                    "config_id": config_id,
+                    "trial_idx": idx,
+                })
+        else:
+            for seed_offset in range(n_seeds):
+                seed = start_seed + seed_offset
+                exp_name = _make_experiment_name(idx, overrides) + f"_seed{seed}"
+                experiments.append({
+                    "overrides": overrides,
+                    "seed": seed,
+                    "name": exp_name,
+                    "config_id": config_id,
+                    "trial_idx": idx,
+                })
 
     return experiments
 
@@ -333,7 +352,7 @@ def aggregate_results(sweep_dir: str, sweep_cfg: dict):
         print(f"Wrote grouped summary to {summary_path}")
 
         # Also produce a human-readable leaderboard
-        main_metric = sweep_cfg.get("metric", "all_test_corr")
+        main_metric = sweep_cfg.get("metric", "all_test_correlation")
         mean_col = f"{main_metric}_mean"
         sem_col = f"{main_metric}_sem"
         if mean_col in summary.columns:
@@ -362,9 +381,14 @@ def main():
     parser.add_argument("--dry-run", action="store_true",
                         help="Print sbatch commands without submitting")
     parser.add_argument("--seeds", type=int, default=5,
-                        help="Number of seeds per config (default: 5)")
+                        help="Number of seeds per config (default: 5). "
+                             "Ignored when --k-cross or k_cross in YAML is set.")
     parser.add_argument("--start-seed", type=int, default=0,
                         help="First seed value (default: 0)")
+    parser.add_argument("--k-cross", type=int, default=None,
+                        help="Number of cross-validation folds. Overrides --seeds. "
+                             "Oracle patterns are always the test set; non-oracle "
+                             "patterns are split into K mutually exclusive val folds.")
     parser.add_argument("--slurm-template", type=str, default="slurm/nots_gpu.slurm",
                         help="Path to the .slurm job script template")
     parser.add_argument("--aggregate", type=str, default=None, metavar="DIR",
@@ -414,13 +438,21 @@ def main():
     shutil.copy(args.sweep_config, os.path.join(sweep_dir, "sweep_config.yaml"))
 
     base_config = sweep_cfg.get("base_config", {})
-    experiments = expand_sweep(sweep_cfg, args.seeds, args.start_seed)
 
-    n_configs = len(experiments) // args.seeds
+    # Resolve k_cross: CLI flag overrides YAML, YAML overrides default (None)
+    k_cross = args.k_cross or sweep_cfg.get("k_cross", None)
+    experiments = expand_sweep(sweep_cfg, args.seeds, args.start_seed,
+                               k_cross=k_cross)
+
+    n_repeats = k_cross if k_cross else args.seeds
+    n_configs = len(experiments) // n_repeats
     n_array_tasks = -(-len(experiments) // args.tasks_per_job)
     print(f"Sweep: {sweep_name}")
     print(f"Strategy: {sweep_cfg.get('strategy', 'grid')}")
-    print(f"Configs: {n_configs}  ×  {args.seeds} seeds  =  {len(experiments)} trials")
+    if k_cross:
+        print(f"Configs: {n_configs}  ×  {k_cross} CV folds  =  {len(experiments)} trials")
+    else:
+        print(f"Configs: {n_configs}  ×  {args.seeds} seeds  =  {len(experiments)} trials")
     print(f"Tasks per job: {args.tasks_per_job}  →  {n_array_tasks} array tasks")
     print(f"Output: {sweep_dir}")
     print(f"SLURM template: {args.slurm_template}")
@@ -440,6 +472,9 @@ def main():
             if isinstance(cfg[k], dict) and k.startswith("_"):
                 cfg.update(cfg.pop(k))
         cfg["seed"] = exp["seed"]
+        if "cv_fold" in exp:
+            cfg["cv_fold"] = exp["cv_fold"]
+            cfg["k_cross"] = exp["k_cross"]
         cfg["skip_oracle_plots"] = True  # save time; re-enable for best
 
         exp_dir = os.path.join(sweep_dir, exp["name"])

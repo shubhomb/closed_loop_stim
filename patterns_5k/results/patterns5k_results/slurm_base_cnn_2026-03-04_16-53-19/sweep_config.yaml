@@ -1,0 +1,85 @@
+# =====================================================================
+# SLURM Sweep: Base CNN (no history)
+# =====================================================================
+#
+# Tests learning rate, weight decay, number of layers, kernel sizes,
+# and conv channel width.  No spike-history channels (history=0).
+#
+# Designed for multi-seed runs on NOTS via slurm_sweep.py:
+#   python slurm_sweep.py --sweep-config slurm_sweep_base_cnn.yaml \
+#       --seeds 5 --slurm-template nots_gpu.slurm
+# =====================================================================
+
+sweep_name: "slurm_base_cnn"
+strategy: "grid"
+metric: "all_test_corr"
+direction: "maximize"
+seed: 42
+
+base_config:
+  datadir: "/scratch/sb272/patterns5k_data/oracle_ICMS_150/"
+  problematic_neurons: [19, 104, 201, 211, 300, 310, 311, 312]
+  inference_mode: false
+  artifact_path: null
+  seed: 42
+  split_mode: "oracle"
+  input_bin_size_ms: 10
+  output_bin_size_ms: 10
+  n_input_bins: 60
+  n_output_bins: 60
+  output_offset: 0
+  max_time_ms: 600
+  encoding_mode: "current"
+  history: 0
+  batch_size: 16
+  model_type: "cnn"
+  embedding_dim: 0
+  dropout: 0.2
+  pooling: "none"
+  init_bias: null
+  init_state: true
+  num_epochs: 50
+  weight_loss: 1
+  sum_loss: false
+  patience: 10
+  criterion_fn: "poisson"
+  pattern_limit: 50
+  skip_oracle_plots: true
+
+search_space:
+  # ---- Learning rate ----
+  learning_rate:
+    type: categorical
+    values: [0.0001, 0.0005, 0.001, 0.005]
+
+  # ---- Weight regularization ----
+  weight_decay:
+    type: categorical
+    values: [0, 0.00001, 0.0001, 0.001]
+
+  # ---- Architecture bundles (kernel_sizes + conv_channels must match length) ----
+  _arch:
+    type: categorical
+    values:
+  # --- 2-layer architectures (Varied FC Dims) ---
+      - { kernel_sizes: [3, 3], conv_channels: [64, 128],  fc_dims: [128] }
+      - { kernel_sizes: [3, 3], conv_channels: [64, 128],  fc_dims: [256] }
+      - { kernel_sizes: [3, 3], conv_channels: [64, 128],  fc_dims: [512] }
+      
+      - { kernel_sizes: [5, 3], conv_channels: [128, 256], fc_dims: [256] }
+      - { kernel_sizes: [5, 3], conv_channels: [128, 256], fc_dims: [512] }
+      - { kernel_sizes: [5, 3], conv_channels: [128, 256], fc_dims: [1024] }
+
+      # --- 3-layer architectures (Varied FC Dims) ---
+      - { kernel_sizes: [3, 3, 3], conv_channels: [32, 64, 128],  fc_dims: [128] }
+      - { kernel_sizes: [3, 3, 3], conv_channels: [32, 64, 128],  fc_dims: [256] }
+      
+      - { kernel_sizes: [5, 3, 3], conv_channels: [64, 128, 256], fc_dims: [256] }
+      - { kernel_sizes: [5, 3, 3], conv_channels: [64, 128, 256], fc_dims: [512] }
+      - { kernel_sizes: [5, 3, 3], conv_channels: [64, 128, 256], fc_dims: [1024] }
+
+      # --- 3-layer (Consistent Channels, Varied FC) ---
+      - { kernel_sizes: [3, 3, 3], conv_channels: [128, 128, 128], fc_dims: [256] }
+      - { kernel_sizes: [3, 3, 3], conv_channels: [128, 128, 128], fc_dims: [512] }
+      - { kernel_sizes: [3, 3, 3], conv_channels: [256, 256, 256], fc_dims: [512] }
+      - { kernel_sizes: [3, 3, 3], conv_channels: [256, 256, 256], fc_dims: [1024] }

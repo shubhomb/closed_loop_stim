@@ -145,7 +145,7 @@ def main():
 
     print(f"[slurm_experiment] Finished in {elapsed:.1f}s")
     key_metrics = {k: summary.get(k) for k in
-                   ["all_test_corr", "all_test_fve", "best_val_corr", "AR_FVE"]}
+                   ["all_test_correlation", "all_test_fve", "AR_FVE", "AR_test_corr"]}
     print(f"[slurm_experiment] {json.dumps(key_metrics)}")
 
 

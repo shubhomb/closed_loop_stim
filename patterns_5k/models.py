@@ -822,17 +822,21 @@ def perturbation_analysis(model_tuple, loader, n_stim_channels,
 
     Perturbations applied:
 
-    1. **stim_shuffle** – each stimulus channel is independently shuffled
-       in time (different random permutation per channel per sample).
+    1. **stim_shuffle** – stimulus channels are randomly permuted (i.e. which
+       channel carries which pattern is shuffled), preserving the temporal
+       structure and the number of simultaneously active channels at each
+       timestep.
 
     *History-model only (skipped when input has no history channels):*
 
     2. **history_mean** – every history channel is replaced by that
-       neuron's mean firing rate (averaged over all test samples and
-       time bins).  *Deterministic – computed once.*
-    3. **history_shuffle** – all history channels are shuffled together in
-       time (same random permutation for every neuron within a sample,
-       preserving cross-neuron correlations at each time step).
+       neuron's mean firing rate averaged over all test samples and
+       time bins. 
+    3. **history_shuffle** – for each sample the history channels are
+       replaced with those from a randomly chosen *different* trial of
+       the same stimulation pattern (at the same time offset), testing
+       whether predictions depend on the specific pre-stimulation
+       activity or only on the stimulus itself.
 
     Parameters
     ----------
@@ -876,6 +880,7 @@ def perturbation_analysis(model_tuple, loader, n_stim_channels,
     if has_history:
         hist_sum = np.zeros(n_neurons, dtype=np.float64)
         hist_count = 0
+        all_hist_channels = []  # for history-swap perturbation
 
     with torch.no_grad():
         for bx, by in tqdm(loader, desc="Original pass", leave=False):
@@ -887,9 +892,19 @@ def perturbation_analysis(model_tuple, loader, n_stim_channels,
                 hist = bx[:, n_stim_channels:, :].numpy()   # (B, n_neurons, T)
                 hist_sum += hist.sum(axis=(0, 2))
                 hist_count += hist.shape[0] * hist.shape[2]
+                all_hist_channels.append(bx[:, n_stim_channels:].clone())
 
     all_pred_orig = np.concatenate(all_pred_orig, axis=0)
     all_true = np.concatenate(all_true, axis=0)
+
+    if has_history:
+        all_hist_channels = torch.cat(all_hist_channels, dim=0)  # (N, n_neurons, T)
+        # Map (pattern_name, time_offset) → list of sample indices
+        dataset = loader.dataset
+        pattern_t_to_indices = defaultdict(list)
+        for sample_idx, (timing_idx, t) in enumerate(dataset.samples):
+            pname = dataset.timing_to_pattern[timing_idx]
+            pattern_t_to_indices[(pname, t)].append(sample_idx)
 
     # ---- 2. History-mean perturbation (deterministic, history only) ----
     if has_history:
@@ -915,27 +930,39 @@ def perturbation_analysis(model_tuple, loader, n_stim_channels,
         pred_stim_all = []
         if has_history:
             pred_hshuffle_all = []
+            batch_cursor = 0
         with torch.no_grad():
             for bx, by in loader:
                 B, C, T = bx.shape
 
-                # --- stim shuffle: independent permutation per channel ---
+                # --- stim shuffle: permute channels, preserve timepoints ---
+                # Shuffling channels (not time) preserves how many channels
+                # are stimulated at each timestep while breaking channel identity.
                 bx_stim = bx.clone()
                 for b in range(B):
-                    for ch in range(n_stim_channels):
-                        perm = torch.from_numpy(rng.permutation(T).copy())
-                        bx_stim[b, ch] = bx_stim[b, ch, perm]
+                    perm = torch.from_numpy(rng.permutation(n_stim_channels).copy())
+                    bx_stim[b, :n_stim_channels] = bx_stim[b, :n_stim_channels][perm]
                 pred_stim_all.append(
                     torch.exp(model(bx_stim.to(device))).cpu().numpy())
 
                 if has_history:
-                    # --- history shuffle: same permutation for all neurons ---
+                    # --- history swap: use history from a different trial
+                    # of the same pattern at the same time offset ---
                     bx_hs = bx.clone()
                     for b in range(B):
-                        perm = torch.from_numpy(rng.permutation(T).copy())
-                        bx_hs[b, n_stim_channels:] = bx_hs[b, n_stim_channels:][:, perm]
+                        global_idx = batch_cursor + b
+                        timing_idx, t = dataset.samples[global_idx]
+                        pname = dataset.timing_to_pattern[timing_idx]
+                        candidates = [
+                            si for si in pattern_t_to_indices[(pname, t)]
+                            if dataset.samples[si][0] != timing_idx
+                        ]
+                        if candidates:
+                            other_idx = rng.choice(candidates)
+                            bx_hs[b, n_stim_channels:] = all_hist_channels[other_idx]
                     pred_hshuffle_all.append(
                         torch.exp(model(bx_hs.to(device))).cpu().numpy())
+                    batch_cursor += B
 
         pred_stim_all = np.concatenate(pred_stim_all, axis=0)
 

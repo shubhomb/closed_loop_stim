@@ -304,7 +304,7 @@ def run_optuna_sweep(sweep_cfg: dict, sweep_dir: str, dry_run: bool = False):
     base_config = sweep_cfg.get("base_config", {})
     search_space = sweep_cfg.get("search_space", {})
     n_trials = sweep_cfg.get("n_trials", 20)
-    metric = sweep_cfg.get("metric", "all_test_corr")
+    metric = sweep_cfg.get("metric", "all_test_correlation")
     direction = sweep_cfg.get("direction", "maximize")
     seed = sweep_cfg.get("seed", 42)
 
@@ -448,7 +448,7 @@ def main():
     logger.info(f"Sweep: {sweep_name}")
     logger.info(f"Strategy: {sweep_cfg.get('strategy', 'grid')}")
     logger.info(f"Output: {sweep_dir}")
-    logger.info(f"Metric: {sweep_cfg.get('metric', 'all_test_corr')} ({sweep_cfg.get('direction', 'maximize')})")
+    logger.info(f"Metric: {sweep_cfg.get('metric', 'all_test_correlation')} ({sweep_cfg.get('direction', 'maximize')})")
 
     # Dispatch
     strategy = sweep_cfg.get("strategy", "grid")
@@ -470,7 +470,7 @@ def main():
         # Print leaderboard
         completed = df[df["status"] == "completed"]
         if not completed.empty:
-            metric = sweep_cfg.get("metric", "all_test_corr")
+            metric = sweep_cfg.get("metric", "all_test_correlation")
             if metric in completed.columns:
                 ascending = sweep_cfg.get("direction", "maximize") == "minimize"
                 leaderboard = completed.sort_values(metric, ascending=ascending)

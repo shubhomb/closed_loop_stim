@@ -216,11 +216,21 @@ def _coarsen(arr_3d, factor=0):
     return trimmed.reshape(N, neurons, coarse, factor).mean(axis=3)
 
 def fraction_variance_explained(y_true, y_pred, global_variance=False):
-    """
-    y_pred and y_true are shape (batch, neurons, time)
-    Returns:
-        neuron_r2: (neurons,) - R2 averaged over the batch
-        mean_r2: float - Global average R2
+    """Fraction of variance explained (FVE / R²) per neuron.
+
+    Parameters
+    ----------
+    y_true, y_pred : ndarray, shape (N_samples, neurons, time)
+    global_variance : bool
+        If True, denominator uses each neuron's mean firing rate across
+        **all** samples and time bins in y_true (i.e. the test set mean).
+        If False, denominator uses each sample's own temporal mean per
+        neuron, and FVE is averaged over samples.
+
+    Returns
+    -------
+    neuron_fve : ndarray (neurons,)
+    mean_fve   : float
     """
     assert y_pred.shape == y_true.shape
     batch_size, num_neurons, _ = y_true.shape

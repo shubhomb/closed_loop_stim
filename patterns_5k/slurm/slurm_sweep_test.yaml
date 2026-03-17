@@ -9,9 +9,10 @@
 
 sweep_name: "slurm_test"
 strategy: "grid"
-metric: "all_test_corr"
+metric: "all_test_correlation"
 direction: "maximize"
 seed: 42
+k_cross: 3
 
 base_config:
   datadir: "/scratch/sb272/patterns5k_data/oracle_ICMS_150/"

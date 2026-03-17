@@ -1,0 +1,164 @@
+2026-03-04 21:53:10,321 - INFO - ============================================================
+2026-03-04 21:53:10,321 - INFO - Experiment run directory: /scratch/sb272/patterns5k_results/slurm_base_cnn_2026-03-04_16-53-19/trial_0107_learning_rate=5.0e-04_kernel_sizes=3x3_conv_channels=64x128_fc_dims=512_seed0
+2026-03-04 21:53:10,321 - INFO - ============================================================
+2026-03-04 21:53:10,321 - INFO - Loading data …
+2026-03-04 21:53:11,336 - INFO - 63 unique neurons after dropping problematic neurons
+2026-03-04 21:53:12,538 - INFO - Stimulation channels: 42, Spiking neurons: 63
+2026-03-04 21:55:18,878 - INFO - Unique patterns: 4050, Total trials: 5000
+2026-03-04 21:55:18,880 - INFO - Stimulation channels: 42, Spiking neurons: 63
+2026-03-04 21:55:18,880 - INFO - Unique patterns: 4050, Total trials: 5000
+2026-03-04 21:55:18,895 - INFO - Split (oracle): train=3400, val=600, test=1000
+2026-03-04 21:55:45,802 - INFO - BinnedStimSpikeDataset initialized:
+2026-03-04 21:55:45,803 - INFO -   input_bin_size_ms=10, output_bin_size_ms=10
+2026-03-04 21:55:45,803 - INFO -   n_input_bins=60, n_output_bins=60
+2026-03-04 21:55:45,803 - INFO -   output_offset=0, total_bins_input=60, total_bins_output=60
+2026-03-04 21:55:45,803 - INFO -   Valid start positions per trial: 0 to 0
+2026-03-04 21:55:45,803 - INFO -   Total samples: 3400 (3400 trials × 1 positions)
+2026-03-04 21:56:15,511 - INFO - BinnedStimSpikeDataset initialized:
+2026-03-04 21:56:15,511 - INFO -   input_bin_size_ms=10, output_bin_size_ms=10
+2026-03-04 21:56:15,511 - INFO -   n_input_bins=60, n_output_bins=60
+2026-03-04 21:56:15,511 - INFO -   output_offset=0, total_bins_input=60, total_bins_output=60
+2026-03-04 21:56:15,511 - INFO -   Valid start positions per trial: 0 to 0
+2026-03-04 21:56:15,511 - INFO -   Total samples: 600 (600 trials × 1 positions)
+2026-03-04 21:56:43,227 - INFO - BinnedStimSpikeDataset initialized:
+2026-03-04 21:56:43,228 - INFO -   input_bin_size_ms=10, output_bin_size_ms=10
+2026-03-04 21:56:43,228 - INFO -   n_input_bins=60, n_output_bins=60
+2026-03-04 21:56:43,228 - INFO -   output_offset=0, total_bins_input=60, total_bins_output=60
+2026-03-04 21:56:43,228 - INFO -   Valid start positions per trial: 0 to 0
+2026-03-04 21:56:43,228 - INFO -   Total samples: 1000 (1000 trials × 1 positions)
+2026-03-04 21:56:43,228 - INFO - Samples — train: 3400, val: 600, test: 1000
+2026-03-04 21:56:43,228 - INFO - Input channels: 42, Neurons: 63
+2026-03-04 21:56:43,248 - INFO - Using CPU
+2026-03-04 21:56:43,266 - INFO - Model: CNN — 131,583 trainable params (131,583 total)
+2026-03-04 21:56:47,660 - INFO - Starting training …
+2026-03-04 21:56:53,268 - INFO - Epoch   1/50 | Train: 0.228019 | Val: 0.191774 | Corr: 0.063196 | LR: 5.00e-04
+2026-03-04 21:56:53,281 - INFO -   ↳ Saved best model (val_corr=0.063196)
+2026-03-04 21:56:57,672 - INFO - Epoch   2/50 | Train: 0.184541 | Val: 0.187318 | Corr: 0.073648 | LR: 5.00e-04
+2026-03-04 21:56:57,685 - INFO -   ↳ Saved best model (val_corr=0.073648)
+2026-03-04 21:57:02,201 - INFO - Epoch   3/50 | Train: 0.183015 | Val: 0.185850 | Corr: 0.080256 | LR: 5.00e-04
+2026-03-04 21:57:02,212 - INFO -   ↳ Saved best model (val_corr=0.080256)
+2026-03-04 21:57:06,411 - INFO - Epoch   4/50 | Train: 0.182005 | Val: 0.188890 | Corr: 0.086314 | LR: 5.00e-04
+2026-03-04 21:57:06,421 - INFO -   ↳ Saved best model (val_corr=0.086314)
+2026-03-04 21:57:11,308 - INFO - Epoch   5/50 | Train: 0.181083 | Val: 0.184324 | Corr: 0.091689 | LR: 5.00e-04
+2026-03-04 21:57:11,327 - INFO -   ↳ Saved best model (val_corr=0.091689)
+2026-03-04 21:57:15,764 - INFO - Epoch   6/50 | Train: 0.180376 | Val: 0.184678 | Corr: 0.098748 | LR: 5.00e-04
+2026-03-04 21:57:15,778 - INFO -   ↳ Saved best model (val_corr=0.098748)
+2026-03-04 21:57:20,335 - INFO - Epoch   7/50 | Train: 0.179823 | Val: 0.185585 | Corr: 0.100682 | LR: 5.00e-04
+2026-03-04 21:57:20,350 - INFO -   ↳ Saved best model (val_corr=0.100682)
+2026-03-04 21:57:25,439 - INFO - Epoch   8/50 | Train: 0.179280 | Val: 0.186474 | Corr: 0.106098 | LR: 5.00e-04
+2026-03-04 21:57:25,464 - INFO -   ↳ Saved best model (val_corr=0.106098)
+2026-03-04 21:57:29,957 - INFO - Epoch   9/50 | Train: 0.178963 | Val: 0.183234 | Corr: 0.109994 | LR: 5.00e-04
+2026-03-04 21:57:29,968 - INFO -   ↳ Saved best model (val_corr=0.109994)
+2026-03-04 21:57:34,464 - INFO - Epoch  10/50 | Train: 0.178479 | Val: 0.182606 | Corr: 0.112835 | LR: 5.00e-04
+2026-03-04 21:57:34,475 - INFO -   ↳ Saved best model (val_corr=0.112835)
+2026-03-04 21:57:39,506 - INFO - Epoch  11/50 | Train: 0.178183 | Val: 0.184334 | Corr: 0.116530 | LR: 5.00e-04
+2026-03-04 21:57:39,517 - INFO -   ↳ Saved best model (val_corr=0.116530)
+2026-03-04 21:57:43,970 - INFO - Epoch  12/50 | Train: 0.177884 | Val: 0.182884 | Corr: 0.119807 | LR: 5.00e-04
+2026-03-04 21:57:43,982 - INFO -   ↳ Saved best model (val_corr=0.119807)
+2026-03-04 21:57:48,610 - INFO - Epoch  13/50 | Train: 0.177641 | Val: 0.184248 | Corr: 0.122431 | LR: 5.00e-04
+2026-03-04 21:57:48,620 - INFO -   ↳ Saved best model (val_corr=0.122431)
+2026-03-04 21:57:53,684 - INFO - Epoch  14/50 | Train: 0.177389 | Val: 0.181629 | Corr: 0.123974 | LR: 5.00e-04
+2026-03-04 21:57:53,707 - INFO -   ↳ Saved best model (val_corr=0.123974)
+2026-03-04 21:57:58,237 - INFO - Epoch  15/50 | Train: 0.177164 | Val: 0.181004 | Corr: 0.123788 | LR: 5.00e-04
+2026-03-04 21:58:02,744 - INFO - Epoch  16/50 | Train: 0.177130 | Val: 0.181689 | Corr: 0.127114 | LR: 5.00e-04
+2026-03-04 21:58:02,753 - INFO -   ↳ Saved best model (val_corr=0.127114)
+2026-03-04 21:58:07,738 - INFO - Epoch  17/50 | Train: 0.176934 | Val: 0.180671 | Corr: 0.127410 | LR: 5.00e-04
+2026-03-04 21:58:07,759 - INFO -   ↳ Saved best model (val_corr=0.127410)
+2026-03-04 21:58:12,167 - INFO - Epoch  18/50 | Train: 0.176745 | Val: 0.180687 | Corr: 0.129347 | LR: 5.00e-04
+2026-03-04 21:58:12,177 - INFO -   ↳ Saved best model (val_corr=0.129347)
+2026-03-04 21:58:16,814 - INFO - Epoch  19/50 | Train: 0.176618 | Val: 0.180308 | Corr: 0.130595 | LR: 5.00e-04
+2026-03-04 21:58:16,829 - INFO -   ↳ Saved best model (val_corr=0.130595)
+2026-03-04 21:58:21,602 - INFO - Epoch  20/50 | Train: 0.176495 | Val: 0.180594 | Corr: 0.131149 | LR: 5.00e-04
+2026-03-04 21:58:21,614 - INFO -   ↳ Saved best model (val_corr=0.131149)
+2026-03-04 21:58:25,474 - INFO - Epoch  21/50 | Train: 0.176300 | Val: 0.180150 | Corr: 0.131985 | LR: 5.00e-04
+2026-03-04 21:58:25,489 - INFO -   ↳ Saved best model (val_corr=0.131985)
+2026-03-04 21:58:29,250 - INFO - Epoch  22/50 | Train: 0.176299 | Val: 0.179433 | Corr: 0.132163 | LR: 5.00e-04
+2026-03-04 21:58:29,260 - INFO -   ↳ Saved best model (val_corr=0.132163)
+2026-03-04 21:58:33,014 - INFO - Epoch  23/50 | Train: 0.176221 | Val: 0.179352 | Corr: 0.133124 | LR: 5.00e-04
+2026-03-04 21:58:33,023 - INFO -   ↳ Saved best model (val_corr=0.133124)
+2026-03-04 21:58:36,808 - INFO - Epoch  24/50 | Train: 0.176106 | Val: 0.181225 | Corr: 0.134227 | LR: 5.00e-04
+2026-03-04 21:58:36,822 - INFO -   ↳ Saved best model (val_corr=0.134227)
+2026-03-04 21:58:40,607 - INFO - Epoch  25/50 | Train: 0.176001 | Val: 0.179883 | Corr: 0.133697 | LR: 5.00e-04
+2026-03-04 21:58:44,357 - INFO - Epoch  26/50 | Train: 0.175899 | Val: 0.180415 | Corr: 0.134450 | LR: 5.00e-04
+2026-03-04 21:58:44,369 - INFO -   ↳ Saved best model (val_corr=0.134450)
+2026-03-04 21:58:48,121 - INFO - Epoch  27/50 | Train: 0.175852 | Val: 0.179440 | Corr: 0.135300 | LR: 5.00e-04
+2026-03-04 21:58:48,131 - INFO -   ↳ Saved best model (val_corr=0.135300)
+2026-03-04 21:58:51,874 - INFO - Epoch  28/50 | Train: 0.175780 | Val: 0.179897 | Corr: 0.135261 | LR: 5.00e-04
+2026-03-04 21:58:55,643 - INFO - Epoch  29/50 | Train: 0.175836 | Val: 0.181121 | Corr: 0.136371 | LR: 2.50e-04
+2026-03-04 21:58:55,654 - INFO -   ↳ Saved best model (val_corr=0.136371)
+2026-03-04 21:58:59,447 - INFO - Epoch  30/50 | Train: 0.175330 | Val: 0.179627 | Corr: 0.136813 | LR: 2.50e-04
+2026-03-04 21:58:59,459 - INFO -   ↳ Saved best model (val_corr=0.136813)
+2026-03-04 21:59:03,260 - INFO - Epoch  31/50 | Train: 0.175268 | Val: 0.179607 | Corr: 0.136182 | LR: 2.50e-04
+2026-03-04 21:59:07,049 - INFO - Epoch  32/50 | Train: 0.175197 | Val: 0.179898 | Corr: 0.136686 | LR: 2.50e-04
+2026-03-04 21:59:10,844 - INFO - Epoch  33/50 | Train: 0.175164 | Val: 0.180437 | Corr: 0.137277 | LR: 2.50e-04
+2026-03-04 21:59:10,856 - INFO -   ↳ Saved best model (val_corr=0.137277)
+2026-03-04 21:59:14,647 - INFO - Epoch  34/50 | Train: 0.175153 | Val: 0.179620 | Corr: 0.137657 | LR: 2.50e-04
+2026-03-04 21:59:14,659 - INFO -   ↳ Saved best model (val_corr=0.137657)
+2026-03-04 21:59:18,420 - INFO - Epoch  35/50 | Train: 0.175133 | Val: 0.179763 | Corr: 0.137548 | LR: 1.25e-04
+2026-03-04 21:59:22,220 - INFO - Epoch  36/50 | Train: 0.174962 | Val: 0.179854 | Corr: 0.138005 | LR: 1.25e-04
+2026-03-04 21:59:22,235 - INFO -   ↳ Saved best model (val_corr=0.138005)
+2026-03-04 21:59:26,027 - INFO - Epoch  37/50 | Train: 0.174974 | Val: 0.179644 | Corr: 0.137416 | LR: 1.25e-04
+2026-03-04 21:59:29,821 - INFO - Epoch  38/50 | Train: 0.174851 | Val: 0.179705 | Corr: 0.137922 | LR: 1.25e-04
+2026-03-04 21:59:33,622 - INFO - Epoch  39/50 | Train: 0.174857 | Val: 0.179831 | Corr: 0.138333 | LR: 1.25e-04
+2026-03-04 21:59:33,634 - INFO -   ↳ Saved best model (val_corr=0.138333)
+2026-03-04 21:59:37,422 - INFO - Epoch  40/50 | Train: 0.174865 | Val: 0.179955 | Corr: 0.138370 | LR: 1.25e-04
+2026-03-04 21:59:37,435 - INFO -   ↳ Saved best model (val_corr=0.138370)
+2026-03-04 21:59:41,219 - INFO - Epoch  41/50 | Train: 0.174829 | Val: 0.179579 | Corr: 0.137947 | LR: 6.25e-05
+2026-03-04 21:59:44,983 - INFO - Epoch  42/50 | Train: 0.174742 | Val: 0.179494 | Corr: 0.138301 | LR: 6.25e-05
+2026-03-04 21:59:48,786 - INFO - Epoch  43/50 | Train: 0.174672 | Val: 0.179472 | Corr: 0.138529 | LR: 6.25e-05
+2026-03-04 21:59:48,794 - INFO -   ↳ Saved best model (val_corr=0.138529)
+2026-03-04 21:59:52,584 - INFO - Epoch  44/50 | Train: 0.174715 | Val: 0.180075 | Corr: 0.138829 | LR: 6.25e-05
+2026-03-04 21:59:52,595 - INFO -   ↳ Saved best model (val_corr=0.138829)
+2026-03-04 21:59:56,383 - INFO - Epoch  45/50 | Train: 0.174664 | Val: 0.179526 | Corr: 0.138588 | LR: 6.25e-05
+2026-03-04 22:00:00,178 - INFO - Epoch  46/50 | Train: 0.174675 | Val: 0.179798 | Corr: 0.138393 | LR: 6.25e-05
+2026-03-04 22:00:03,989 - INFO - Epoch  47/50 | Train: 0.174609 | Val: 0.180099 | Corr: 0.138805 | LR: 3.13e-05
+2026-03-04 22:00:07,726 - INFO - Epoch  48/50 | Train: 0.174550 | Val: 0.179727 | Corr: 0.138505 | LR: 3.13e-05
+2026-03-04 22:00:11,507 - INFO - Epoch  49/50 | Train: 0.174589 | Val: 0.179484 | Corr: 0.138605 | LR: 3.13e-05
+2026-03-04 22:00:15,321 - INFO - Epoch  50/50 | Train: 0.174557 | Val: 0.179602 | Corr: 0.138710 | LR: 3.13e-05
+2026-03-04 22:00:15,322 - INFO - Training complete — best val corr: 0.138829
+2026-03-04 22:00:16,856 - INFO - Test loss: 0.170007, Test corr: 0.135738
+2026-03-04 22:00:17,165 - INFO - Fraction of variance explained (FVE): 0.016520
+2026-03-04 22:00:17,166 - INFO - Generating figures …
+2026-03-04 22:00:17,646 - INFO - Correlation between predicted and actual per-neuron averages: r=0.9951, p=0.00e+00
+2026-03-04 22:00:19,724 - INFO - Pattern selectivity summary:
+2026-03-04 22:00:19,724 - INFO -   Mean correlation across neurons: 0.4901
+2026-03-04 22:00:19,724 - INFO -   Median correlation: 0.5580
+2026-03-04 22:00:19,724 - INFO -   Neurons with r > 0.5: 33 / 63
+2026-03-04 22:00:19,724 - INFO -   Neurons with r > 0.3: 53 / 63
+2026-03-04 22:00:19,725 - INFO - Pattern selectivity — mean neuron corr: 0.4901
+2026-03-04 22:00:21,379 - INFO - LOO (avg rate) — Model mean r: 0.2862, LOO mean r: 0.4546, Neurons model > LOO: 1/63
+2026-03-04 22:00:23,634 - INFO - LOO (temporal) — Model mean r: 0.1365, LOO mean r: 0.3186, Neurons model > LOO: 0/63
+2026-03-04 22:00:23,634 - INFO - Skipping oracle trial plots (skip_oracle_plots=True)
+2026-03-04 22:00:23,641 - INFO - Experiment complete. Summary: {
+  "run_dir": "/scratch/sb272/patterns5k_results/slurm_base_cnn_2026-03-04_16-53-19/trial_0107_learning_rate=5.0e-04_kernel_sizes=3x3_conv_channels=64x128_fc_dims=512_seed0",
+  "model_type": "cnn",
+  "batch_avg_test_loss": 0.17000724041461945,
+  "batch_avg_test_corr": 0.13573809357211833,
+  "all_test_fve": 0.016519677071344285,
+  "AR_FVE": NaN,
+  "AR_test_correlation": NaN,
+  "best_val_corr": 0.138829424934778,
+  "total_params": 131583,
+  "trainable_params": 131583,
+  "epochs_trained": 50,
+  "mean_pattern_corr": 0.4900840404919737,
+  "history": 0,
+  "init_state": true,
+  "loo_avg_mean_corr": 0.45456832695830385,
+  "model_avg_mean_corr": 0.2862388735507287,
+  "neurons_model_beats_loo_avg": 1,
+  "loo_temporal_mean_corr": 0.31855225563049316,
+  "all_test_corr": 0.13652445375919342,
+  "neurons_model_beats_loo_temporal": 0,
+  "kernel_sizes": [
+    3,
+    3
+  ],
+  "conv_channels": [
+    64,
+    128
+  ],
+  "fc_dims": [
+    512
+  ]
+}

@@ -9,16 +9,18 @@
 # additional input channels.  history and init_state are forced to
 # 0 / False internally by run_experiment.
 #
-# Designed for multi-seed runs on NOTS via slurm_sweep.py:
+# Designed for cross-validated runs on NOTS via slurm_sweep.py:
 #   python slurm_sweep.py --sweep-config slurm_sweep_cache_cnn.yaml \
-#       --seeds 5 --slurm-template nots_gpu.slurm
+#       --slurm-template nots_gpu.slurm
+# k_cross in this file controls the number of CV folds (default: 5).
 # =====================================================================
 
 sweep_name: "slurm_cache_cnn"
 strategy: "grid"
-metric: "all_test_corr"
+metric: "all_test_correlation"
 direction: "maximize"
 seed: 42
+k_cross: 5
 
 base_config:
   datadir: "/scratch/sb272/patterns5k_data/oracle_ICMS_150/"

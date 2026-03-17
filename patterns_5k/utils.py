@@ -34,6 +34,20 @@ def load_raw_data(cfg: dict, logger=None) -> dict:
     datadir = cfg["datadir"]
     problematic_neurons = cfg.get("problematic_neurons", [])
 
+    # Fallback: if configured datadir doesn't exist locally, try to find
+    # the data under the local 'data/' directory by matching the last
+    # path component (e.g. "oracle_ICMS_150").
+    spkvecs_path = os.path.join(datadir, "SpkVecs.npy")
+    if not os.path.isfile(spkvecs_path):
+        basename = os.path.basename(os.path.normpath(datadir))
+        local_candidate = os.path.join("data", basename)
+        if os.path.isfile(os.path.join(local_candidate, "SpkVecs.npy")):
+            _log(f"Datadir '{datadir}' not found; falling back to '{local_candidate}/'")
+            datadir = local_candidate
+        else:
+            raise FileNotFoundError(
+                f"SpkVecs.npy not found at '{spkvecs_path}' or fallback '{local_candidate}/SpkVecs.npy'")
+
     _log("Loading data …")
     spikes_df = make_spikes_responses_df(os.path.join(datadir, "SpkVecs.npy"))
     spikes_df = spikes_df[~spikes_df["neuron_id"].isin(problematic_neurons)]

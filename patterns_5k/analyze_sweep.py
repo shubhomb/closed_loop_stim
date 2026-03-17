@@ -8,12 +8,12 @@ Usage:
     # From Python / notebook:
     from analyze_sweep import SweepAnalyzer
     sa = SweepAnalyzer("results/cnn_history_sweep_2026-02-13_12-47-14")
-    sa.plot_metric_vs_param("history", "all_test_corr")
+    sa.plot_metric_vs_param("history", "all_test_correlation")
     sa.plot_all()
 
     # CLI:
     python analyze_sweep.py results/cnn_history_sweep_*
-    python analyze_sweep.py results/cnn_kernel_sweep_* --params kernel_sizes --metrics all_test_corr neurons_model_beats_loo
+    python analyze_sweep.py results/cnn_kernel_sweep_* --params kernel_sizes --metrics all_test_correlation
 """
 
 import argparse
@@ -33,26 +33,28 @@ import yaml
 
 # ── Metric display names ────────────────────────────────────────────
 METRIC_LABELS = {
-    "batch_avg_test_corr": "Batch-Avg Test Correlation",
-    "batch_avg_test_loss": "Batch-Avg Test Loss",
-    "all_test_fve": "Test FVE (all samples)",
-    "all_test_corr": "Test Temporal Correlation (all samples)",
+    "test_poissonnll_loss": "Test Poisson NLL Loss",
+    "all_test_fve": "Test FVE (global variance)",
+    "all_test_correlation": "Test Temporal Correlation (all samples)",
     "AR_FVE": "AR FVE",
-    "AR_test_correlation": "AR Test Correlation",
-    "best_val_corr": "Best Val Correlation during Training",
-    "mean_pattern_corr": "Mean Pattern Selectivity (r)",
-    # LOO keys
-    "model_avg_mean_corr": "Average Correlation over Neurons",
-    "loo_avg_mean_corr": "LOO Avg-Rate Mean Corr",
-    "neurons_model_beats_loo_avg": "# Neurons Model > LOO (Avg Rate)",
-    "loo_temporal_mean_corr": "LOO Temporal Mean Corr",
-    "neurons_model_beats_loo_temporal": "# Neurons Model > LOO (Temporal)",
+    "AR_test_corr": "AR Test Correlation",
     # Legacy keys (older runs)
+    "batch_avg_test_corr": "Batch-Avg Test Correlation (legacy)",
+    "batch_avg_test_loss": "Batch-Avg Test Loss (legacy)",
+    "all_test_corr": "Test Temporal Correlation (legacy)",
+    "AR_test_correlation": "AR Test Correlation (legacy)",
+    "best_val_corr": "Best Val Correlation (legacy)",
+    "mean_pattern_corr": "Mean Pattern Selectivity (legacy)",
+    "model_avg_mean_corr": "Average Correlation over Neurons (legacy)",
+    "loo_avg_mean_corr": "LOO Avg-Rate Mean Corr (legacy)",
+    "neurons_model_beats_loo_avg": "# Neurons Model > LOO Avg Rate (legacy)",
+    "loo_temporal_mean_corr": "LOO Temporal Mean Corr (legacy)",
+    "neurons_model_beats_loo_temporal": "# Neurons Model > LOO Temporal (legacy)",
     "test_corr": "Test Correlation (legacy)",
     "test_loss": "Test Loss (legacy)",
     "test_fve": "Test FVE (legacy)",
     "model_temporal_mean_corr": "Model Temporal Mean Corr (legacy)",
-    "model_sample_mean_corr": "Model Sample-Level Mean Corr",
+    "model_sample_mean_corr": "Model Sample-Level Mean Corr (legacy)",
     "loo_mean_corr": "LOO Baseline Mean Corr",
     "neurons_model_beats_loo": "# Neurons Model > LOO",
     "epochs_trained": "Epochs Trained",
@@ -134,16 +136,17 @@ class SweepAnalyzer:
         metric_cols = {
             "run_dir", "model_type",
             # Current metric names
+            "test_poissonnll_loss",
+            "all_test_fve", "all_test_correlation",
+            "AR_FVE", "AR_test_corr",
+            # Legacy keys (older runs)
             "batch_avg_test_loss", "batch_avg_test_corr",
-            "all_test_fve", "all_test_corr",
-            "AR_FVE", "AR_test_correlation",
+            "all_test_corr", "AR_test_correlation",
             "best_val_corr",
             "total_params", "trainable_params", "epochs_trained",
             "mean_pattern_corr",
-            # LOO keys
             "model_avg_mean_corr", "loo_avg_mean_corr", "neurons_model_beats_loo_avg",
             "loo_temporal_mean_corr", "neurons_model_beats_loo_temporal",
-            # Legacy keys (older runs)
             "test_loss", "test_corr", "test_fve", "model_temporal_mean_corr",
             "loo_mean_corr", "model_sample_mean_corr", "neurons_model_beats_loo",
             "experiment", "status",
@@ -265,13 +268,13 @@ class SweepAnalyzer:
         """
         if metrics is None:
             metrics = [
-                "all_test_corr", "batch_avg_test_corr", "all_test_fve",
-                "AR_test_correlation", "AR_FVE",
-                "best_val_corr", "batch_avg_test_loss",
-                "mean_pattern_corr",
-                "neurons_model_beats_loo_avg", "neurons_model_beats_loo_temporal",
-                "model_avg_mean_corr",
+                "all_test_correlation", "all_test_fve",
+                "AR_test_corr", "AR_FVE",
+                "test_poissonnll_loss",
                 # Legacy fallbacks
+                "all_test_corr", "batch_avg_test_corr",
+                "AR_test_correlation", "batch_avg_test_loss",
+                "best_val_corr", "mean_pattern_corr",
                 "test_corr", "model_temporal_mean_corr",
                 "neurons_model_beats_loo", "model_sample_mean_corr",
             ]

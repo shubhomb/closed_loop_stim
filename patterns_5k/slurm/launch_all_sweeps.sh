@@ -1,6 +1,6 @@
 #!/bin/bash
 # =====================================================================
-# Launch all three HP sweeps on NOTS (base CNN, history CNN, cache CNN)
+# Launch all two HP sweeps on NOTS (base CNN, history CNN)
 #
 # Sweeps are submitted SEQUENTIALLY via SLURM dependencies: the history
 # CNN sweep waits for the base CNN sweep to finish, and the cache CNN
@@ -13,8 +13,7 @@
 # With default settings (tasks-per-job=50, 5 seeds):
 #   Base CNN:  720 trials  →  15 array tasks
 #   Hist CNN: 2100 trials  →  42 array tasks
-#   Cache CNN:4480 trials  →  90 array tasks
-#   Total:                    147 array tasks  (3 sbatch submissions, sequential)
+#   Total:                    57 array tasks  (2 sbatch submissions, sequential)
 #
 # Usage:
 #   bash launch_all_sweeps.sh [--dry-run] [--seeds N] [--start-seed S]
