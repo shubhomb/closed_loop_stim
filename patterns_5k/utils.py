@@ -312,10 +312,10 @@ def trial_breakout_spikes_and_patterns(spikes_df, pattern_df, channel_to_index, 
         for idx, row in spikes_during_pattern.iterrows():
             neuron_id = row['neuron_id']
             neuron_index = spiking_neuron_to_index[neuron_id]
-            spike_time = row['timestamp'] - pattern_start_time # this is in frames, centered on the pattern_start_time
-            if spike_time >= 0 and spike_time < 60000:  # cut off at 2s after 
-                ms_idx = (spike_time) // 30 
-            spike_responses_pattern[neuron_index, ms_idx] += 1
+            spike_time = row['timestamp'] - pattern_start_time  # frames, relative to pattern start
+            ms_idx = spike_time // 30
+            if 0 <= ms_idx < spike_responses_pattern.shape[1]:
+                spike_responses_pattern[neuron_index, ms_idx] += 1
         spike_responses[timing_idx] = spike_responses_pattern
     return pattern_stims, pattern_polarities, spike_responses, timing_to_pattern, unique_trials
 
@@ -607,6 +607,7 @@ class BinnedStimSpikeDataset(Dataset):
             spikes_full = np.concatenate([previous_trial_spikes, trial_spikes], axis=1)
 
             x_width = self.n_initial_state_bins + self.n_input_bins
+            
             # Offset between spike and stim indexing
             # stim_full[k] aligns with spikes_full[k + history_val]
             spike_offset = history_val

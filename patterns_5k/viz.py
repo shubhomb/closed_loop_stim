@@ -877,6 +877,216 @@ def plot_oracle_pattern_average_responses(unique_trials, spike_responses, spikin
         plt.close()
 
 
+def plot_oracle_pattern_with_stim(unique_trials, spike_responses, spiking_neurons,
+                                  pattern_polarities, savepath,
+                                  plot_duration_ms=2000, bin_size_ms=60,
+                                  stim_duration_ms=600):
+    """Plot stim-polarity pattern on top aligned with average spike response below.
+
+    Both panels share the same x-axis (time in ms from pattern onset) and the
+    same bin resolution. The polarity panel is 0 outside the stim window.
+    """
+    from matplotlib.gridspec import GridSpec
+
+    if not os.path.exists(savepath):
+        os.makedirs(savepath)
+
+    oracle_patterns = unique_trials[unique_trials['is_oracle']]['pattern_name'].unique()
+    n_bins = (plot_duration_ms + bin_size_ms - 1) // bin_size_ms
+
+    sta_by_pattern = {}          # pattern_name -> (n_neurons, n_bins) binned STA
+    stim_by_pattern = {}         # pattern_name -> (n_ch, n_bins) binned polarity
+
+    for pattern_name in oracle_patterns:
+        trials = unique_trials[unique_trials['pattern_name'] == pattern_name]
+        print(f"Pattern {pattern_name}: {len(trials)} trials, {n_bins} bins of {bin_size_ms} ms")
+
+        # --- Average binned spike response (n_neurons, n_bins) ---
+        avg = np.zeros((len(spiking_neurons), n_bins))
+        for _, ti in trials.iterrows():
+            avg += bin_spike_response(spike_responses[ti['pattern_timing_index']],
+                                      bin_size_ms, max_time=plot_duration_ms,
+                                      remainder="append")
+        avg /= len(trials)
+        sta_by_pattern[int(pattern_name)] = avg.astype(np.float32)
+
+        # --- Bin the polarity pattern to the same bin size (signed) ---
+        pol_ms = pattern_polarities[pattern_name]          # (n_ch, 600) in ms
+        n_ch = pol_ms.shape[0]
+        # Pad/truncate to plot_duration_ms (zeros outside stim window)
+        pol_full = np.zeros((n_ch, plot_duration_ms))
+        pol_full[:, :min(stim_duration_ms, plot_duration_ms)] = \
+            pol_ms[:, :min(stim_duration_ms, plot_duration_ms)]
+
+        pol_binned = np.zeros((n_ch, n_bins))
+        for b in range(n_bins):
+            lo = b * bin_size_ms
+            hi = min((b + 1) * bin_size_ms, plot_duration_ms)
+            seg = pol_full[:, lo:hi]
+            # Preserve sign: pick value with max magnitude in the bin
+            idx = np.argmax(np.abs(seg), axis=1)
+            pol_binned[:, b] = seg[np.arange(n_ch), idx]
+        stim_by_pattern[int(pattern_name)] = pol_binned.astype(np.float32)
+
+        # --- Figure: stim on top, spikes below, shared extent ---
+        fig = plt.figure(figsize=(10, 9))
+        gs = GridSpec(2, 2, width_ratios=[40, 1],
+                      height_ratios=[max(1, n_ch), max(1, avg.shape[0])],
+                      hspace=0.08, wspace=0.03)
+        ax_stim = fig.add_subplot(gs[0, 0])
+        ax_spk = fig.add_subplot(gs[1, 0], sharex=ax_stim)
+        cax = fig.add_subplot(gs[1, 1])
+
+        ax_stim.imshow(pol_binned, aspect='auto', cmap=polarity_cmap,
+                       vmin=-1, vmax=1, interpolation='nearest',
+                       extent=[0, plot_duration_ms, n_ch, 0])
+        ax_stim.set_ylabel('Stim channel')
+        ax_stim.set_title(f'Oracle pattern {pattern_name} — stim polarity (top) & avg spike response (bottom)')
+        plt.setp(ax_stim.get_xticklabels(), visible=False)
+
+        im = ax_spk.imshow(avg, aspect='auto', cmap='Greys',
+                           interpolation='nearest',
+                           extent=[0, plot_duration_ms, avg.shape[0], 0])
+        ax_spk.set_xlabel('Time (ms)')
+        ax_spk.set_ylabel('Neuron index')
+        fig.colorbar(im, cax=cax, label='Avg spikes/bin')
+
+        fig.savefig(f'{savepath}/pattern_and_sta_{pattern_name}.png',
+                    bbox_inches='tight', dpi=120)
+        plt.close(fig)
+
+    # --- Save STAs + stim patterns as a single .npz ---
+    pattern_names = np.array(sorted(sta_by_pattern.keys()), dtype=np.int64)
+    sta_stack = np.stack([sta_by_pattern[p] for p in pattern_names], axis=0)    # (P, n_neurons, n_bins)
+    stim_stack = np.stack([stim_by_pattern[p] for p in pattern_names], axis=0)  # (P, n_ch, n_bins)
+    bin_centers_ms = (np.arange(n_bins) + 0.5) * bin_size_ms
+    npz_path = os.path.join(savepath, 'oracle_pattern_stas.npz')
+    np.savez(
+        npz_path,
+        pattern_names=pattern_names,
+        sta=sta_stack,                  # trial-averaged spike response, shape (P, n_neurons, n_bins)
+        stim_polarity=stim_stack,       # binned polarity, shape (P, n_stim_channels, n_bins)
+        spiking_neurons=np.asarray(spiking_neurons),
+        bin_centers_ms=bin_centers_ms.astype(np.float32),
+        bin_size_ms=np.int32(bin_size_ms),
+        plot_duration_ms=np.int32(plot_duration_ms),
+        stim_duration_ms=np.int32(stim_duration_ms),
+    )
+    print(f"Saved {len(pattern_names)} STAs to {npz_path} "
+          f"(sta shape {sta_stack.shape}, stim shape {stim_stack.shape})")
+
+
+def plot_oracle_pattern_pca_scree(unique_trials, spike_responses, spiking_neurons,
+                                  savepath, bin_size_ms=10,
+                                  first_half_ms=(0, 1000),
+                                  second_half_ms=(1000, 2000)):
+    """Per-oracle-pattern PCA scree over spatiotemporal trial snippets.
+
+    For each oracle pattern, gather its N trials. Each trial is binned at
+    ``bin_size_ms`` and sliced into two halves (stim + early response vs.
+    post-stim baseline). PCA is fit over trials within each half and the
+    cumulative variance-explained curve is plotted — one line per pattern.
+    """
+    from sklearn.decomposition import PCA
+    from matplotlib.lines import Line2D
+
+    if not os.path.exists(savepath):
+        os.makedirs(savepath)
+
+    oracle_patterns = sorted(unique_trials[unique_trials['is_oracle']]['pattern_name'].unique())
+    if len(oracle_patterns) == 0:
+        print("No oracle patterns found.")
+        return
+
+    halves = [('first', first_half_ms), ('second', second_half_ms)]
+    cumvars = {name: {} for name, _ in halves}
+
+    for pattern_name in oracle_patterns:
+        trials = unique_trials[unique_trials['pattern_name'] == pattern_name]
+        for half_name, (lo_ms, hi_ms) in halves:
+            snippets = []
+            for _, ti in trials.iterrows():
+                resp = spike_responses[ti['pattern_timing_index']]           # (n_neurons, time_ms)
+                seg = resp[:, lo_ms:hi_ms]                                   # (n_neurons, half_ms)
+                # bin at bin_size_ms
+                binned = bin_spike_response(seg, bin_size_ms,
+                                            max_time=hi_ms - lo_ms,
+                                            remainder="append")              # (n_neurons, n_bins)
+                snippets.append(binned.reshape(-1))                           # flatten spatiotemporal
+            X = np.stack(snippets, axis=0)                                    # (n_trials, n_features)
+            n_components = min(X.shape[0], X.shape[1])
+            pca = PCA(n_components=n_components, svd_solver='full').fit(X)
+            cumvars[half_name][pattern_name] = np.cumsum(pca.explained_variance_ratio_)
+
+    # ---------------- Figure ----------------
+    # 1 row x 2 cols, both halves overlaid in each subplot for direct comparison:
+    #   Col 0: one line per pattern per half (first = warm, second = cool)
+    #   Col 1: mean ± SD across patterns, one band per half
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5.5), sharey=True)
+
+    half_colors = {'first': '#D02525', 'second': '#1E8FFF'}   # red vs blue
+
+    # --- Col 0: each pattern as a line, grouped by half ---
+    ax = axes[0]
+    for half_name, (lo_ms, hi_ms) in halves:
+        cv_dict = cumvars[half_name]
+        for i, pat in enumerate(oracle_patterns):
+            cv = cv_dict[pat]
+            ax.plot(np.arange(1, len(cv) + 1), cv,
+                    color=half_colors[half_name],
+                    linewidth=0.8, alpha=0.45,
+                    label=None)
+    # Legend proxies
+    legend_lines = [
+        Line2D([0], [0], color=half_colors['first'], lw=2,
+               label=f"First {halves[0][1][0]}-{halves[0][1][1]} ms (stim + early)"),
+        Line2D([0], [0], color=half_colors['second'], lw=2,
+               label=f"Second {halves[1][1][0]}-{halves[1][1][1]} ms (post-stim)"),
+    ]
+    ax.legend(handles=legend_lines, loc='lower right')
+    ax.set_title('PCA — cumulative var. per oracle pattern')
+    ax.set_ylabel('Cumulative frac. var. explained')
+    ax.set_xlabel('Number of components')
+    ax.grid()
+    ax.set_ylim(0, 1.02)
+
+    # --- Col 1: mean ± SD across patterns, overlaid halves ---
+    ax = axes[1]
+    for half_name, (lo_ms, hi_ms) in halves:
+        cv_dict = cumvars[half_name]
+        max_n = max(len(cv_dict[p]) for p in oracle_patterns)
+        stacked = np.full((len(oracle_patterns), max_n), np.nan)
+        for i, pat in enumerate(oracle_patterns):
+            cv = cv_dict[pat]
+            stacked[i, :len(cv)] = cv
+        mean_cv = np.nanmean(stacked, axis=0)
+        std_cv = np.nanstd(stacked, axis=0)
+        xs = np.arange(1, max_n + 1)
+        label = (f"First {lo_ms}-{hi_ms} ms" if half_name == 'first'
+                 else f"Second {lo_ms}-{hi_ms} ms")
+        c = half_colors[half_name]
+        ax.plot(xs, mean_cv, color=c, linewidth=2.2, label=f'{label} — mean')
+        ax.fill_between(xs, mean_cv - std_cv, mean_cv + std_cv,
+                        color=c, alpha=0.2, label=f'{label} — ±1 SD')
+    ax.set_title('PCA — mean ± SD across patterns')
+    ax.set_xlabel('Number of components')
+    ax.grid()
+    ax.set_ylim(0, 1.02)
+    ax.legend(loc='lower right', fontsize=8)
+
+    n_trials_typical = int(unique_trials[unique_trials['is_oracle']]
+                           .groupby('pattern_name').size().median())
+    plt.suptitle(
+        f'PCA per oracle pattern  |  {len(oracle_patterns)} patterns  |  '
+        f'~{n_trials_typical} trials/pattern  |  bin {bin_size_ms} ms'
+    )
+    plt.tight_layout()
+    out = os.path.join(savepath, 'oracle_pattern_pca_scree.png')
+    plt.savefig(out, dpi=130, bbox_inches='tight')
+    plt.close(fig)
+    print(f"Saved {out}")
+
+
 def plot_stimulation_polarity_timeseries(pattern_stims, pattern_polarities, pattern_name, savepath):
     if not os.path.exists(savepath):
         os.makedirs(savepath)
@@ -1895,3 +2105,56 @@ def fa_input_output(model_tuple, cfg, raw_data, model_label='',
     fig2 = _plot(fc_out, sv_out, 'FA Point Cloud — Model Outputs (coarse)',  'out_start', 'out_end')
 
     return fig1, fig2, fa_in, fa_out
+
+
+if __name__ == "__main__":
+    import argparse
+    from utils import load_raw_data
+
+    parser = argparse.ArgumentParser(
+        description="Render oracle-pattern figures (aligned stim/STA and/or per-pattern PCA scree).")
+    parser.add_argument("--datadir", default="data/oracle_ICMS_150/",
+                        help="Dataset directory (contains SpkVecs.npy, pattern_registrations.pkl).")
+    parser.add_argument("--mode", choices=["stas", "pca", "both"], default="stas",
+                        help="Which figure(s) to produce: aligned stim/STA panels, PCA scree, or both.")
+    parser.add_argument("--outdir-name", default="patterns_and_stas",
+                        help="Output subdirectory under --datadir (used by 'stas' and 'both').")
+    parser.add_argument("--pca-outdir-name", default="pca_scree",
+                        help="Output subdirectory under --datadir for the PCA scree figure.")
+    parser.add_argument("--plot-duration-ms", type=int, default=2000)
+    parser.add_argument("--bin-size-ms", type=int, default=60)
+    parser.add_argument("--stim-duration-ms", type=int, default=600)
+    parser.add_argument("--pca-bin-size-ms", type=int, default=10,
+                        help="Temporal bin for PCA snippets (finer bins = richer features).")
+    parser.add_argument("--first-half-ms", type=int, nargs=2, default=[0, 1000])
+    parser.add_argument("--second-half-ms", type=int, nargs=2, default=[1000, 2000])
+    args = parser.parse_args()
+
+    raw = load_raw_data({"datadir": args.datadir, "problematic_neurons": []})
+
+    if args.mode in ("stas", "both"):
+        savepath = os.path.join(args.datadir, args.outdir_name)
+        plot_oracle_pattern_with_stim(
+            unique_trials=raw["unique_trials"],
+            spike_responses=raw["spike_responses"],
+            spiking_neurons=raw["spiking_neurons"],
+            pattern_polarities=raw["pattern_polarities"],
+            savepath=savepath,
+            plot_duration_ms=args.plot_duration_ms,
+            bin_size_ms=args.bin_size_ms,
+            stim_duration_ms=args.stim_duration_ms,
+        )
+        print(f"Saved STA figures to {savepath}/")
+
+    if args.mode in ("pca", "both"):
+        pca_savepath = os.path.join(args.datadir, args.pca_outdir_name)
+        plot_oracle_pattern_pca_scree(
+            unique_trials=raw["unique_trials"],
+            spike_responses=raw["spike_responses"],
+            spiking_neurons=raw["spiking_neurons"],
+            savepath=pca_savepath,
+            bin_size_ms=args.pca_bin_size_ms,
+            first_half_ms=tuple(args.first_half_ms),
+            second_half_ms=tuple(args.second_half_ms),
+        )
+        print(f"Saved PCA scree to {pca_savepath}/")
