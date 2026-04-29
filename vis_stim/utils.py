@@ -6,7 +6,6 @@ import os
 import yaml
 import torch
 from torch.utils.data import Dataset, DataLoader
-from models import SimpleCausalSpikeCNN
 
 # Mapping from delay_mode to integer index for categorical encoding
 # Index 4 = no stimulation (default)
@@ -140,23 +139,29 @@ def read_pattern_json(pattern_registrations_pkl_path):
     final_df['step_start_timestamp'] = final_df['step_start_timestamp'].astype(int)
     final_df['pattern_flag_start_timestamp'] = final_df['pattern_flag_start_timestamp'].astype(int)
     
-    # 7. Add is_oracle column: True for any pattern_name that appears more than once
-    repeat_counts = (
-        final_df[['pattern_name', 'pattern_timing_index']]
-        .drop_duplicates()
-        .groupby('pattern_name')['pattern_timing_index']
-        .count()
-    )
-    oracle_pattern_names = set(repeat_counts[repeat_counts > 1].index)
-    final_df['is_oracle'] = final_df['pattern_name'].isin(oracle_pattern_names)
+    # 7. Add is_oracle column
+    oracle_patterns = final_df.groupby(['pattern_name'])['pattern_timing_index'].agg('nunique')  # count how many pattern names appear
+    oracle_patterns = oracle_patterns[oracle_patterns > 1].index  # Patterns with more than 1 trial are oracles
+    print(f"Identified {len(oracle_patterns)} oracle patterns with >1 trial: {oracle_patterns.values}") 
+    final_df['is_oracle'] = final_df['pattern_name'].isin(oracle_patterns)
 
-    # 8. Add trial column: cumulative occurrence index per pattern_name
-    final_df['trial'] = 1
+    # 8. Add trial column
+    # For non-oracle patterns: trial = 1 (single trial each)
+    # For oracle patterns: trial = 1-10 (10 repeats of each pattern)
+    # We assign trial numbers based on the order of appearance (pattern_timing_index)
+    final_df['trial'] = 1  # Default for non-oracle
+    
+    # For oracle patterns, assign trial number based on order of occurrence
     oracle_mask = final_df['is_oracle']
     if oracle_mask.any():
+        # Get unique (pattern_name, pattern_timing_index) pairs for oracle patterns
         oracle_occurrences = final_df.loc[oracle_mask, ['pattern_name', 'pattern_timing_index']].drop_duplicates()
         oracle_occurrences = oracle_occurrences.sort_values('pattern_timing_index')
+        
+        # Assign trial number (1-10) for each pattern_name based on order of appearance
         oracle_occurrences['trial'] = oracle_occurrences.groupby('pattern_name').cumcount() + 1
+        
+        # Merge back to get trial numbers for oracle patterns
         trial_map = oracle_occurrences.set_index('pattern_timing_index')['trial'].to_dict()
         final_df.loc[oracle_mask, 'trial'] = final_df.loc[oracle_mask, 'pattern_timing_index'].map(trial_map)
 
@@ -179,15 +184,11 @@ def preprocess_pattern_stimulations_df(pattern_df, align_to_stim=False, center_t
     patterns = patterns.sort_values('pattern_timing_index').reset_index(drop=True)
 
     if align_to_stim:
-        # Use the earliest step_start_timestamp per trial as the aligned flag.
-        # step_index==0 can be missing when its step_channel_delays was empty
-        # (dropped upstream), and even when present it isn't guaranteed to be
-        # the numerically smallest timestamp — grouping by min on the full
-        # stim-bearing rows is the robust definition of "first stim".
+        # Get the step_start_timestamp for step_index == 0 for each pattern
         first_step_timestamps = (
-            pattern_df
+            pattern_df[pattern_df['step_index'] == 0]
             .groupby('pattern_timing_index')['step_start_timestamp']
-            .min()
+            .first()
             .reset_index()
             .rename(columns={'step_start_timestamp': 'first_stim_timestamp'})
         )
@@ -266,15 +267,13 @@ def trial_breakout_spikes_and_patterns(spikes_df, pattern_df, channel_to_index, 
         timing_to_pattern[timing_idx] = pattern_name
         n_channels = len(channel_to_index)
         # Build stim pattern (same for all trials of same pattern, only compute once)
-        if pattern_name not in pattern_stims:
+        if pattern_name not in pattern_stims: 
             pattern_subset = pattern_df[pattern_df['pattern_name'] == pattern_name].drop_duplicates(subset=['step_index', 'channel', 'delay_mode'])
             stim = np.zeros((n_channels, stim_time_ms))  # 44 channels, 600 ms duration
             polarity = np.zeros((n_channels, stim_time_ms))  # Track polarity: -1 for delay_mode -1, +1 otherwise
-            # Use the first occurrence's pattern_flag_start_timestamp as reference for this pattern
-            pattern_start_ref = pattern_df[pattern_df['pattern_name'] == pattern_name]['pattern_flag_start_timestamp'].iloc[0]
             for idx, row in pattern_subset.iterrows():
-                # Convert actual step timestamp to ms relative to pattern start
-                stim_ms = int((row['step_start_timestamp'] - pattern_start_ref) / 30)
+                step_index = row['step_index']
+                stim_ms = step_time_ms * step_index  # each step is 60 ms
                 if pd.isna(row['channel']):
                     continue  # No stimulation for this step
                 channel_index = channel_to_index[int(row['channel'])]
@@ -285,25 +284,25 @@ def trial_breakout_spikes_and_patterns(spikes_df, pattern_df, channel_to_index, 
                 if delay_mode == 0:  # 3 pulses, 50 Hz, starting at stim_ms
                     for pulse in range(3):
                         pulse_time = stim_ms + pulse * 20
-                        if 0 <= pulse_time < stim_time_ms:
+                        if pulse_time < 600:
                             stim[channel_index, pulse_time] = 3
                             polarity[channel_index, pulse_time] = pulse_polarity
                 elif delay_mode == 1:  # 3 pulses, 50 Hz, starting at 10ms after stim_ms
                     for pulse in range(3):
                         pulse_time = stim_ms + 10 + pulse * 20
-                        if 0 <= pulse_time < stim_time_ms:
+                        if pulse_time < 600:
                             stim[channel_index, pulse_time] = 3
                             polarity[channel_index, pulse_time] = pulse_polarity
                 elif delay_mode == -1:  # same as 0 but with reverse phase structure
-                    for pulse in range(3):
+                    for pulse in range(3): 
                         pulse_time = stim_ms + pulse * 20
-                        if 0 <= pulse_time < stim_time_ms:
+                        if pulse_time < 600:
                             stim[channel_index, pulse_time] = 3
                             polarity[channel_index, pulse_time] = pulse_polarity
                 elif delay_mode == 2:  # 6 pulses, 100 Hz, starting at stim_ms
                     for pulse in range(6):
                         pulse_time = stim_ms + pulse * 10
-                        if 0 <= pulse_time < stim_time_ms:
+                        if pulse_time < 600:
                             stim[channel_index, pulse_time] = 3
                             polarity[channel_index, pulse_time] = pulse_polarity
             pattern_stims[pattern_name] = stim
@@ -513,13 +512,6 @@ class BinnedStimSpikeDataset(Dataset):
         n_channels = len(channel_to_index)
         total_bins = max_time_ms // bin_size_ms
         assert bin_size_ms <= 60 # if bin size is more than 60, then we can have multiple stimulations per bin which would need to be encoded differently
-        # Use the real step-start time (from step_start_timestamp relative to
-        # pattern_flag_start_timestamp, converted from 30 kHz frames to ms)
-        # instead of the nominal step_index * 60 ms. Pulses within the step are
-        # still placed at their nominal intra-step offsets.
-        def _step_start_ms(row):
-            return (row['step_start_timestamp'] - row['pattern_flag_start_timestamp']) / 30.0
-
         if self.encoding_mode == "categorical":
             stim = np.full((n_channels, total_bins), NO_STIM_INDEX, dtype=np.int64)
             for _, row in pattern_subset.iterrows():
@@ -528,18 +520,20 @@ class BinnedStimSpikeDataset(Dataset):
                 step_index = int(row['step_index'])
                 if step_index >= 10:  # Only first 10 steps (600ms of stimulation)
                     continue
-
+                
                 channel_index = channel_to_index[int(row['channel'])]
                 delay_mode = int(row['delay_mode'])
                 category_idx = DELAY_MODE_TO_INDEX[delay_mode]
-
-                step_start_ms = _step_start_ms(row)
-                step_end_ms   = step_start_ms + 60
-
-                start_bin = int(step_start_ms // bin_size_ms)
-                end_bin   = min(int(step_end_ms // bin_size_ms), total_bins)
-
-                for b in range(max(0, start_bin), end_bin):
+                
+                # Each 60ms step contains stimulation
+                # Mark all bins within this 60ms window with the delay mode category
+                step_start_ms = step_index * 60
+                step_end_ms = step_start_ms + 60
+                
+                start_bin = step_start_ms // bin_size_ms
+                end_bin = min(step_end_ms // bin_size_ms, total_bins)
+                
+                for b in range(start_bin, end_bin):
                     stim[channel_index, b] = category_idx
         elif self.encoding_mode == "current":
             stim = np.full((n_channels, total_bins), 0, dtype=np.int64)
@@ -547,29 +541,28 @@ class BinnedStimSpikeDataset(Dataset):
             for _, row in pattern_subset.iterrows():
                 if pd.isna(row['channel']):
                     continue
-
+                step_index = int(row['step_index'])
+                
                 channel_index = channel_to_index[int(row['channel'])]
                 delay_mode = int(row['delay_mode'])
+                
+                # Each 60ms step contains stimulation
+                step_start_ms = step_index * 60
+                step_end_ms = step_start_ms + 60
+                
+                start_bin = step_start_ms // bin_size_ms
+                end_bin = min(step_end_ms // bin_size_ms, total_bins)
+                
 
-                step_start_ms = _step_start_ms(row)
-
-                # Pulses within the step are assumed to fire at fixed offsets
-                # from the real step start (nominal intra-step timing).
-                if delay_mode == 0:               # 3 pulses @ 50 Hz, anodic
-                    offsets, amp = (0, 20, 40), 3
-                elif delay_mode == 1:             # 3 pulses @ 50 Hz, cathodic, +10 ms
-                    offsets, amp = (10, 30, 50), -3
-                elif delay_mode == -1:            # reverse phase of mode 0
-                    offsets, amp = (0, 20, 40), -3
-                elif delay_mode == 2:             # 6 pulses @ 100 Hz
-                    offsets, amp = (0, 10, 20, 30, 40, 50), 3
-                else:
-                    continue
-
-                for dt in offsets:
-                    b = int((step_start_ms + dt) // bin_size_ms)
-                    if 0 <= b < total_bins:
-                        stim[channel_index, b] = amp
+                # since we know each bin is 10 ms, we can set the current directly
+                if delay_mode == 0:
+                    stim[channel_index, start_bin:end_bin:2] = 3
+                elif delay_mode == 1:
+                    stim[channel_index, start_bin+1:end_bin:2] = -3
+                elif delay_mode == -1: # reverse phase of delay mode 0
+                    stim[channel_index, start_bin:end_bin:2] = -3
+                elif delay_mode == 2: # 100 Hz
+                    stim[channel_index, start_bin:end_bin] = 3
         return stim
     
     def _bin_spikes(self, spike_resp, bin_size_ms):

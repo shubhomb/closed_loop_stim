@@ -474,47 +474,65 @@ def sliding_window_predict_trial(model_tuple, cfg, test_loader, timing_idx,
     p_sum = np.zeros((n_neurons, tot_out), dtype=np.float32)
     p_cnt = np.zeros(tot_out, dtype=np.float32)
 
-    _init = None
-    if init_state_flag and n_init > 0:
+    # Mirror BinnedStimSpikeDataset.__getitem__ alignment exactly so that
+    # prediction indexing matches training indexing.
+    history_val = history if (history is not None and history > 0) else 0
+    if init_state_flag:
+        spike_prepend = n_init + history_val
         prev = timing_idx - 1
-        if prev in ds.spike_responses_binned:
-            _init = ds.spike_responses_binned[prev][:, -n_init:]
+        prev_trial = ds.spike_responses_binned.get(
+            prev, np.zeros((n_neurons, tot_out), dtype=np.float32)
+        )
+        available = prev_trial.shape[1]
+        if spike_prepend <= available:
+            prev_ctx = prev_trial[:, -spike_prepend:]
         else:
-            _init = np.zeros((n_neurons, n_init), dtype=np.float32)
+            prev_ctx = np.zeros((n_neurons, spike_prepend), dtype=np.float32)
+            if available > 0:
+                prev_ctx[:, -available:] = prev_trial
+
+        stim_full    = np.pad(stim_binned, ((0, 0), (n_init, 0)), mode='constant')
+        spikes_full  = np.concatenate([prev_ctx, spikes_binned], axis=1)
+        x_width      = n_init + n_input_bins
+        spike_offset = history_val
+    else:
+        stim_full    = stim_binned
+        spikes_full  = spikes_binned
+        x_width      = n_input_bins
+        spike_offset = 0
 
     model.eval()
     with torch.no_grad():
         for t in range(max_s + 1):
-            se = t + n_input_bins
-            actual_bins = stim_binned.shape[1]
+            se = t + x_width
+            actual_bins = stim_full.shape[1]
             if se <= actual_bins:
-                xs = stim_binned[:, t:se].copy()
+                xs = stim_full[:, t:se].copy().astype(np.float32)
             else:
-                xs = np.zeros((stim_binned.shape[0], n_input_bins), dtype=np.float32)
+                xs = np.zeros((stim_full.shape[0], x_width), dtype=np.float32)
                 av = max(0, actual_bins - t)
                 if av > 0:
-                    xs[:, :av] = stim_binned[:, t:t + av]
+                    xs[:, :av] = stim_full[:, t:t + av]
 
-            if init_state_flag and _init is not None:
-                xs = np.pad(xs, ((0, 0), (n_init, 0)), mode='constant')
-
-            if history and history > 0:
-                if init_state_flag and _init is not None:
-                    sfl = np.concatenate([_init, spikes_binned[:, t:t + n_input_bins]], axis=1)
+            if history_val > 0:
+                n_time    = x_width
+                lag_start = t + spike_offset - history_val
+                yh = np.zeros((n_neurons, n_time), dtype=np.float32)
+                if lag_start >= 0:
+                    end = min(lag_start + n_time, spikes_full.shape[1])
+                    yh[:, :end - lag_start] = spikes_full[:, lag_start:end]
                 else:
-                    sfl = spikes_binned[:, t:t + n_input_bins]
-                tt = xs.shape[1]
-                yh = np.zeros((n_neurons, tt), dtype=np.float32)
-                if tt > history:
-                    src = sfl[:, :tt - history]
-                    yh[:, history:history + src.shape[1]] = src
-                xs = np.concatenate([xs.astype(np.float32), yh], axis=0)
+                    valid_from = -lag_start
+                    avail      = min(n_time - valid_from, spikes_full.shape[1])
+                    if avail > 0:
+                        yh[:, valid_from:valid_from + avail] = spikes_full[:, 0:avail]
+                xs = np.concatenate([xs, yh], axis=0)
 
             bx = torch.tensor(xs, dtype=torch.float32).unsqueeze(0).to(device)
             pr = model(bx).cpu().numpy()
             for o in range(n_output_bins):
                 tb = t + output_offset + o
-                if tb < tot_out:
+                if 0 <= tb < tot_out:
                     p_sum[:, tb] += pr[0, :, o]
                     p_cnt[tb] += 1
 

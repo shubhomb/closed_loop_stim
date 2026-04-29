@@ -1470,20 +1470,35 @@ def plot_psth_from_cv_results(
     gt_lw=2.0,
     n_sessions=3,
     save_dir=None,
+    color_by_order=False,
+    order_column='first_trial',
+    order_cmap='Blues',
 ):
     """
     Plot PSTHs using cross-validation results.
-    
+
     For each snippet, loads the model from the fold where that snippet was held out,
     ensuring all predictions shown are truly out-of-sample.
-    
+
     Works for any split strategy: trial, session, config, electrode, current.
-    
+
     Parameters
     ----------
     show_ground_truth : bool
         If True, creates adjacent subplots showing ground truth with identical axes.
         Colors for corresponding GT and prediction traces are identical.
+    color_by_order : bool
+        If True, color traces by the temporal/ordinal value of `order_column`
+        using a sequential colormap (light -> dark = early -> late). Works for
+        any breakout (trial, session, electrode, etc.) as long as the column is
+        numeric/orderable. If False (default), uses categorical tab10 coloring.
+    order_column : str
+        DataFrame column used for ordering when `color_by_order=True`.
+        Examples: 'first_trial', 'session', 'first_electrode', 'first_current',
+        'snippet_start'.
+    order_cmap : str
+        Sequential matplotlib colormap name used when `color_by_order=True`
+        (e.g. 'Blues', 'viridis', 'plasma').
     """
     split_strategy = cv_hparams['split_strategy']
     n_units = cv_hparams['n_units']
@@ -1549,6 +1564,15 @@ def plot_psth_from_cv_results(
     # Color schemes
     current_colors = {3: 'red', 4: 'blue', 5: 'green'}
     trial_cmap = cm.get_cmap('tab10')
+    seq_cmap = cm.get_cmap(order_cmap) if color_by_order else None
+
+    # Validate order_column when color_by_order is requested
+    if color_by_order and order_column not in valid_df.columns:
+        logging.warning(
+            f"order_column '{order_column}' not in valid_df; "
+            f"falling back to categorical coloring"
+        )
+        color_by_order = False
     
     for config in configs_to_plot:
         # Get neurons of interest for this config. Plot all target neurons if none specified.
@@ -1619,8 +1643,30 @@ def plot_psth_from_cv_results(
                 
                 stim_lines_added_pred = {3: False, 4: False, 5: False}
                 stim_lines_added_gt = {3: False, 4: False, 5: False}
-                
-                for trial_idx, (idx, row) in enumerate(session_df.iterrows()):
+
+                # If coloring by order, iterate in ascending order of the
+                # order_column and build a normalization over the values
+                # actually present in this subplot. Map to mid->high region of
+                # the colormap (0.25-1.0) to avoid near-white traces.
+                if color_by_order:
+                    iter_df = session_df.sort_values(
+                        order_column, kind='mergesort'
+                    )
+                    order_vals = pd.to_numeric(
+                        iter_df[order_column], errors='coerce'
+                    ).to_numpy()
+                    valid_mask = ~np.isnan(order_vals)
+                    if valid_mask.sum() >= 2:
+                        vmin = np.nanmin(order_vals)
+                        vmax = np.nanmax(order_vals)
+                        span = vmax - vmin if vmax > vmin else 1.0
+                    else:
+                        vmin, span = 0.0, 1.0
+                else:
+                    iter_df = session_df
+                    order_vals = None
+
+                for trial_idx, (idx, row) in enumerate(iter_df.iterrows()):
                     # Determine which holdout element this snippet belongs to
                     holdout_elem = row[split_column]
                     
@@ -1636,7 +1682,15 @@ def plot_psth_from_cv_results(
                         continue
                     
                     # Use same color for both GT and prediction
-                    trial_color = trial_cmap(trial_idx % trial_cmap.N)
+                    if color_by_order and order_vals is not None:
+                        v = order_vals[trial_idx]
+                        if np.isnan(v):
+                            trial_color = trial_cmap(trial_idx % trial_cmap.N)
+                        else:
+                            frac = (v - vmin) / span
+                            trial_color = seq_cmap(0.25 + 0.75 * frac)
+                    else:
+                        trial_color = trial_cmap(trial_idx % trial_cmap.N)
                     
                     # --- Ground truth (extended) ---
                     session = row['session']
