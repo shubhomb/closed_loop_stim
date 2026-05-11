@@ -280,7 +280,7 @@ def trial_breakout_spikes_and_patterns(spikes_df, pattern_df, channel_to_index, 
                 channel_index = channel_to_index[int(row['channel'])]
                 delay_mode = int(row['delay_mode'])
                 # Polarity is -1 for delay_mode -1, +1 otherwise
-                pulse_polarity = -1 if delay_mode == -1 else 1
+                pulse_polarity = -1 if delay_mode == -1 else 1 # This is the correct definition of polarity based on the original code's use of delay_mode -1 as the only negative case
                 
                 if delay_mode == 0:  # 3 pulses, 50 Hz, starting at stim_ms
                     for pulse in range(3):
@@ -371,6 +371,54 @@ def bin_spike_response(spike_resp, bin_size, max_time=None, remainder='drop'):
     binned = reshaped.sum(axis=2).astype(np.float32)
     
     return binned
+
+
+def encode_pattern_nominal_current_10ms(pattern_subset, channel_to_index, max_time_ms):
+    """Encode a pattern in 'current' mode at 10ms bins using NOMINAL step starts
+    (step_index * 60ms) instead of real timestamps. Pulses land at clean offsets
+    relative to step starts: dm 0/-1 -> {0,2,4}, dm 1 -> {1,3,5}, dm 2 -> {0..5}.
+
+    Returns: (n_channels, max_time_ms // 10) int8 array with values in {-3, 0, +3}.
+    """
+    n_channels = len(channel_to_index)
+    bin_ms = 10
+    total_bins = max_time_ms // bin_ms
+    stim = np.zeros((n_channels, total_bins), dtype=np.int8)
+    for _, row in pattern_subset.iterrows():
+        if pd.isna(row['channel']):
+            continue
+        step_index = int(row['step_index'])
+        if step_index * 60 >= max_time_ms:
+            continue
+        ch = channel_to_index[int(row['channel'])]
+        delay_mode = int(row['delay_mode'])
+        step_start_ms = step_index * 60
+        if delay_mode == 0:
+            offsets, amp = (0, 20, 40), 3
+        elif delay_mode == 1:
+            offsets, amp = (10, 30, 50), 3
+        elif delay_mode == -1:
+            offsets, amp = (0, 20, 40), -3
+        elif delay_mode == 2:
+            offsets, amp = (0, 10, 20, 30, 40, 50), 3
+        else:
+            continue
+        for dt in offsets:
+            b = (step_start_ms + dt) // bin_ms
+            if 0 <= b < total_bins:
+                stim[ch, b] = amp
+    return stim
+
+
+def build_pattern_stims_nominal(pattern_df, channel_to_index, max_time_ms):
+    """Build a {pattern_name -> (n_channels, n_bins) int8} dict using nominal step
+    starts so every 60ms step contains a clean pulse triplet at known offsets."""
+    out = {}
+    for pname in pattern_df['pattern_name'].unique():
+        subset = pattern_df[pattern_df['pattern_name'] == pname].drop_duplicates(
+            subset=['step_index', 'channel', 'delay_mode'])
+        out[pname] = encode_pattern_nominal_current_10ms(subset, channel_to_index, max_time_ms)
+    return out
 
 
 def coarsen_2d(arr, factor, method='mean'):
@@ -1014,7 +1062,7 @@ def load_model_from_run_dir(run_dir, n_stim_channels, n_neurons, device=None):
     n_stim_channels : int
         Number of stimulation channels (from dataset / raw data).
     n_neurons : int
-        Number of neurons (from dataset / raw data).
+        Number of neurons (from  / raw data).
     device : torch.device, optional
         Device to place the model on.  Defaults to CPU.
 
@@ -1087,3 +1135,165 @@ def load_model_from_run_dir(run_dir, n_stim_channels, n_neurons, device=None):
     return model, cfg, device
 
 
+
+
+from numpy.lib.stride_tricks import sliding_window_view
+from collections import defaultdict
+import numpy as np
+
+
+from numpy.lib.stride_tricks import sliding_window_view
+from collections import defaultdict
+import numpy as np
+
+def build_encoder_dataset(spike_responses, timing_to_pattern, pattern_stims, pattern_polarities,
+                  oracle_pattern_indices, *,
+                  WINDOW_SIZE, SPIKE_LATENCY=0, MAX_TIME_MS,
+                  MODE='step', OVERLAPS=False,
+                  n_stim_channels, n_amplitudes, n_neurons,
+                  oracle_mode='per_trial'):
+    """
+    Build (X, Y) train/test arrays.
+
+    oracle_mode controls how oracle trials are used in training:
+      - 'per_trial':  each oracle trial is its own training row (test = empty).
+      - 'averaged':   oracle trials are averaged per pname (test = empty).
+                      ** test set will be empty in this mode -- caller's responsibility
+                         to know that. (Per the spec, test is not averaged oracles.)
+      - 'leftout':    oracle trials are excluded from training entirely; test set is
+                      every oracle trial, per-trial.
+
+    Non-oracle trials (timing_idx not in test_indices) always go into training, per-trial.
+
+    Returns dict with: train_X, train_Y, train_timings, test_X, test_Y, test_timings.
+    """
+    if oracle_mode not in ('per_trial', 'averaged', 'leftout'):
+        raise ValueError(f"oracle_mode must be one of 'per_trial', 'averaged', 'leftout'; got {oracle_mode!r}")
+
+    delay_mode_to_lridx = {-1: 0, 0: 1, 1: 2, 2: 3}
+
+    def encode_one(timing_idx):
+        spk   = spike_responses[timing_idx]
+        pname = timing_to_pattern[timing_idx]
+        win   = spk[:, SPIKE_LATENCY:SPIKE_LATENCY + MAX_TIME_MS]
+        stim  = pattern_stims[pname]
+        pol   = pattern_polarities[pname]
+        signed_stim = stim * pol
+
+        if MODE == 'step':
+            if WINDOW_SIZE % 60 != 0:
+                raise ValueError('For step mode, WINDOW_SIZE must be a multiple of 60ms.')
+            stim_one_hot = np.zeros((n_stim_channels * 4, signed_stim.shape[1] // 60))
+            for step in range(0, signed_stim.shape[1], 60):
+                for ch in range(n_stim_channels):
+                    dm = None
+                    # dm=2: 100Hz anodic. Synthesizer writes +3 every 10ms, so step and step+10 are both +3.
+                    if signed_stim[ch, step] == 3 and signed_stim[ch, step + 10] == 3:
+                        dm = 2
+                    # dm=0: 50Hz anodic. +3 at step start, step+10 empty (next pulse at step+20).
+                    elif signed_stim[ch, step] == 3:
+                        dm = 0
+                    # dm=1: 50Hz anodic, delayed 10ms. step empty, +3 at step+10.
+                    elif signed_stim[ch, step + 10] == 3:
+                        dm = 1
+                    # dm=-1: 50Hz cathodic. -3 at step start.
+                    elif signed_stim[ch, step] == -3:
+                        dm = -1
+                    if dm is not None:
+                        stim_one_hot[ch * 4 + delay_mode_to_lridx[dm], step // 60] = 1
+        elif MODE == 'pulse':
+            stim_one_hot = np.zeros((n_stim_channels * n_amplitudes, win.shape[1]))
+            for ch in range(n_stim_channels):
+                for a_idx, amp_val in enumerate([-3, 3]):
+                    stim_one_hot[ch * n_amplitudes + a_idx, :] = (signed_stim[ch, :] == amp_val)
+        else:
+            raise ValueError(f'unknown MODE {MODE!r}')
+
+        if OVERLAPS:
+            # Sample at step boundaries so spike-window count == stim-window count.
+            spk_view = sliding_window_view(win, window_shape=WINDOW_SIZE, axis=1)[:, ::60, :]
+            Y = spk_view.sum(axis=-1).T
+            if MODE == 'step':
+                stim_view = sliding_window_view(stim_one_hot, window_shape=WINDOW_SIZE // 60, axis=1)
+                X = stim_view.sum(axis=-1).T
+            else:
+                stim_view = sliding_window_view(stim_one_hot, window_shape=WINDOW_SIZE, axis=1)[:, ::60, :]
+                X = stim_view.sum(axis=-1).T
+        else:
+            Y = win.reshape(n_neurons, -1, WINDOW_SIZE).sum(axis=-1).T
+            if MODE == 'step':
+                X = stim_one_hot.reshape(stim_one_hot.shape[0], -1, WINDOW_SIZE // 60).sum(axis=-1).T
+            else:
+                X = stim_one_hot.reshape(stim_one_hot.shape[0], -1, WINDOW_SIZE).sum(axis=-1).T
+        return X, Y
+
+    oracle_set = set(oracle_pattern_indices)
+
+    # --- Non-oracle trials -> training (per-trial) ---
+    nonoracle_X, nonoracle_Y, nonoracle_T = [], [], []
+    # --- Oracle trials -> grouped by pname ---
+    oracle_X_by_pname = {}                   # pname -> X (identical across trials)
+    oracle_Y_by_pname = defaultdict(list)
+    oracle_timing_by_pname = defaultdict(list)
+
+    for timing_idx in spike_responses.keys():
+        X, Y = encode_one(timing_idx)
+        if timing_idx in oracle_set:
+            pname = timing_to_pattern[timing_idx]
+            oracle_X_by_pname[pname] = X
+            oracle_Y_by_pname[pname].append(Y)
+            oracle_timing_by_pname[pname].append(timing_idx)
+        else:
+            nonoracle_X.append(X)
+            nonoracle_Y.append(Y)
+            nonoracle_T.extend([timing_idx] * Y.shape[0])
+
+    train_X_blocks, train_Y_blocks, train_T = list(nonoracle_X), list(nonoracle_Y), list(nonoracle_T)
+    test_X_blocks,  test_Y_blocks,  test_T  = [], [], []
+
+    pnames = list(oracle_X_by_pname.keys())
+
+    if oracle_mode == 'per_trial':
+        for p in pnames:
+            ys = oracle_Y_by_pname[p]
+            n_win = ys[0].shape[0]
+            Y_block = np.vstack(ys)
+            X_block = np.tile(oracle_X_by_pname[p], (len(ys), 1))
+            train_X_blocks.append(X_block)
+            train_Y_blocks.append(Y_block)
+            for ti in oracle_timing_by_pname[p]:
+                train_T.extend([ti] * n_win)              # repeat per window
+        # test is empty
+    elif oracle_mode == 'averaged':
+        for p in pnames:
+            ys = oracle_Y_by_pname[p]
+            Y_avg = np.mean(np.stack(ys, axis=0), axis=0)   # (n_win, n_neurons)
+            n_win = Y_avg.shape[0]
+            train_X_blocks.append(oracle_X_by_pname[p])
+            train_Y_blocks.append(Y_avg)
+            train_T.extend([oracle_timing_by_pname[p][0]] * n_win)
+        # test is empty (per-spec: test is not averaged oracles)
+    elif oracle_mode == 'leftout':
+        for p in pnames:
+            ys = oracle_Y_by_pname[p]
+            n_win = ys[0].shape[0]
+            Y_block = np.vstack(ys)
+            X_block = np.tile(oracle_X_by_pname[p], (len(ys), 1))
+            test_X_blocks.append(X_block)
+            test_Y_blocks.append(Y_block)
+            for ti in oracle_timing_by_pname[p]:
+                test_T.extend([ti] * n_win)
+
+    def _stack(Xs, Ys, Ts):
+        if not Xs:
+            return (np.zeros((0, 0)), np.zeros((0, 0)), np.array([]))
+        return np.vstack(Xs), np.vstack(Ys), np.array(Ts)
+
+    train_X, train_Y, train_T = _stack(train_X_blocks, train_Y_blocks, train_T)
+    test_X,  test_Y,  test_T  = _stack(test_X_blocks,  test_Y_blocks,  test_T)
+
+    return {
+        'train_X': train_X, 'train_Y': train_Y, 'train_timings': train_T,
+        'test_X':  test_X,  'test_Y':  test_Y,  'test_timings':  test_T,
+        'oracle_pnames': pnames,
+    }

@@ -1,0 +1,7496 @@
+# Auto-generated.
+# 1-layer: full grid kernels{3,5,20} x channels{128,256,512}.
+# 2-layer: full grid (kernels^2 x channels^2).
+# 3-layer: curated kernel templates (large->small temporal window):
+#   [20,5,3], [20,5,5], [20,3,3], [5,5,3], [5,3,3]; full channel grid.
+# FC heads: 1-2 layers in {128,256}.
+# Optim: lr=1e-3, dropout=0.3, weight_decay=1e-5, patience=10.
+sweep_name: vis_stim_simple_cnn
+strategy: grid
+metric: test_corr
+direction: maximize
+seed: 42
+base_config:
+  datadir: /scratch/sb272/vis_stim_data
+  sample_rate: 30000
+  stim_ms: 500
+  bin_ms: 10
+  n_vis_trials: 100
+  max_time_ms: 720
+  input_bin_ms: 10
+  output_bin_ms: 10
+  encoding_mode: current
+  val_frac: 0.2
+  batch_size: 16
+  n_epochs: 50
+  patience: 10
+  use_batch_norm: true
+  lr: 0.001
+  weight_decay: 1.0e-05
+  dropout: 0.3
+  vis_orient_time: 600
+  budget_per_step: 4
+  encodings:
+  - -1
+  - 0
+  - 1
+  - 2
+  require_improvement: true
+  k_trials_per_pattern: 10
+  shuffle_seed: 0
+search_space:
+  _arch:
+    type: categorical
+    values:
+    - kernel_sizes: &id001
+      - 3
+      conv_channels: &id002
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id001
+      conv_channels: *id002
+      fc_dims:
+      - 256
+    - kernel_sizes: *id001
+      conv_channels: *id002
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id001
+      conv_channels: *id002
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id001
+      conv_channels: *id002
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id001
+      conv_channels: *id002
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id003
+      - 3
+      conv_channels: &id004
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id003
+      conv_channels: *id004
+      fc_dims:
+      - 256
+    - kernel_sizes: *id003
+      conv_channels: *id004
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id003
+      conv_channels: *id004
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id003
+      conv_channels: *id004
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id003
+      conv_channels: *id004
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id005
+      - 3
+      conv_channels: &id006
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id005
+      conv_channels: *id006
+      fc_dims:
+      - 256
+    - kernel_sizes: *id005
+      conv_channels: *id006
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id005
+      conv_channels: *id006
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id005
+      conv_channels: *id006
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id005
+      conv_channels: *id006
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id007
+      - 5
+      conv_channels: &id008
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id007
+      conv_channels: *id008
+      fc_dims:
+      - 256
+    - kernel_sizes: *id007
+      conv_channels: *id008
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id007
+      conv_channels: *id008
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id007
+      conv_channels: *id008
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id007
+      conv_channels: *id008
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id009
+      - 5
+      conv_channels: &id010
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id009
+      conv_channels: *id010
+      fc_dims:
+      - 256
+    - kernel_sizes: *id009
+      conv_channels: *id010
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id009
+      conv_channels: *id010
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id009
+      conv_channels: *id010
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id009
+      conv_channels: *id010
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id011
+      - 5
+      conv_channels: &id012
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id011
+      conv_channels: *id012
+      fc_dims:
+      - 256
+    - kernel_sizes: *id011
+      conv_channels: *id012
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id011
+      conv_channels: *id012
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id011
+      conv_channels: *id012
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id011
+      conv_channels: *id012
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id013
+      - 20
+      conv_channels: &id014
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id013
+      conv_channels: *id014
+      fc_dims:
+      - 256
+    - kernel_sizes: *id013
+      conv_channels: *id014
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id013
+      conv_channels: *id014
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id013
+      conv_channels: *id014
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id013
+      conv_channels: *id014
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id015
+      - 20
+      conv_channels: &id016
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id015
+      conv_channels: *id016
+      fc_dims:
+      - 256
+    - kernel_sizes: *id015
+      conv_channels: *id016
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id015
+      conv_channels: *id016
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id015
+      conv_channels: *id016
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id015
+      conv_channels: *id016
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id017
+      - 20
+      conv_channels: &id018
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id017
+      conv_channels: *id018
+      fc_dims:
+      - 256
+    - kernel_sizes: *id017
+      conv_channels: *id018
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id017
+      conv_channels: *id018
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id017
+      conv_channels: *id018
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id017
+      conv_channels: *id018
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id019
+      - 3
+      - 3
+      conv_channels: &id020
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id019
+      conv_channels: *id020
+      fc_dims:
+      - 256
+    - kernel_sizes: *id019
+      conv_channels: *id020
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id019
+      conv_channels: *id020
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id019
+      conv_channels: *id020
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id019
+      conv_channels: *id020
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id021
+      - 3
+      - 3
+      conv_channels: &id022
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id021
+      conv_channels: *id022
+      fc_dims:
+      - 256
+    - kernel_sizes: *id021
+      conv_channels: *id022
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id021
+      conv_channels: *id022
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id021
+      conv_channels: *id022
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id021
+      conv_channels: *id022
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id023
+      - 3
+      - 3
+      conv_channels: &id024
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id023
+      conv_channels: *id024
+      fc_dims:
+      - 256
+    - kernel_sizes: *id023
+      conv_channels: *id024
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id023
+      conv_channels: *id024
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id023
+      conv_channels: *id024
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id023
+      conv_channels: *id024
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id025
+      - 3
+      - 3
+      conv_channels: &id026
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id025
+      conv_channels: *id026
+      fc_dims:
+      - 256
+    - kernel_sizes: *id025
+      conv_channels: *id026
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id025
+      conv_channels: *id026
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id025
+      conv_channels: *id026
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id025
+      conv_channels: *id026
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id027
+      - 3
+      - 3
+      conv_channels: &id028
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id027
+      conv_channels: *id028
+      fc_dims:
+      - 256
+    - kernel_sizes: *id027
+      conv_channels: *id028
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id027
+      conv_channels: *id028
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id027
+      conv_channels: *id028
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id027
+      conv_channels: *id028
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id029
+      - 3
+      - 3
+      conv_channels: &id030
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id029
+      conv_channels: *id030
+      fc_dims:
+      - 256
+    - kernel_sizes: *id029
+      conv_channels: *id030
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id029
+      conv_channels: *id030
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id029
+      conv_channels: *id030
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id029
+      conv_channels: *id030
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id031
+      - 3
+      - 3
+      conv_channels: &id032
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id031
+      conv_channels: *id032
+      fc_dims:
+      - 256
+    - kernel_sizes: *id031
+      conv_channels: *id032
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id031
+      conv_channels: *id032
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id031
+      conv_channels: *id032
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id031
+      conv_channels: *id032
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id033
+      - 3
+      - 3
+      conv_channels: &id034
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id033
+      conv_channels: *id034
+      fc_dims:
+      - 256
+    - kernel_sizes: *id033
+      conv_channels: *id034
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id033
+      conv_channels: *id034
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id033
+      conv_channels: *id034
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id033
+      conv_channels: *id034
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id035
+      - 3
+      - 3
+      conv_channels: &id036
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id035
+      conv_channels: *id036
+      fc_dims:
+      - 256
+    - kernel_sizes: *id035
+      conv_channels: *id036
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id035
+      conv_channels: *id036
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id035
+      conv_channels: *id036
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id035
+      conv_channels: *id036
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id037
+      - 3
+      - 5
+      conv_channels: &id038
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id037
+      conv_channels: *id038
+      fc_dims:
+      - 256
+    - kernel_sizes: *id037
+      conv_channels: *id038
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id037
+      conv_channels: *id038
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id037
+      conv_channels: *id038
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id037
+      conv_channels: *id038
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id039
+      - 3
+      - 5
+      conv_channels: &id040
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id039
+      conv_channels: *id040
+      fc_dims:
+      - 256
+    - kernel_sizes: *id039
+      conv_channels: *id040
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id039
+      conv_channels: *id040
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id039
+      conv_channels: *id040
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id039
+      conv_channels: *id040
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id041
+      - 3
+      - 5
+      conv_channels: &id042
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id041
+      conv_channels: *id042
+      fc_dims:
+      - 256
+    - kernel_sizes: *id041
+      conv_channels: *id042
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id041
+      conv_channels: *id042
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id041
+      conv_channels: *id042
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id041
+      conv_channels: *id042
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id043
+      - 3
+      - 5
+      conv_channels: &id044
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id043
+      conv_channels: *id044
+      fc_dims:
+      - 256
+    - kernel_sizes: *id043
+      conv_channels: *id044
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id043
+      conv_channels: *id044
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id043
+      conv_channels: *id044
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id043
+      conv_channels: *id044
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id045
+      - 3
+      - 5
+      conv_channels: &id046
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id045
+      conv_channels: *id046
+      fc_dims:
+      - 256
+    - kernel_sizes: *id045
+      conv_channels: *id046
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id045
+      conv_channels: *id046
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id045
+      conv_channels: *id046
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id045
+      conv_channels: *id046
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id047
+      - 3
+      - 5
+      conv_channels: &id048
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id047
+      conv_channels: *id048
+      fc_dims:
+      - 256
+    - kernel_sizes: *id047
+      conv_channels: *id048
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id047
+      conv_channels: *id048
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id047
+      conv_channels: *id048
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id047
+      conv_channels: *id048
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id049
+      - 3
+      - 5
+      conv_channels: &id050
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id049
+      conv_channels: *id050
+      fc_dims:
+      - 256
+    - kernel_sizes: *id049
+      conv_channels: *id050
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id049
+      conv_channels: *id050
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id049
+      conv_channels: *id050
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id049
+      conv_channels: *id050
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id051
+      - 3
+      - 5
+      conv_channels: &id052
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id051
+      conv_channels: *id052
+      fc_dims:
+      - 256
+    - kernel_sizes: *id051
+      conv_channels: *id052
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id051
+      conv_channels: *id052
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id051
+      conv_channels: *id052
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id051
+      conv_channels: *id052
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id053
+      - 3
+      - 5
+      conv_channels: &id054
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id053
+      conv_channels: *id054
+      fc_dims:
+      - 256
+    - kernel_sizes: *id053
+      conv_channels: *id054
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id053
+      conv_channels: *id054
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id053
+      conv_channels: *id054
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id053
+      conv_channels: *id054
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id055
+      - 3
+      - 20
+      conv_channels: &id056
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id055
+      conv_channels: *id056
+      fc_dims:
+      - 256
+    - kernel_sizes: *id055
+      conv_channels: *id056
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id055
+      conv_channels: *id056
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id055
+      conv_channels: *id056
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id055
+      conv_channels: *id056
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id057
+      - 3
+      - 20
+      conv_channels: &id058
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id057
+      conv_channels: *id058
+      fc_dims:
+      - 256
+    - kernel_sizes: *id057
+      conv_channels: *id058
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id057
+      conv_channels: *id058
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id057
+      conv_channels: *id058
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id057
+      conv_channels: *id058
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id059
+      - 3
+      - 20
+      conv_channels: &id060
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id059
+      conv_channels: *id060
+      fc_dims:
+      - 256
+    - kernel_sizes: *id059
+      conv_channels: *id060
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id059
+      conv_channels: *id060
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id059
+      conv_channels: *id060
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id059
+      conv_channels: *id060
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id061
+      - 3
+      - 20
+      conv_channels: &id062
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id061
+      conv_channels: *id062
+      fc_dims:
+      - 256
+    - kernel_sizes: *id061
+      conv_channels: *id062
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id061
+      conv_channels: *id062
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id061
+      conv_channels: *id062
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id061
+      conv_channels: *id062
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id063
+      - 3
+      - 20
+      conv_channels: &id064
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id063
+      conv_channels: *id064
+      fc_dims:
+      - 256
+    - kernel_sizes: *id063
+      conv_channels: *id064
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id063
+      conv_channels: *id064
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id063
+      conv_channels: *id064
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id063
+      conv_channels: *id064
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id065
+      - 3
+      - 20
+      conv_channels: &id066
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id065
+      conv_channels: *id066
+      fc_dims:
+      - 256
+    - kernel_sizes: *id065
+      conv_channels: *id066
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id065
+      conv_channels: *id066
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id065
+      conv_channels: *id066
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id065
+      conv_channels: *id066
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id067
+      - 3
+      - 20
+      conv_channels: &id068
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id067
+      conv_channels: *id068
+      fc_dims:
+      - 256
+    - kernel_sizes: *id067
+      conv_channels: *id068
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id067
+      conv_channels: *id068
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id067
+      conv_channels: *id068
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id067
+      conv_channels: *id068
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id069
+      - 3
+      - 20
+      conv_channels: &id070
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id069
+      conv_channels: *id070
+      fc_dims:
+      - 256
+    - kernel_sizes: *id069
+      conv_channels: *id070
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id069
+      conv_channels: *id070
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id069
+      conv_channels: *id070
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id069
+      conv_channels: *id070
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id071
+      - 3
+      - 20
+      conv_channels: &id072
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id071
+      conv_channels: *id072
+      fc_dims:
+      - 256
+    - kernel_sizes: *id071
+      conv_channels: *id072
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id071
+      conv_channels: *id072
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id071
+      conv_channels: *id072
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id071
+      conv_channels: *id072
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id073
+      - 5
+      - 3
+      conv_channels: &id074
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id073
+      conv_channels: *id074
+      fc_dims:
+      - 256
+    - kernel_sizes: *id073
+      conv_channels: *id074
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id073
+      conv_channels: *id074
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id073
+      conv_channels: *id074
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id073
+      conv_channels: *id074
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id075
+      - 5
+      - 3
+      conv_channels: &id076
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id075
+      conv_channels: *id076
+      fc_dims:
+      - 256
+    - kernel_sizes: *id075
+      conv_channels: *id076
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id075
+      conv_channels: *id076
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id075
+      conv_channels: *id076
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id075
+      conv_channels: *id076
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id077
+      - 5
+      - 3
+      conv_channels: &id078
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id077
+      conv_channels: *id078
+      fc_dims:
+      - 256
+    - kernel_sizes: *id077
+      conv_channels: *id078
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id077
+      conv_channels: *id078
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id077
+      conv_channels: *id078
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id077
+      conv_channels: *id078
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id079
+      - 5
+      - 3
+      conv_channels: &id080
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id079
+      conv_channels: *id080
+      fc_dims:
+      - 256
+    - kernel_sizes: *id079
+      conv_channels: *id080
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id079
+      conv_channels: *id080
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id079
+      conv_channels: *id080
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id079
+      conv_channels: *id080
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id081
+      - 5
+      - 3
+      conv_channels: &id082
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id081
+      conv_channels: *id082
+      fc_dims:
+      - 256
+    - kernel_sizes: *id081
+      conv_channels: *id082
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id081
+      conv_channels: *id082
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id081
+      conv_channels: *id082
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id081
+      conv_channels: *id082
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id083
+      - 5
+      - 3
+      conv_channels: &id084
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id083
+      conv_channels: *id084
+      fc_dims:
+      - 256
+    - kernel_sizes: *id083
+      conv_channels: *id084
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id083
+      conv_channels: *id084
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id083
+      conv_channels: *id084
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id083
+      conv_channels: *id084
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id085
+      - 5
+      - 3
+      conv_channels: &id086
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id085
+      conv_channels: *id086
+      fc_dims:
+      - 256
+    - kernel_sizes: *id085
+      conv_channels: *id086
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id085
+      conv_channels: *id086
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id085
+      conv_channels: *id086
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id085
+      conv_channels: *id086
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id087
+      - 5
+      - 3
+      conv_channels: &id088
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id087
+      conv_channels: *id088
+      fc_dims:
+      - 256
+    - kernel_sizes: *id087
+      conv_channels: *id088
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id087
+      conv_channels: *id088
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id087
+      conv_channels: *id088
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id087
+      conv_channels: *id088
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id089
+      - 5
+      - 3
+      conv_channels: &id090
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id089
+      conv_channels: *id090
+      fc_dims:
+      - 256
+    - kernel_sizes: *id089
+      conv_channels: *id090
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id089
+      conv_channels: *id090
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id089
+      conv_channels: *id090
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id089
+      conv_channels: *id090
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id091
+      - 5
+      - 5
+      conv_channels: &id092
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id091
+      conv_channels: *id092
+      fc_dims:
+      - 256
+    - kernel_sizes: *id091
+      conv_channels: *id092
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id091
+      conv_channels: *id092
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id091
+      conv_channels: *id092
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id091
+      conv_channels: *id092
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id093
+      - 5
+      - 5
+      conv_channels: &id094
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id093
+      conv_channels: *id094
+      fc_dims:
+      - 256
+    - kernel_sizes: *id093
+      conv_channels: *id094
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id093
+      conv_channels: *id094
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id093
+      conv_channels: *id094
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id093
+      conv_channels: *id094
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id095
+      - 5
+      - 5
+      conv_channels: &id096
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id095
+      conv_channels: *id096
+      fc_dims:
+      - 256
+    - kernel_sizes: *id095
+      conv_channels: *id096
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id095
+      conv_channels: *id096
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id095
+      conv_channels: *id096
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id095
+      conv_channels: *id096
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id097
+      - 5
+      - 5
+      conv_channels: &id098
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id097
+      conv_channels: *id098
+      fc_dims:
+      - 256
+    - kernel_sizes: *id097
+      conv_channels: *id098
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id097
+      conv_channels: *id098
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id097
+      conv_channels: *id098
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id097
+      conv_channels: *id098
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id099
+      - 5
+      - 5
+      conv_channels: &id100
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id099
+      conv_channels: *id100
+      fc_dims:
+      - 256
+    - kernel_sizes: *id099
+      conv_channels: *id100
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id099
+      conv_channels: *id100
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id099
+      conv_channels: *id100
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id099
+      conv_channels: *id100
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id101
+      - 5
+      - 5
+      conv_channels: &id102
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id101
+      conv_channels: *id102
+      fc_dims:
+      - 256
+    - kernel_sizes: *id101
+      conv_channels: *id102
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id101
+      conv_channels: *id102
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id101
+      conv_channels: *id102
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id101
+      conv_channels: *id102
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id103
+      - 5
+      - 5
+      conv_channels: &id104
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id103
+      conv_channels: *id104
+      fc_dims:
+      - 256
+    - kernel_sizes: *id103
+      conv_channels: *id104
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id103
+      conv_channels: *id104
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id103
+      conv_channels: *id104
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id103
+      conv_channels: *id104
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id105
+      - 5
+      - 5
+      conv_channels: &id106
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id105
+      conv_channels: *id106
+      fc_dims:
+      - 256
+    - kernel_sizes: *id105
+      conv_channels: *id106
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id105
+      conv_channels: *id106
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id105
+      conv_channels: *id106
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id105
+      conv_channels: *id106
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id107
+      - 5
+      - 5
+      conv_channels: &id108
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id107
+      conv_channels: *id108
+      fc_dims:
+      - 256
+    - kernel_sizes: *id107
+      conv_channels: *id108
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id107
+      conv_channels: *id108
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id107
+      conv_channels: *id108
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id107
+      conv_channels: *id108
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id109
+      - 5
+      - 20
+      conv_channels: &id110
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id109
+      conv_channels: *id110
+      fc_dims:
+      - 256
+    - kernel_sizes: *id109
+      conv_channels: *id110
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id109
+      conv_channels: *id110
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id109
+      conv_channels: *id110
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id109
+      conv_channels: *id110
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id111
+      - 5
+      - 20
+      conv_channels: &id112
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id111
+      conv_channels: *id112
+      fc_dims:
+      - 256
+    - kernel_sizes: *id111
+      conv_channels: *id112
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id111
+      conv_channels: *id112
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id111
+      conv_channels: *id112
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id111
+      conv_channels: *id112
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id113
+      - 5
+      - 20
+      conv_channels: &id114
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id113
+      conv_channels: *id114
+      fc_dims:
+      - 256
+    - kernel_sizes: *id113
+      conv_channels: *id114
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id113
+      conv_channels: *id114
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id113
+      conv_channels: *id114
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id113
+      conv_channels: *id114
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id115
+      - 5
+      - 20
+      conv_channels: &id116
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id115
+      conv_channels: *id116
+      fc_dims:
+      - 256
+    - kernel_sizes: *id115
+      conv_channels: *id116
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id115
+      conv_channels: *id116
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id115
+      conv_channels: *id116
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id115
+      conv_channels: *id116
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id117
+      - 5
+      - 20
+      conv_channels: &id118
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id117
+      conv_channels: *id118
+      fc_dims:
+      - 256
+    - kernel_sizes: *id117
+      conv_channels: *id118
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id117
+      conv_channels: *id118
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id117
+      conv_channels: *id118
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id117
+      conv_channels: *id118
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id119
+      - 5
+      - 20
+      conv_channels: &id120
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id119
+      conv_channels: *id120
+      fc_dims:
+      - 256
+    - kernel_sizes: *id119
+      conv_channels: *id120
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id119
+      conv_channels: *id120
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id119
+      conv_channels: *id120
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id119
+      conv_channels: *id120
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id121
+      - 5
+      - 20
+      conv_channels: &id122
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id121
+      conv_channels: *id122
+      fc_dims:
+      - 256
+    - kernel_sizes: *id121
+      conv_channels: *id122
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id121
+      conv_channels: *id122
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id121
+      conv_channels: *id122
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id121
+      conv_channels: *id122
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id123
+      - 5
+      - 20
+      conv_channels: &id124
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id123
+      conv_channels: *id124
+      fc_dims:
+      - 256
+    - kernel_sizes: *id123
+      conv_channels: *id124
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id123
+      conv_channels: *id124
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id123
+      conv_channels: *id124
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id123
+      conv_channels: *id124
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id125
+      - 5
+      - 20
+      conv_channels: &id126
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id125
+      conv_channels: *id126
+      fc_dims:
+      - 256
+    - kernel_sizes: *id125
+      conv_channels: *id126
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id125
+      conv_channels: *id126
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id125
+      conv_channels: *id126
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id125
+      conv_channels: *id126
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id127
+      - 20
+      - 3
+      conv_channels: &id128
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id127
+      conv_channels: *id128
+      fc_dims:
+      - 256
+    - kernel_sizes: *id127
+      conv_channels: *id128
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id127
+      conv_channels: *id128
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id127
+      conv_channels: *id128
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id127
+      conv_channels: *id128
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id129
+      - 20
+      - 3
+      conv_channels: &id130
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id129
+      conv_channels: *id130
+      fc_dims:
+      - 256
+    - kernel_sizes: *id129
+      conv_channels: *id130
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id129
+      conv_channels: *id130
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id129
+      conv_channels: *id130
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id129
+      conv_channels: *id130
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id131
+      - 20
+      - 3
+      conv_channels: &id132
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id131
+      conv_channels: *id132
+      fc_dims:
+      - 256
+    - kernel_sizes: *id131
+      conv_channels: *id132
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id131
+      conv_channels: *id132
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id131
+      conv_channels: *id132
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id131
+      conv_channels: *id132
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id133
+      - 20
+      - 3
+      conv_channels: &id134
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id133
+      conv_channels: *id134
+      fc_dims:
+      - 256
+    - kernel_sizes: *id133
+      conv_channels: *id134
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id133
+      conv_channels: *id134
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id133
+      conv_channels: *id134
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id133
+      conv_channels: *id134
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id135
+      - 20
+      - 3
+      conv_channels: &id136
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id135
+      conv_channels: *id136
+      fc_dims:
+      - 256
+    - kernel_sizes: *id135
+      conv_channels: *id136
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id135
+      conv_channels: *id136
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id135
+      conv_channels: *id136
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id135
+      conv_channels: *id136
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id137
+      - 20
+      - 3
+      conv_channels: &id138
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id137
+      conv_channels: *id138
+      fc_dims:
+      - 256
+    - kernel_sizes: *id137
+      conv_channels: *id138
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id137
+      conv_channels: *id138
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id137
+      conv_channels: *id138
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id137
+      conv_channels: *id138
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id139
+      - 20
+      - 3
+      conv_channels: &id140
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id139
+      conv_channels: *id140
+      fc_dims:
+      - 256
+    - kernel_sizes: *id139
+      conv_channels: *id140
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id139
+      conv_channels: *id140
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id139
+      conv_channels: *id140
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id139
+      conv_channels: *id140
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id141
+      - 20
+      - 3
+      conv_channels: &id142
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id141
+      conv_channels: *id142
+      fc_dims:
+      - 256
+    - kernel_sizes: *id141
+      conv_channels: *id142
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id141
+      conv_channels: *id142
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id141
+      conv_channels: *id142
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id141
+      conv_channels: *id142
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id143
+      - 20
+      - 3
+      conv_channels: &id144
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id143
+      conv_channels: *id144
+      fc_dims:
+      - 256
+    - kernel_sizes: *id143
+      conv_channels: *id144
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id143
+      conv_channels: *id144
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id143
+      conv_channels: *id144
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id143
+      conv_channels: *id144
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id145
+      - 20
+      - 5
+      conv_channels: &id146
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id145
+      conv_channels: *id146
+      fc_dims:
+      - 256
+    - kernel_sizes: *id145
+      conv_channels: *id146
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id145
+      conv_channels: *id146
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id145
+      conv_channels: *id146
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id145
+      conv_channels: *id146
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id147
+      - 20
+      - 5
+      conv_channels: &id148
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id147
+      conv_channels: *id148
+      fc_dims:
+      - 256
+    - kernel_sizes: *id147
+      conv_channels: *id148
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id147
+      conv_channels: *id148
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id147
+      conv_channels: *id148
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id147
+      conv_channels: *id148
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id149
+      - 20
+      - 5
+      conv_channels: &id150
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id149
+      conv_channels: *id150
+      fc_dims:
+      - 256
+    - kernel_sizes: *id149
+      conv_channels: *id150
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id149
+      conv_channels: *id150
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id149
+      conv_channels: *id150
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id149
+      conv_channels: *id150
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id151
+      - 20
+      - 5
+      conv_channels: &id152
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id151
+      conv_channels: *id152
+      fc_dims:
+      - 256
+    - kernel_sizes: *id151
+      conv_channels: *id152
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id151
+      conv_channels: *id152
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id151
+      conv_channels: *id152
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id151
+      conv_channels: *id152
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id153
+      - 20
+      - 5
+      conv_channels: &id154
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id153
+      conv_channels: *id154
+      fc_dims:
+      - 256
+    - kernel_sizes: *id153
+      conv_channels: *id154
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id153
+      conv_channels: *id154
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id153
+      conv_channels: *id154
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id153
+      conv_channels: *id154
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id155
+      - 20
+      - 5
+      conv_channels: &id156
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id155
+      conv_channels: *id156
+      fc_dims:
+      - 256
+    - kernel_sizes: *id155
+      conv_channels: *id156
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id155
+      conv_channels: *id156
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id155
+      conv_channels: *id156
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id155
+      conv_channels: *id156
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id157
+      - 20
+      - 5
+      conv_channels: &id158
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id157
+      conv_channels: *id158
+      fc_dims:
+      - 256
+    - kernel_sizes: *id157
+      conv_channels: *id158
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id157
+      conv_channels: *id158
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id157
+      conv_channels: *id158
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id157
+      conv_channels: *id158
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id159
+      - 20
+      - 5
+      conv_channels: &id160
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id159
+      conv_channels: *id160
+      fc_dims:
+      - 256
+    - kernel_sizes: *id159
+      conv_channels: *id160
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id159
+      conv_channels: *id160
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id159
+      conv_channels: *id160
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id159
+      conv_channels: *id160
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id161
+      - 20
+      - 5
+      conv_channels: &id162
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id161
+      conv_channels: *id162
+      fc_dims:
+      - 256
+    - kernel_sizes: *id161
+      conv_channels: *id162
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id161
+      conv_channels: *id162
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id161
+      conv_channels: *id162
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id161
+      conv_channels: *id162
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id163
+      - 20
+      - 20
+      conv_channels: &id164
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id163
+      conv_channels: *id164
+      fc_dims:
+      - 256
+    - kernel_sizes: *id163
+      conv_channels: *id164
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id163
+      conv_channels: *id164
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id163
+      conv_channels: *id164
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id163
+      conv_channels: *id164
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id165
+      - 20
+      - 20
+      conv_channels: &id166
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id165
+      conv_channels: *id166
+      fc_dims:
+      - 256
+    - kernel_sizes: *id165
+      conv_channels: *id166
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id165
+      conv_channels: *id166
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id165
+      conv_channels: *id166
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id165
+      conv_channels: *id166
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id167
+      - 20
+      - 20
+      conv_channels: &id168
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id167
+      conv_channels: *id168
+      fc_dims:
+      - 256
+    - kernel_sizes: *id167
+      conv_channels: *id168
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id167
+      conv_channels: *id168
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id167
+      conv_channels: *id168
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id167
+      conv_channels: *id168
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id169
+      - 20
+      - 20
+      conv_channels: &id170
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id169
+      conv_channels: *id170
+      fc_dims:
+      - 256
+    - kernel_sizes: *id169
+      conv_channels: *id170
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id169
+      conv_channels: *id170
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id169
+      conv_channels: *id170
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id169
+      conv_channels: *id170
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id171
+      - 20
+      - 20
+      conv_channels: &id172
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id171
+      conv_channels: *id172
+      fc_dims:
+      - 256
+    - kernel_sizes: *id171
+      conv_channels: *id172
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id171
+      conv_channels: *id172
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id171
+      conv_channels: *id172
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id171
+      conv_channels: *id172
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id173
+      - 20
+      - 20
+      conv_channels: &id174
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id173
+      conv_channels: *id174
+      fc_dims:
+      - 256
+    - kernel_sizes: *id173
+      conv_channels: *id174
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id173
+      conv_channels: *id174
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id173
+      conv_channels: *id174
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id173
+      conv_channels: *id174
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id175
+      - 20
+      - 20
+      conv_channels: &id176
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id175
+      conv_channels: *id176
+      fc_dims:
+      - 256
+    - kernel_sizes: *id175
+      conv_channels: *id176
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id175
+      conv_channels: *id176
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id175
+      conv_channels: *id176
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id175
+      conv_channels: *id176
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id177
+      - 20
+      - 20
+      conv_channels: &id178
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id177
+      conv_channels: *id178
+      fc_dims:
+      - 256
+    - kernel_sizes: *id177
+      conv_channels: *id178
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id177
+      conv_channels: *id178
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id177
+      conv_channels: *id178
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id177
+      conv_channels: *id178
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id179
+      - 20
+      - 20
+      conv_channels: &id180
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id179
+      conv_channels: *id180
+      fc_dims:
+      - 256
+    - kernel_sizes: *id179
+      conv_channels: *id180
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id179
+      conv_channels: *id180
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id179
+      conv_channels: *id180
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id179
+      conv_channels: *id180
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id181
+      - 20
+      - 5
+      - 3
+      conv_channels: &id182
+      - 128
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id181
+      conv_channels: *id182
+      fc_dims:
+      - 256
+    - kernel_sizes: *id181
+      conv_channels: *id182
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id181
+      conv_channels: *id182
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id181
+      conv_channels: *id182
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id181
+      conv_channels: *id182
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id183
+      - 20
+      - 5
+      - 3
+      conv_channels: &id184
+      - 128
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id183
+      conv_channels: *id184
+      fc_dims:
+      - 256
+    - kernel_sizes: *id183
+      conv_channels: *id184
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id183
+      conv_channels: *id184
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id183
+      conv_channels: *id184
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id183
+      conv_channels: *id184
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id185
+      - 20
+      - 5
+      - 3
+      conv_channels: &id186
+      - 128
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id185
+      conv_channels: *id186
+      fc_dims:
+      - 256
+    - kernel_sizes: *id185
+      conv_channels: *id186
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id185
+      conv_channels: *id186
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id185
+      conv_channels: *id186
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id185
+      conv_channels: *id186
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id187
+      - 20
+      - 5
+      - 3
+      conv_channels: &id188
+      - 128
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id187
+      conv_channels: *id188
+      fc_dims:
+      - 256
+    - kernel_sizes: *id187
+      conv_channels: *id188
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id187
+      conv_channels: *id188
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id187
+      conv_channels: *id188
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id187
+      conv_channels: *id188
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id189
+      - 20
+      - 5
+      - 3
+      conv_channels: &id190
+      - 128
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id189
+      conv_channels: *id190
+      fc_dims:
+      - 256
+    - kernel_sizes: *id189
+      conv_channels: *id190
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id189
+      conv_channels: *id190
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id189
+      conv_channels: *id190
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id189
+      conv_channels: *id190
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id191
+      - 20
+      - 5
+      - 3
+      conv_channels: &id192
+      - 128
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id191
+      conv_channels: *id192
+      fc_dims:
+      - 256
+    - kernel_sizes: *id191
+      conv_channels: *id192
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id191
+      conv_channels: *id192
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id191
+      conv_channels: *id192
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id191
+      conv_channels: *id192
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id193
+      - 20
+      - 5
+      - 3
+      conv_channels: &id194
+      - 128
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id193
+      conv_channels: *id194
+      fc_dims:
+      - 256
+    - kernel_sizes: *id193
+      conv_channels: *id194
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id193
+      conv_channels: *id194
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id193
+      conv_channels: *id194
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id193
+      conv_channels: *id194
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id195
+      - 20
+      - 5
+      - 3
+      conv_channels: &id196
+      - 128
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id195
+      conv_channels: *id196
+      fc_dims:
+      - 256
+    - kernel_sizes: *id195
+      conv_channels: *id196
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id195
+      conv_channels: *id196
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id195
+      conv_channels: *id196
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id195
+      conv_channels: *id196
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id197
+      - 20
+      - 5
+      - 3
+      conv_channels: &id198
+      - 128
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id197
+      conv_channels: *id198
+      fc_dims:
+      - 256
+    - kernel_sizes: *id197
+      conv_channels: *id198
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id197
+      conv_channels: *id198
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id197
+      conv_channels: *id198
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id197
+      conv_channels: *id198
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id199
+      - 20
+      - 5
+      - 3
+      conv_channels: &id200
+      - 256
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id199
+      conv_channels: *id200
+      fc_dims:
+      - 256
+    - kernel_sizes: *id199
+      conv_channels: *id200
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id199
+      conv_channels: *id200
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id199
+      conv_channels: *id200
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id199
+      conv_channels: *id200
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id201
+      - 20
+      - 5
+      - 3
+      conv_channels: &id202
+      - 256
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id201
+      conv_channels: *id202
+      fc_dims:
+      - 256
+    - kernel_sizes: *id201
+      conv_channels: *id202
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id201
+      conv_channels: *id202
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id201
+      conv_channels: *id202
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id201
+      conv_channels: *id202
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id203
+      - 20
+      - 5
+      - 3
+      conv_channels: &id204
+      - 256
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id203
+      conv_channels: *id204
+      fc_dims:
+      - 256
+    - kernel_sizes: *id203
+      conv_channels: *id204
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id203
+      conv_channels: *id204
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id203
+      conv_channels: *id204
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id203
+      conv_channels: *id204
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id205
+      - 20
+      - 5
+      - 3
+      conv_channels: &id206
+      - 256
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id205
+      conv_channels: *id206
+      fc_dims:
+      - 256
+    - kernel_sizes: *id205
+      conv_channels: *id206
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id205
+      conv_channels: *id206
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id205
+      conv_channels: *id206
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id205
+      conv_channels: *id206
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id207
+      - 20
+      - 5
+      - 3
+      conv_channels: &id208
+      - 256
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id207
+      conv_channels: *id208
+      fc_dims:
+      - 256
+    - kernel_sizes: *id207
+      conv_channels: *id208
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id207
+      conv_channels: *id208
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id207
+      conv_channels: *id208
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id207
+      conv_channels: *id208
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id209
+      - 20
+      - 5
+      - 3
+      conv_channels: &id210
+      - 256
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id209
+      conv_channels: *id210
+      fc_dims:
+      - 256
+    - kernel_sizes: *id209
+      conv_channels: *id210
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id209
+      conv_channels: *id210
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id209
+      conv_channels: *id210
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id209
+      conv_channels: *id210
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id211
+      - 20
+      - 5
+      - 3
+      conv_channels: &id212
+      - 256
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id211
+      conv_channels: *id212
+      fc_dims:
+      - 256
+    - kernel_sizes: *id211
+      conv_channels: *id212
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id211
+      conv_channels: *id212
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id211
+      conv_channels: *id212
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id211
+      conv_channels: *id212
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id213
+      - 20
+      - 5
+      - 3
+      conv_channels: &id214
+      - 256
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id213
+      conv_channels: *id214
+      fc_dims:
+      - 256
+    - kernel_sizes: *id213
+      conv_channels: *id214
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id213
+      conv_channels: *id214
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id213
+      conv_channels: *id214
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id213
+      conv_channels: *id214
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id215
+      - 20
+      - 5
+      - 3
+      conv_channels: &id216
+      - 256
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id215
+      conv_channels: *id216
+      fc_dims:
+      - 256
+    - kernel_sizes: *id215
+      conv_channels: *id216
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id215
+      conv_channels: *id216
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id215
+      conv_channels: *id216
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id215
+      conv_channels: *id216
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id217
+      - 20
+      - 5
+      - 3
+      conv_channels: &id218
+      - 512
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id217
+      conv_channels: *id218
+      fc_dims:
+      - 256
+    - kernel_sizes: *id217
+      conv_channels: *id218
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id217
+      conv_channels: *id218
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id217
+      conv_channels: *id218
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id217
+      conv_channels: *id218
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id219
+      - 20
+      - 5
+      - 3
+      conv_channels: &id220
+      - 512
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id219
+      conv_channels: *id220
+      fc_dims:
+      - 256
+    - kernel_sizes: *id219
+      conv_channels: *id220
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id219
+      conv_channels: *id220
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id219
+      conv_channels: *id220
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id219
+      conv_channels: *id220
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id221
+      - 20
+      - 5
+      - 3
+      conv_channels: &id222
+      - 512
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id221
+      conv_channels: *id222
+      fc_dims:
+      - 256
+    - kernel_sizes: *id221
+      conv_channels: *id222
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id221
+      conv_channels: *id222
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id221
+      conv_channels: *id222
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id221
+      conv_channels: *id222
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id223
+      - 20
+      - 5
+      - 3
+      conv_channels: &id224
+      - 512
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id223
+      conv_channels: *id224
+      fc_dims:
+      - 256
+    - kernel_sizes: *id223
+      conv_channels: *id224
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id223
+      conv_channels: *id224
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id223
+      conv_channels: *id224
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id223
+      conv_channels: *id224
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id225
+      - 20
+      - 5
+      - 3
+      conv_channels: &id226
+      - 512
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id225
+      conv_channels: *id226
+      fc_dims:
+      - 256
+    - kernel_sizes: *id225
+      conv_channels: *id226
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id225
+      conv_channels: *id226
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id225
+      conv_channels: *id226
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id225
+      conv_channels: *id226
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id227
+      - 20
+      - 5
+      - 3
+      conv_channels: &id228
+      - 512
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id227
+      conv_channels: *id228
+      fc_dims:
+      - 256
+    - kernel_sizes: *id227
+      conv_channels: *id228
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id227
+      conv_channels: *id228
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id227
+      conv_channels: *id228
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id227
+      conv_channels: *id228
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id229
+      - 20
+      - 5
+      - 3
+      conv_channels: &id230
+      - 512
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id229
+      conv_channels: *id230
+      fc_dims:
+      - 256
+    - kernel_sizes: *id229
+      conv_channels: *id230
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id229
+      conv_channels: *id230
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id229
+      conv_channels: *id230
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id229
+      conv_channels: *id230
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id231
+      - 20
+      - 5
+      - 3
+      conv_channels: &id232
+      - 512
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id231
+      conv_channels: *id232
+      fc_dims:
+      - 256
+    - kernel_sizes: *id231
+      conv_channels: *id232
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id231
+      conv_channels: *id232
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id231
+      conv_channels: *id232
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id231
+      conv_channels: *id232
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id233
+      - 20
+      - 5
+      - 3
+      conv_channels: &id234
+      - 512
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id233
+      conv_channels: *id234
+      fc_dims:
+      - 256
+    - kernel_sizes: *id233
+      conv_channels: *id234
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id233
+      conv_channels: *id234
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id233
+      conv_channels: *id234
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id233
+      conv_channels: *id234
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id235
+      - 20
+      - 5
+      - 5
+      conv_channels: &id236
+      - 128
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id235
+      conv_channels: *id236
+      fc_dims:
+      - 256
+    - kernel_sizes: *id235
+      conv_channels: *id236
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id235
+      conv_channels: *id236
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id235
+      conv_channels: *id236
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id235
+      conv_channels: *id236
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id237
+      - 20
+      - 5
+      - 5
+      conv_channels: &id238
+      - 128
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id237
+      conv_channels: *id238
+      fc_dims:
+      - 256
+    - kernel_sizes: *id237
+      conv_channels: *id238
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id237
+      conv_channels: *id238
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id237
+      conv_channels: *id238
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id237
+      conv_channels: *id238
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id239
+      - 20
+      - 5
+      - 5
+      conv_channels: &id240
+      - 128
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id239
+      conv_channels: *id240
+      fc_dims:
+      - 256
+    - kernel_sizes: *id239
+      conv_channels: *id240
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id239
+      conv_channels: *id240
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id239
+      conv_channels: *id240
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id239
+      conv_channels: *id240
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id241
+      - 20
+      - 5
+      - 5
+      conv_channels: &id242
+      - 128
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id241
+      conv_channels: *id242
+      fc_dims:
+      - 256
+    - kernel_sizes: *id241
+      conv_channels: *id242
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id241
+      conv_channels: *id242
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id241
+      conv_channels: *id242
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id241
+      conv_channels: *id242
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id243
+      - 20
+      - 5
+      - 5
+      conv_channels: &id244
+      - 128
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id243
+      conv_channels: *id244
+      fc_dims:
+      - 256
+    - kernel_sizes: *id243
+      conv_channels: *id244
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id243
+      conv_channels: *id244
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id243
+      conv_channels: *id244
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id243
+      conv_channels: *id244
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id245
+      - 20
+      - 5
+      - 5
+      conv_channels: &id246
+      - 128
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id245
+      conv_channels: *id246
+      fc_dims:
+      - 256
+    - kernel_sizes: *id245
+      conv_channels: *id246
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id245
+      conv_channels: *id246
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id245
+      conv_channels: *id246
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id245
+      conv_channels: *id246
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id247
+      - 20
+      - 5
+      - 5
+      conv_channels: &id248
+      - 128
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id247
+      conv_channels: *id248
+      fc_dims:
+      - 256
+    - kernel_sizes: *id247
+      conv_channels: *id248
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id247
+      conv_channels: *id248
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id247
+      conv_channels: *id248
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id247
+      conv_channels: *id248
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id249
+      - 20
+      - 5
+      - 5
+      conv_channels: &id250
+      - 128
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id249
+      conv_channels: *id250
+      fc_dims:
+      - 256
+    - kernel_sizes: *id249
+      conv_channels: *id250
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id249
+      conv_channels: *id250
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id249
+      conv_channels: *id250
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id249
+      conv_channels: *id250
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id251
+      - 20
+      - 5
+      - 5
+      conv_channels: &id252
+      - 128
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id251
+      conv_channels: *id252
+      fc_dims:
+      - 256
+    - kernel_sizes: *id251
+      conv_channels: *id252
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id251
+      conv_channels: *id252
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id251
+      conv_channels: *id252
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id251
+      conv_channels: *id252
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id253
+      - 20
+      - 5
+      - 5
+      conv_channels: &id254
+      - 256
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id253
+      conv_channels: *id254
+      fc_dims:
+      - 256
+    - kernel_sizes: *id253
+      conv_channels: *id254
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id253
+      conv_channels: *id254
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id253
+      conv_channels: *id254
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id253
+      conv_channels: *id254
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id255
+      - 20
+      - 5
+      - 5
+      conv_channels: &id256
+      - 256
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id255
+      conv_channels: *id256
+      fc_dims:
+      - 256
+    - kernel_sizes: *id255
+      conv_channels: *id256
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id255
+      conv_channels: *id256
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id255
+      conv_channels: *id256
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id255
+      conv_channels: *id256
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id257
+      - 20
+      - 5
+      - 5
+      conv_channels: &id258
+      - 256
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id257
+      conv_channels: *id258
+      fc_dims:
+      - 256
+    - kernel_sizes: *id257
+      conv_channels: *id258
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id257
+      conv_channels: *id258
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id257
+      conv_channels: *id258
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id257
+      conv_channels: *id258
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id259
+      - 20
+      - 5
+      - 5
+      conv_channels: &id260
+      - 256
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id259
+      conv_channels: *id260
+      fc_dims:
+      - 256
+    - kernel_sizes: *id259
+      conv_channels: *id260
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id259
+      conv_channels: *id260
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id259
+      conv_channels: *id260
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id259
+      conv_channels: *id260
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id261
+      - 20
+      - 5
+      - 5
+      conv_channels: &id262
+      - 256
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id261
+      conv_channels: *id262
+      fc_dims:
+      - 256
+    - kernel_sizes: *id261
+      conv_channels: *id262
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id261
+      conv_channels: *id262
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id261
+      conv_channels: *id262
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id261
+      conv_channels: *id262
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id263
+      - 20
+      - 5
+      - 5
+      conv_channels: &id264
+      - 256
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id263
+      conv_channels: *id264
+      fc_dims:
+      - 256
+    - kernel_sizes: *id263
+      conv_channels: *id264
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id263
+      conv_channels: *id264
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id263
+      conv_channels: *id264
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id263
+      conv_channels: *id264
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id265
+      - 20
+      - 5
+      - 5
+      conv_channels: &id266
+      - 256
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id265
+      conv_channels: *id266
+      fc_dims:
+      - 256
+    - kernel_sizes: *id265
+      conv_channels: *id266
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id265
+      conv_channels: *id266
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id265
+      conv_channels: *id266
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id265
+      conv_channels: *id266
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id267
+      - 20
+      - 5
+      - 5
+      conv_channels: &id268
+      - 256
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id267
+      conv_channels: *id268
+      fc_dims:
+      - 256
+    - kernel_sizes: *id267
+      conv_channels: *id268
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id267
+      conv_channels: *id268
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id267
+      conv_channels: *id268
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id267
+      conv_channels: *id268
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id269
+      - 20
+      - 5
+      - 5
+      conv_channels: &id270
+      - 256
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id269
+      conv_channels: *id270
+      fc_dims:
+      - 256
+    - kernel_sizes: *id269
+      conv_channels: *id270
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id269
+      conv_channels: *id270
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id269
+      conv_channels: *id270
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id269
+      conv_channels: *id270
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id271
+      - 20
+      - 5
+      - 5
+      conv_channels: &id272
+      - 512
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id271
+      conv_channels: *id272
+      fc_dims:
+      - 256
+    - kernel_sizes: *id271
+      conv_channels: *id272
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id271
+      conv_channels: *id272
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id271
+      conv_channels: *id272
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id271
+      conv_channels: *id272
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id273
+      - 20
+      - 5
+      - 5
+      conv_channels: &id274
+      - 512
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id273
+      conv_channels: *id274
+      fc_dims:
+      - 256
+    - kernel_sizes: *id273
+      conv_channels: *id274
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id273
+      conv_channels: *id274
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id273
+      conv_channels: *id274
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id273
+      conv_channels: *id274
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id275
+      - 20
+      - 5
+      - 5
+      conv_channels: &id276
+      - 512
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id275
+      conv_channels: *id276
+      fc_dims:
+      - 256
+    - kernel_sizes: *id275
+      conv_channels: *id276
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id275
+      conv_channels: *id276
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id275
+      conv_channels: *id276
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id275
+      conv_channels: *id276
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id277
+      - 20
+      - 5
+      - 5
+      conv_channels: &id278
+      - 512
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id277
+      conv_channels: *id278
+      fc_dims:
+      - 256
+    - kernel_sizes: *id277
+      conv_channels: *id278
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id277
+      conv_channels: *id278
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id277
+      conv_channels: *id278
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id277
+      conv_channels: *id278
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id279
+      - 20
+      - 5
+      - 5
+      conv_channels: &id280
+      - 512
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id279
+      conv_channels: *id280
+      fc_dims:
+      - 256
+    - kernel_sizes: *id279
+      conv_channels: *id280
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id279
+      conv_channels: *id280
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id279
+      conv_channels: *id280
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id279
+      conv_channels: *id280
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id281
+      - 20
+      - 5
+      - 5
+      conv_channels: &id282
+      - 512
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id281
+      conv_channels: *id282
+      fc_dims:
+      - 256
+    - kernel_sizes: *id281
+      conv_channels: *id282
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id281
+      conv_channels: *id282
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id281
+      conv_channels: *id282
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id281
+      conv_channels: *id282
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id283
+      - 20
+      - 5
+      - 5
+      conv_channels: &id284
+      - 512
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id283
+      conv_channels: *id284
+      fc_dims:
+      - 256
+    - kernel_sizes: *id283
+      conv_channels: *id284
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id283
+      conv_channels: *id284
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id283
+      conv_channels: *id284
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id283
+      conv_channels: *id284
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id285
+      - 20
+      - 5
+      - 5
+      conv_channels: &id286
+      - 512
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id285
+      conv_channels: *id286
+      fc_dims:
+      - 256
+    - kernel_sizes: *id285
+      conv_channels: *id286
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id285
+      conv_channels: *id286
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id285
+      conv_channels: *id286
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id285
+      conv_channels: *id286
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id287
+      - 20
+      - 5
+      - 5
+      conv_channels: &id288
+      - 512
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id287
+      conv_channels: *id288
+      fc_dims:
+      - 256
+    - kernel_sizes: *id287
+      conv_channels: *id288
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id287
+      conv_channels: *id288
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id287
+      conv_channels: *id288
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id287
+      conv_channels: *id288
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id289
+      - 20
+      - 3
+      - 3
+      conv_channels: &id290
+      - 128
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id289
+      conv_channels: *id290
+      fc_dims:
+      - 256
+    - kernel_sizes: *id289
+      conv_channels: *id290
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id289
+      conv_channels: *id290
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id289
+      conv_channels: *id290
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id289
+      conv_channels: *id290
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id291
+      - 20
+      - 3
+      - 3
+      conv_channels: &id292
+      - 128
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id291
+      conv_channels: *id292
+      fc_dims:
+      - 256
+    - kernel_sizes: *id291
+      conv_channels: *id292
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id291
+      conv_channels: *id292
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id291
+      conv_channels: *id292
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id291
+      conv_channels: *id292
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id293
+      - 20
+      - 3
+      - 3
+      conv_channels: &id294
+      - 128
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id293
+      conv_channels: *id294
+      fc_dims:
+      - 256
+    - kernel_sizes: *id293
+      conv_channels: *id294
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id293
+      conv_channels: *id294
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id293
+      conv_channels: *id294
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id293
+      conv_channels: *id294
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id295
+      - 20
+      - 3
+      - 3
+      conv_channels: &id296
+      - 128
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id295
+      conv_channels: *id296
+      fc_dims:
+      - 256
+    - kernel_sizes: *id295
+      conv_channels: *id296
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id295
+      conv_channels: *id296
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id295
+      conv_channels: *id296
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id295
+      conv_channels: *id296
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id297
+      - 20
+      - 3
+      - 3
+      conv_channels: &id298
+      - 128
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id297
+      conv_channels: *id298
+      fc_dims:
+      - 256
+    - kernel_sizes: *id297
+      conv_channels: *id298
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id297
+      conv_channels: *id298
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id297
+      conv_channels: *id298
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id297
+      conv_channels: *id298
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id299
+      - 20
+      - 3
+      - 3
+      conv_channels: &id300
+      - 128
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id299
+      conv_channels: *id300
+      fc_dims:
+      - 256
+    - kernel_sizes: *id299
+      conv_channels: *id300
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id299
+      conv_channels: *id300
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id299
+      conv_channels: *id300
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id299
+      conv_channels: *id300
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id301
+      - 20
+      - 3
+      - 3
+      conv_channels: &id302
+      - 128
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id301
+      conv_channels: *id302
+      fc_dims:
+      - 256
+    - kernel_sizes: *id301
+      conv_channels: *id302
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id301
+      conv_channels: *id302
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id301
+      conv_channels: *id302
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id301
+      conv_channels: *id302
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id303
+      - 20
+      - 3
+      - 3
+      conv_channels: &id304
+      - 128
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id303
+      conv_channels: *id304
+      fc_dims:
+      - 256
+    - kernel_sizes: *id303
+      conv_channels: *id304
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id303
+      conv_channels: *id304
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id303
+      conv_channels: *id304
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id303
+      conv_channels: *id304
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id305
+      - 20
+      - 3
+      - 3
+      conv_channels: &id306
+      - 128
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id305
+      conv_channels: *id306
+      fc_dims:
+      - 256
+    - kernel_sizes: *id305
+      conv_channels: *id306
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id305
+      conv_channels: *id306
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id305
+      conv_channels: *id306
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id305
+      conv_channels: *id306
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id307
+      - 20
+      - 3
+      - 3
+      conv_channels: &id308
+      - 256
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id307
+      conv_channels: *id308
+      fc_dims:
+      - 256
+    - kernel_sizes: *id307
+      conv_channels: *id308
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id307
+      conv_channels: *id308
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id307
+      conv_channels: *id308
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id307
+      conv_channels: *id308
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id309
+      - 20
+      - 3
+      - 3
+      conv_channels: &id310
+      - 256
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id309
+      conv_channels: *id310
+      fc_dims:
+      - 256
+    - kernel_sizes: *id309
+      conv_channels: *id310
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id309
+      conv_channels: *id310
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id309
+      conv_channels: *id310
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id309
+      conv_channels: *id310
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id311
+      - 20
+      - 3
+      - 3
+      conv_channels: &id312
+      - 256
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id311
+      conv_channels: *id312
+      fc_dims:
+      - 256
+    - kernel_sizes: *id311
+      conv_channels: *id312
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id311
+      conv_channels: *id312
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id311
+      conv_channels: *id312
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id311
+      conv_channels: *id312
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id313
+      - 20
+      - 3
+      - 3
+      conv_channels: &id314
+      - 256
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id313
+      conv_channels: *id314
+      fc_dims:
+      - 256
+    - kernel_sizes: *id313
+      conv_channels: *id314
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id313
+      conv_channels: *id314
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id313
+      conv_channels: *id314
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id313
+      conv_channels: *id314
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id315
+      - 20
+      - 3
+      - 3
+      conv_channels: &id316
+      - 256
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id315
+      conv_channels: *id316
+      fc_dims:
+      - 256
+    - kernel_sizes: *id315
+      conv_channels: *id316
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id315
+      conv_channels: *id316
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id315
+      conv_channels: *id316
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id315
+      conv_channels: *id316
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id317
+      - 20
+      - 3
+      - 3
+      conv_channels: &id318
+      - 256
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id317
+      conv_channels: *id318
+      fc_dims:
+      - 256
+    - kernel_sizes: *id317
+      conv_channels: *id318
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id317
+      conv_channels: *id318
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id317
+      conv_channels: *id318
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id317
+      conv_channels: *id318
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id319
+      - 20
+      - 3
+      - 3
+      conv_channels: &id320
+      - 256
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id319
+      conv_channels: *id320
+      fc_dims:
+      - 256
+    - kernel_sizes: *id319
+      conv_channels: *id320
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id319
+      conv_channels: *id320
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id319
+      conv_channels: *id320
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id319
+      conv_channels: *id320
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id321
+      - 20
+      - 3
+      - 3
+      conv_channels: &id322
+      - 256
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id321
+      conv_channels: *id322
+      fc_dims:
+      - 256
+    - kernel_sizes: *id321
+      conv_channels: *id322
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id321
+      conv_channels: *id322
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id321
+      conv_channels: *id322
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id321
+      conv_channels: *id322
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id323
+      - 20
+      - 3
+      - 3
+      conv_channels: &id324
+      - 256
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id323
+      conv_channels: *id324
+      fc_dims:
+      - 256
+    - kernel_sizes: *id323
+      conv_channels: *id324
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id323
+      conv_channels: *id324
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id323
+      conv_channels: *id324
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id323
+      conv_channels: *id324
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id325
+      - 20
+      - 3
+      - 3
+      conv_channels: &id326
+      - 512
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id325
+      conv_channels: *id326
+      fc_dims:
+      - 256
+    - kernel_sizes: *id325
+      conv_channels: *id326
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id325
+      conv_channels: *id326
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id325
+      conv_channels: *id326
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id325
+      conv_channels: *id326
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id327
+      - 20
+      - 3
+      - 3
+      conv_channels: &id328
+      - 512
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id327
+      conv_channels: *id328
+      fc_dims:
+      - 256
+    - kernel_sizes: *id327
+      conv_channels: *id328
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id327
+      conv_channels: *id328
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id327
+      conv_channels: *id328
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id327
+      conv_channels: *id328
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id329
+      - 20
+      - 3
+      - 3
+      conv_channels: &id330
+      - 512
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id329
+      conv_channels: *id330
+      fc_dims:
+      - 256
+    - kernel_sizes: *id329
+      conv_channels: *id330
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id329
+      conv_channels: *id330
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id329
+      conv_channels: *id330
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id329
+      conv_channels: *id330
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id331
+      - 20
+      - 3
+      - 3
+      conv_channels: &id332
+      - 512
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id331
+      conv_channels: *id332
+      fc_dims:
+      - 256
+    - kernel_sizes: *id331
+      conv_channels: *id332
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id331
+      conv_channels: *id332
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id331
+      conv_channels: *id332
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id331
+      conv_channels: *id332
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id333
+      - 20
+      - 3
+      - 3
+      conv_channels: &id334
+      - 512
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id333
+      conv_channels: *id334
+      fc_dims:
+      - 256
+    - kernel_sizes: *id333
+      conv_channels: *id334
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id333
+      conv_channels: *id334
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id333
+      conv_channels: *id334
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id333
+      conv_channels: *id334
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id335
+      - 20
+      - 3
+      - 3
+      conv_channels: &id336
+      - 512
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id335
+      conv_channels: *id336
+      fc_dims:
+      - 256
+    - kernel_sizes: *id335
+      conv_channels: *id336
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id335
+      conv_channels: *id336
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id335
+      conv_channels: *id336
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id335
+      conv_channels: *id336
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id337
+      - 20
+      - 3
+      - 3
+      conv_channels: &id338
+      - 512
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id337
+      conv_channels: *id338
+      fc_dims:
+      - 256
+    - kernel_sizes: *id337
+      conv_channels: *id338
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id337
+      conv_channels: *id338
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id337
+      conv_channels: *id338
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id337
+      conv_channels: *id338
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id339
+      - 20
+      - 3
+      - 3
+      conv_channels: &id340
+      - 512
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id339
+      conv_channels: *id340
+      fc_dims:
+      - 256
+    - kernel_sizes: *id339
+      conv_channels: *id340
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id339
+      conv_channels: *id340
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id339
+      conv_channels: *id340
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id339
+      conv_channels: *id340
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id341
+      - 20
+      - 3
+      - 3
+      conv_channels: &id342
+      - 512
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id341
+      conv_channels: *id342
+      fc_dims:
+      - 256
+    - kernel_sizes: *id341
+      conv_channels: *id342
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id341
+      conv_channels: *id342
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id341
+      conv_channels: *id342
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id341
+      conv_channels: *id342
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id343
+      - 5
+      - 5
+      - 3
+      conv_channels: &id344
+      - 128
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id343
+      conv_channels: *id344
+      fc_dims:
+      - 256
+    - kernel_sizes: *id343
+      conv_channels: *id344
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id343
+      conv_channels: *id344
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id343
+      conv_channels: *id344
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id343
+      conv_channels: *id344
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id345
+      - 5
+      - 5
+      - 3
+      conv_channels: &id346
+      - 128
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id345
+      conv_channels: *id346
+      fc_dims:
+      - 256
+    - kernel_sizes: *id345
+      conv_channels: *id346
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id345
+      conv_channels: *id346
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id345
+      conv_channels: *id346
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id345
+      conv_channels: *id346
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id347
+      - 5
+      - 5
+      - 3
+      conv_channels: &id348
+      - 128
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id347
+      conv_channels: *id348
+      fc_dims:
+      - 256
+    - kernel_sizes: *id347
+      conv_channels: *id348
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id347
+      conv_channels: *id348
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id347
+      conv_channels: *id348
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id347
+      conv_channels: *id348
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id349
+      - 5
+      - 5
+      - 3
+      conv_channels: &id350
+      - 128
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id349
+      conv_channels: *id350
+      fc_dims:
+      - 256
+    - kernel_sizes: *id349
+      conv_channels: *id350
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id349
+      conv_channels: *id350
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id349
+      conv_channels: *id350
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id349
+      conv_channels: *id350
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id351
+      - 5
+      - 5
+      - 3
+      conv_channels: &id352
+      - 128
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id351
+      conv_channels: *id352
+      fc_dims:
+      - 256
+    - kernel_sizes: *id351
+      conv_channels: *id352
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id351
+      conv_channels: *id352
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id351
+      conv_channels: *id352
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id351
+      conv_channels: *id352
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id353
+      - 5
+      - 5
+      - 3
+      conv_channels: &id354
+      - 128
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id353
+      conv_channels: *id354
+      fc_dims:
+      - 256
+    - kernel_sizes: *id353
+      conv_channels: *id354
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id353
+      conv_channels: *id354
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id353
+      conv_channels: *id354
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id353
+      conv_channels: *id354
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id355
+      - 5
+      - 5
+      - 3
+      conv_channels: &id356
+      - 128
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id355
+      conv_channels: *id356
+      fc_dims:
+      - 256
+    - kernel_sizes: *id355
+      conv_channels: *id356
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id355
+      conv_channels: *id356
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id355
+      conv_channels: *id356
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id355
+      conv_channels: *id356
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id357
+      - 5
+      - 5
+      - 3
+      conv_channels: &id358
+      - 128
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id357
+      conv_channels: *id358
+      fc_dims:
+      - 256
+    - kernel_sizes: *id357
+      conv_channels: *id358
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id357
+      conv_channels: *id358
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id357
+      conv_channels: *id358
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id357
+      conv_channels: *id358
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id359
+      - 5
+      - 5
+      - 3
+      conv_channels: &id360
+      - 128
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id359
+      conv_channels: *id360
+      fc_dims:
+      - 256
+    - kernel_sizes: *id359
+      conv_channels: *id360
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id359
+      conv_channels: *id360
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id359
+      conv_channels: *id360
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id359
+      conv_channels: *id360
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id361
+      - 5
+      - 5
+      - 3
+      conv_channels: &id362
+      - 256
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id361
+      conv_channels: *id362
+      fc_dims:
+      - 256
+    - kernel_sizes: *id361
+      conv_channels: *id362
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id361
+      conv_channels: *id362
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id361
+      conv_channels: *id362
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id361
+      conv_channels: *id362
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id363
+      - 5
+      - 5
+      - 3
+      conv_channels: &id364
+      - 256
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id363
+      conv_channels: *id364
+      fc_dims:
+      - 256
+    - kernel_sizes: *id363
+      conv_channels: *id364
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id363
+      conv_channels: *id364
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id363
+      conv_channels: *id364
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id363
+      conv_channels: *id364
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id365
+      - 5
+      - 5
+      - 3
+      conv_channels: &id366
+      - 256
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id365
+      conv_channels: *id366
+      fc_dims:
+      - 256
+    - kernel_sizes: *id365
+      conv_channels: *id366
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id365
+      conv_channels: *id366
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id365
+      conv_channels: *id366
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id365
+      conv_channels: *id366
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id367
+      - 5
+      - 5
+      - 3
+      conv_channels: &id368
+      - 256
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id367
+      conv_channels: *id368
+      fc_dims:
+      - 256
+    - kernel_sizes: *id367
+      conv_channels: *id368
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id367
+      conv_channels: *id368
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id367
+      conv_channels: *id368
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id367
+      conv_channels: *id368
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id369
+      - 5
+      - 5
+      - 3
+      conv_channels: &id370
+      - 256
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id369
+      conv_channels: *id370
+      fc_dims:
+      - 256
+    - kernel_sizes: *id369
+      conv_channels: *id370
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id369
+      conv_channels: *id370
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id369
+      conv_channels: *id370
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id369
+      conv_channels: *id370
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id371
+      - 5
+      - 5
+      - 3
+      conv_channels: &id372
+      - 256
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id371
+      conv_channels: *id372
+      fc_dims:
+      - 256
+    - kernel_sizes: *id371
+      conv_channels: *id372
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id371
+      conv_channels: *id372
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id371
+      conv_channels: *id372
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id371
+      conv_channels: *id372
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id373
+      - 5
+      - 5
+      - 3
+      conv_channels: &id374
+      - 256
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id373
+      conv_channels: *id374
+      fc_dims:
+      - 256
+    - kernel_sizes: *id373
+      conv_channels: *id374
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id373
+      conv_channels: *id374
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id373
+      conv_channels: *id374
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id373
+      conv_channels: *id374
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id375
+      - 5
+      - 5
+      - 3
+      conv_channels: &id376
+      - 256
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id375
+      conv_channels: *id376
+      fc_dims:
+      - 256
+    - kernel_sizes: *id375
+      conv_channels: *id376
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id375
+      conv_channels: *id376
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id375
+      conv_channels: *id376
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id375
+      conv_channels: *id376
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id377
+      - 5
+      - 5
+      - 3
+      conv_channels: &id378
+      - 256
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id377
+      conv_channels: *id378
+      fc_dims:
+      - 256
+    - kernel_sizes: *id377
+      conv_channels: *id378
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id377
+      conv_channels: *id378
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id377
+      conv_channels: *id378
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id377
+      conv_channels: *id378
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id379
+      - 5
+      - 5
+      - 3
+      conv_channels: &id380
+      - 512
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id379
+      conv_channels: *id380
+      fc_dims:
+      - 256
+    - kernel_sizes: *id379
+      conv_channels: *id380
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id379
+      conv_channels: *id380
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id379
+      conv_channels: *id380
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id379
+      conv_channels: *id380
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id381
+      - 5
+      - 5
+      - 3
+      conv_channels: &id382
+      - 512
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id381
+      conv_channels: *id382
+      fc_dims:
+      - 256
+    - kernel_sizes: *id381
+      conv_channels: *id382
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id381
+      conv_channels: *id382
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id381
+      conv_channels: *id382
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id381
+      conv_channels: *id382
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id383
+      - 5
+      - 5
+      - 3
+      conv_channels: &id384
+      - 512
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id383
+      conv_channels: *id384
+      fc_dims:
+      - 256
+    - kernel_sizes: *id383
+      conv_channels: *id384
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id383
+      conv_channels: *id384
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id383
+      conv_channels: *id384
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id383
+      conv_channels: *id384
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id385
+      - 5
+      - 5
+      - 3
+      conv_channels: &id386
+      - 512
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id385
+      conv_channels: *id386
+      fc_dims:
+      - 256
+    - kernel_sizes: *id385
+      conv_channels: *id386
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id385
+      conv_channels: *id386
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id385
+      conv_channels: *id386
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id385
+      conv_channels: *id386
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id387
+      - 5
+      - 5
+      - 3
+      conv_channels: &id388
+      - 512
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id387
+      conv_channels: *id388
+      fc_dims:
+      - 256
+    - kernel_sizes: *id387
+      conv_channels: *id388
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id387
+      conv_channels: *id388
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id387
+      conv_channels: *id388
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id387
+      conv_channels: *id388
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id389
+      - 5
+      - 5
+      - 3
+      conv_channels: &id390
+      - 512
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id389
+      conv_channels: *id390
+      fc_dims:
+      - 256
+    - kernel_sizes: *id389
+      conv_channels: *id390
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id389
+      conv_channels: *id390
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id389
+      conv_channels: *id390
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id389
+      conv_channels: *id390
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id391
+      - 5
+      - 5
+      - 3
+      conv_channels: &id392
+      - 512
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id391
+      conv_channels: *id392
+      fc_dims:
+      - 256
+    - kernel_sizes: *id391
+      conv_channels: *id392
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id391
+      conv_channels: *id392
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id391
+      conv_channels: *id392
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id391
+      conv_channels: *id392
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id393
+      - 5
+      - 5
+      - 3
+      conv_channels: &id394
+      - 512
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id393
+      conv_channels: *id394
+      fc_dims:
+      - 256
+    - kernel_sizes: *id393
+      conv_channels: *id394
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id393
+      conv_channels: *id394
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id393
+      conv_channels: *id394
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id393
+      conv_channels: *id394
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id395
+      - 5
+      - 5
+      - 3
+      conv_channels: &id396
+      - 512
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id395
+      conv_channels: *id396
+      fc_dims:
+      - 256
+    - kernel_sizes: *id395
+      conv_channels: *id396
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id395
+      conv_channels: *id396
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id395
+      conv_channels: *id396
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id395
+      conv_channels: *id396
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id397
+      - 5
+      - 3
+      - 3
+      conv_channels: &id398
+      - 128
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id397
+      conv_channels: *id398
+      fc_dims:
+      - 256
+    - kernel_sizes: *id397
+      conv_channels: *id398
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id397
+      conv_channels: *id398
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id397
+      conv_channels: *id398
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id397
+      conv_channels: *id398
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id399
+      - 5
+      - 3
+      - 3
+      conv_channels: &id400
+      - 128
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id399
+      conv_channels: *id400
+      fc_dims:
+      - 256
+    - kernel_sizes: *id399
+      conv_channels: *id400
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id399
+      conv_channels: *id400
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id399
+      conv_channels: *id400
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id399
+      conv_channels: *id400
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id401
+      - 5
+      - 3
+      - 3
+      conv_channels: &id402
+      - 128
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id401
+      conv_channels: *id402
+      fc_dims:
+      - 256
+    - kernel_sizes: *id401
+      conv_channels: *id402
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id401
+      conv_channels: *id402
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id401
+      conv_channels: *id402
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id401
+      conv_channels: *id402
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id403
+      - 5
+      - 3
+      - 3
+      conv_channels: &id404
+      - 128
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id403
+      conv_channels: *id404
+      fc_dims:
+      - 256
+    - kernel_sizes: *id403
+      conv_channels: *id404
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id403
+      conv_channels: *id404
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id403
+      conv_channels: *id404
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id403
+      conv_channels: *id404
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id405
+      - 5
+      - 3
+      - 3
+      conv_channels: &id406
+      - 128
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id405
+      conv_channels: *id406
+      fc_dims:
+      - 256
+    - kernel_sizes: *id405
+      conv_channels: *id406
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id405
+      conv_channels: *id406
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id405
+      conv_channels: *id406
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id405
+      conv_channels: *id406
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id407
+      - 5
+      - 3
+      - 3
+      conv_channels: &id408
+      - 128
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id407
+      conv_channels: *id408
+      fc_dims:
+      - 256
+    - kernel_sizes: *id407
+      conv_channels: *id408
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id407
+      conv_channels: *id408
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id407
+      conv_channels: *id408
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id407
+      conv_channels: *id408
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id409
+      - 5
+      - 3
+      - 3
+      conv_channels: &id410
+      - 128
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id409
+      conv_channels: *id410
+      fc_dims:
+      - 256
+    - kernel_sizes: *id409
+      conv_channels: *id410
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id409
+      conv_channels: *id410
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id409
+      conv_channels: *id410
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id409
+      conv_channels: *id410
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id411
+      - 5
+      - 3
+      - 3
+      conv_channels: &id412
+      - 128
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id411
+      conv_channels: *id412
+      fc_dims:
+      - 256
+    - kernel_sizes: *id411
+      conv_channels: *id412
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id411
+      conv_channels: *id412
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id411
+      conv_channels: *id412
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id411
+      conv_channels: *id412
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id413
+      - 5
+      - 3
+      - 3
+      conv_channels: &id414
+      - 128
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id413
+      conv_channels: *id414
+      fc_dims:
+      - 256
+    - kernel_sizes: *id413
+      conv_channels: *id414
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id413
+      conv_channels: *id414
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id413
+      conv_channels: *id414
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id413
+      conv_channels: *id414
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id415
+      - 5
+      - 3
+      - 3
+      conv_channels: &id416
+      - 256
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id415
+      conv_channels: *id416
+      fc_dims:
+      - 256
+    - kernel_sizes: *id415
+      conv_channels: *id416
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id415
+      conv_channels: *id416
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id415
+      conv_channels: *id416
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id415
+      conv_channels: *id416
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id417
+      - 5
+      - 3
+      - 3
+      conv_channels: &id418
+      - 256
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id417
+      conv_channels: *id418
+      fc_dims:
+      - 256
+    - kernel_sizes: *id417
+      conv_channels: *id418
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id417
+      conv_channels: *id418
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id417
+      conv_channels: *id418
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id417
+      conv_channels: *id418
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id419
+      - 5
+      - 3
+      - 3
+      conv_channels: &id420
+      - 256
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id419
+      conv_channels: *id420
+      fc_dims:
+      - 256
+    - kernel_sizes: *id419
+      conv_channels: *id420
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id419
+      conv_channels: *id420
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id419
+      conv_channels: *id420
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id419
+      conv_channels: *id420
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id421
+      - 5
+      - 3
+      - 3
+      conv_channels: &id422
+      - 256
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id421
+      conv_channels: *id422
+      fc_dims:
+      - 256
+    - kernel_sizes: *id421
+      conv_channels: *id422
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id421
+      conv_channels: *id422
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id421
+      conv_channels: *id422
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id421
+      conv_channels: *id422
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id423
+      - 5
+      - 3
+      - 3
+      conv_channels: &id424
+      - 256
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id423
+      conv_channels: *id424
+      fc_dims:
+      - 256
+    - kernel_sizes: *id423
+      conv_channels: *id424
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id423
+      conv_channels: *id424
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id423
+      conv_channels: *id424
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id423
+      conv_channels: *id424
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id425
+      - 5
+      - 3
+      - 3
+      conv_channels: &id426
+      - 256
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id425
+      conv_channels: *id426
+      fc_dims:
+      - 256
+    - kernel_sizes: *id425
+      conv_channels: *id426
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id425
+      conv_channels: *id426
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id425
+      conv_channels: *id426
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id425
+      conv_channels: *id426
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id427
+      - 5
+      - 3
+      - 3
+      conv_channels: &id428
+      - 256
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id427
+      conv_channels: *id428
+      fc_dims:
+      - 256
+    - kernel_sizes: *id427
+      conv_channels: *id428
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id427
+      conv_channels: *id428
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id427
+      conv_channels: *id428
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id427
+      conv_channels: *id428
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id429
+      - 5
+      - 3
+      - 3
+      conv_channels: &id430
+      - 256
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id429
+      conv_channels: *id430
+      fc_dims:
+      - 256
+    - kernel_sizes: *id429
+      conv_channels: *id430
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id429
+      conv_channels: *id430
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id429
+      conv_channels: *id430
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id429
+      conv_channels: *id430
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id431
+      - 5
+      - 3
+      - 3
+      conv_channels: &id432
+      - 256
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id431
+      conv_channels: *id432
+      fc_dims:
+      - 256
+    - kernel_sizes: *id431
+      conv_channels: *id432
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id431
+      conv_channels: *id432
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id431
+      conv_channels: *id432
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id431
+      conv_channels: *id432
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id433
+      - 5
+      - 3
+      - 3
+      conv_channels: &id434
+      - 512
+      - 128
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id433
+      conv_channels: *id434
+      fc_dims:
+      - 256
+    - kernel_sizes: *id433
+      conv_channels: *id434
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id433
+      conv_channels: *id434
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id433
+      conv_channels: *id434
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id433
+      conv_channels: *id434
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id435
+      - 5
+      - 3
+      - 3
+      conv_channels: &id436
+      - 512
+      - 128
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id435
+      conv_channels: *id436
+      fc_dims:
+      - 256
+    - kernel_sizes: *id435
+      conv_channels: *id436
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id435
+      conv_channels: *id436
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id435
+      conv_channels: *id436
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id435
+      conv_channels: *id436
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id437
+      - 5
+      - 3
+      - 3
+      conv_channels: &id438
+      - 512
+      - 128
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id437
+      conv_channels: *id438
+      fc_dims:
+      - 256
+    - kernel_sizes: *id437
+      conv_channels: *id438
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id437
+      conv_channels: *id438
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id437
+      conv_channels: *id438
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id437
+      conv_channels: *id438
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id439
+      - 5
+      - 3
+      - 3
+      conv_channels: &id440
+      - 512
+      - 256
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id439
+      conv_channels: *id440
+      fc_dims:
+      - 256
+    - kernel_sizes: *id439
+      conv_channels: *id440
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id439
+      conv_channels: *id440
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id439
+      conv_channels: *id440
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id439
+      conv_channels: *id440
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id441
+      - 5
+      - 3
+      - 3
+      conv_channels: &id442
+      - 512
+      - 256
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id441
+      conv_channels: *id442
+      fc_dims:
+      - 256
+    - kernel_sizes: *id441
+      conv_channels: *id442
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id441
+      conv_channels: *id442
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id441
+      conv_channels: *id442
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id441
+      conv_channels: *id442
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id443
+      - 5
+      - 3
+      - 3
+      conv_channels: &id444
+      - 512
+      - 256
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id443
+      conv_channels: *id444
+      fc_dims:
+      - 256
+    - kernel_sizes: *id443
+      conv_channels: *id444
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id443
+      conv_channels: *id444
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id443
+      conv_channels: *id444
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id443
+      conv_channels: *id444
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id445
+      - 5
+      - 3
+      - 3
+      conv_channels: &id446
+      - 512
+      - 512
+      - 128
+      fc_dims:
+      - 128
+    - kernel_sizes: *id445
+      conv_channels: *id446
+      fc_dims:
+      - 256
+    - kernel_sizes: *id445
+      conv_channels: *id446
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id445
+      conv_channels: *id446
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id445
+      conv_channels: *id446
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id445
+      conv_channels: *id446
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id447
+      - 5
+      - 3
+      - 3
+      conv_channels: &id448
+      - 512
+      - 512
+      - 256
+      fc_dims:
+      - 128
+    - kernel_sizes: *id447
+      conv_channels: *id448
+      fc_dims:
+      - 256
+    - kernel_sizes: *id447
+      conv_channels: *id448
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id447
+      conv_channels: *id448
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id447
+      conv_channels: *id448
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id447
+      conv_channels: *id448
+      fc_dims:
+      - 256
+      - 256
+    - kernel_sizes: &id449
+      - 5
+      - 3
+      - 3
+      conv_channels: &id450
+      - 512
+      - 512
+      - 512
+      fc_dims:
+      - 128
+    - kernel_sizes: *id449
+      conv_channels: *id450
+      fc_dims:
+      - 256
+    - kernel_sizes: *id449
+      conv_channels: *id450
+      fc_dims:
+      - 128
+      - 128
+    - kernel_sizes: *id449
+      conv_channels: *id450
+      fc_dims:
+      - 128
+      - 256
+    - kernel_sizes: *id449
+      conv_channels: *id450
+      fc_dims:
+      - 256
+      - 128
+    - kernel_sizes: *id449
+      conv_channels: *id450
+      fc_dims:
+      - 256
+      - 256

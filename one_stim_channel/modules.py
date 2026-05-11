@@ -154,6 +154,92 @@ class SeqDataset(Dataset):
 
 
 
+class ARkModel(nn.Module):
+    """
+    Linear AR[k] control model. Predicts y_t as a linear function of the
+    last k activity values and the last k stim values (no nonlinearity).
+
+        y_t = sum_{i=1..k} A_i y_{t-i} + sum_{i=0..k-1} B_i u_{t-i} + b
+
+    Initial activity (pre-stim history) is taken from `activity_initial`, which
+    must contain the same neurons that are being predicted (use target_indices
+    for both `target_indices` and as the slice of the initial condition).
+
+    Parameters
+    ----------
+    input_size : int
+        Number of stim input channels (electrodes).
+    output_size : int
+        Number of output neurons to predict.
+    k : int
+        AR order (lag length). Same lag used for activity and stim.
+    init_cond_indices : list of int, optional
+        If `activity_initial` from the dataset contains FILTER_NEURONS but the
+        AR model only predicts TARGET_NEURONS, pass the indices that map
+        FILTER -> TARGET so the history is sliced correctly. If None, assumes
+        `activity_initial` already has `output_size` columns.
+    """
+    def __init__(self, input_size: int, output_size: int, k: int = 5,
+                 init_cond_indices=None):
+        super().__init__()
+        self.k = k
+        self.input_size = input_size
+        self.output_size = output_size
+        if init_cond_indices is not None:
+            self.register_buffer(
+                'init_cond_indices',
+                torch.tensor(init_cond_indices, dtype=torch.long),
+            )
+        else:
+            self.init_cond_indices = None
+        # Split the linear map into A (activity-lag) and B (stim-lag) blocks so we can
+        # apply the stim contribution in one shot and only recurse on the activity side.
+        #   y_t = A @ vec(y_{t-1..t-k}) + B @ vec(u_{t..t-k+1}) + bias
+        self.A = nn.Linear(k * output_size, output_size, bias=True)   # carries the bias
+        self.B = nn.Linear(k * input_size, output_size, bias=False)
+
+    def forward(self, inp):
+        inputs, activity_initial = inp
+        device = next(self.parameters()).device
+        if not torch.is_tensor(inputs):
+            inputs = torch.tensor(inputs, dtype=torch.float32, device=device)
+        if not torch.is_tensor(activity_initial):
+            activity_initial = torch.tensor(activity_initial, dtype=torch.float32, device=device)
+
+        batch, seq_len, _ = inputs.shape
+
+        if self.init_cond_indices is not None:
+            y_init = activity_initial.index_select(-1, self.init_cond_indices)  # (batch, output_size)
+        else:
+            y_init = activity_initial
+
+        # ---- Vectorized stim contribution ----
+        # Build per-timestep stim-lag features: at each t, [u_t, u_{t-1}, ..., u_{t-k+1}].
+        # unfold gives a (batch, n_windows, input_size, k) view; rearrange to (batch, T, k*input_size).
+        if self.k > 1:
+            pad = torch.zeros(batch, self.k - 1, self.input_size,
+                              device=inputs.device, dtype=inputs.dtype)
+            u_padded = torch.cat([pad, inputs], dim=1)  # (batch, T+k-1, input_size)
+        else:
+            u_padded = inputs
+        # unfold along time dim: (batch, T, input_size, k); flip to put most recent first
+        u_lags = u_padded.unfold(dimension=1, size=self.k, step=1)              # (batch, T, input_size, k)
+        u_lags = u_lags.flip(dims=[-1])                                          # most recent first
+        u_feat = u_lags.reshape(batch, seq_len, self.k * self.input_size)
+        stim_contrib = self.B(u_feat)                                            # (batch, T, output_size)
+
+        # ---- Recursive activity contribution (must stay sequential) ----
+        # Carry a rolling history of size k with most-recent-first ordering.
+        y_hist = y_init.unsqueeze(1).expand(batch, self.k, self.output_size).contiguous()
+        outs = []
+        for t in range(seq_len):
+            y_t = self.A(y_hist.reshape(batch, -1)) + stim_contrib[:, t, :]
+            outs.append(y_t)
+            y_hist = torch.cat([y_t.unsqueeze(1), y_hist[:, :-1, :]], dim=1)
+
+        return torch.stack(outs, dim=1)  # (batch, seq_len, output_size)
+
+
 class WeightedMAELoss(nn.Module):
     def __init__(self, stim_weight=5.0, window=15, decay='none', linear_end=0.2, exp_tau=5.0):
         """

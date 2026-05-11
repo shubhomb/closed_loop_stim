@@ -1,0 +1,41 @@
+# Default config for vis_stim greedy stim generator (run_greedy.py).
+# Override any field via CLI: --vis-orient-time, --budget-per-step, etc.
+
+# Data
+datadir: "data"
+
+# Visual response binning
+sample_rate: 30000
+stim_ms: 500
+bin_ms: 10
+n_vis_trials: 100
+
+# Stim window / encoding
+max_time_ms: 720
+input_bin_ms: 10
+output_bin_ms: 10
+encoding_mode: "current"
+
+# Train/val/test
+val_frac: 0.2
+batch_size: 16
+n_epochs: 50
+lr: 1.0e-3
+weight_decay: 0
+seed: 42
+
+# Model architecture (SimpleCausalSpikeCNN)
+conv_channels: [256, 256, 256]
+kernel_sizes: [20, 6, 3]
+fc_dims: [256, 128]
+dropout: 0.3
+
+# Greedy stim generator (per-run varied)
+vis_orient_time: 600     # ms window targets are summed over
+budget_per_step: 20      # max channels stimulated per 60ms step
+encodings: [-1, 0, 1, 2]
+require_improvement: true
+
+# Output for the generated pattern registration pkl
+k_trials_per_pattern: 10
+shuffle_seed: 0

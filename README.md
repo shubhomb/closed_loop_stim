@@ -6,4 +6,3 @@ Scripts and analysis for closed loop mouse and electrical stimulation. Each fold
 - Closed_stim MATLAB is a set of Matlab scripts using Ripple API for simultaneous electrical readout and stimulation based on the readout.
 
 Data is courtesy of our collaborators Yuxuan Liu and [Xie Lab](https://www.chongxie.net/). This repository should contain no data, models, or figures, but feel free to contact Shubhom (shubhom@rice.edu) if you want access to these!
-
