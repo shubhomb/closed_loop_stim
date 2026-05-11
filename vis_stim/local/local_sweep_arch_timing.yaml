@@ -1,0 +1,65 @@
+# =====================================================================
+# Local architecture sweep — TIMING PASS.
+#
+# Same 12 architectures we plan to run for real, but n_epochs=3 instead
+# of 50, so we can measure per-trial cost on this workstation and
+# extrapolate to a full run before committing GPU hours.
+#
+# 12 archs x 1 lr x 1 wd x 3 seeds = 36 trials.
+#
+# To convert this into the real run, change n_epochs back to 50.
+# Pass --seeds 3 to local_sweep.py (or rely on its default).
+# =====================================================================
+
+sweep_name: "local_arch_timing"
+strategy: "grid"
+metric: "test_corr"
+direction: "maximize"
+seed: 42
+
+base_config:
+  datadir: "data/vis_stim_data"
+  sample_rate: 30000
+  stim_ms: 500
+  bin_ms: 10
+  n_vis_trials: 100
+  max_time_ms: 720
+  input_bin_ms: 10
+  output_bin_ms: 10
+  encoding_mode: "current"
+  val_frac: 0.2
+  batch_size: 16
+  n_epochs: 3         # TIMING PASS — bump to 50 for the real run
+  patience: 3
+  use_batch_norm: true
+  vis_orient_time: 600
+  budget_per_step: 4
+  encodings: [-1, 0, 1, 2]
+  require_improvement: true
+  k_trials_per_pattern: 10
+  shuffle_seed: 0
+  dropout: 0.3
+
+  # Fixed across the sweep:
+  lr: 0.001
+  weight_decay: 0.00001
+
+search_space:
+  _arch:
+    type: categorical
+    values:
+      # ---- 2-layer convs, 1 FC layer ----
+      - { kernel_sizes: [10, 7], conv_channels: [256, 128], fc_dims: [256] }
+      - { kernel_sizes: [10, 5], conv_channels: [256, 128], fc_dims: [256] }
+      - { kernel_sizes: [7, 5],  conv_channels: [256, 128], fc_dims: [256] }
+      - { kernel_sizes: [7, 3],  conv_channels: [256, 128], fc_dims: [256] }
+      - { kernel_sizes: [5, 3],  conv_channels: [128, 128], fc_dims: [256] }
+      - { kernel_sizes: [10, 3], conv_channels: [512, 256], fc_dims: [256] }
+
+      # ---- 3-layer convs ----
+      - { kernel_sizes: [10, 10, 10], conv_channels: [256, 256, 256], fc_dims: [256] }
+      - { kernel_sizes: [10, 7, 5],   conv_channels: [256, 256, 128], fc_dims: [256] }
+      - { kernel_sizes: [10, 5, 3],   conv_channels: [256, 128, 128], fc_dims: [512, 256] }
+      - { kernel_sizes: [7, 7, 5],    conv_channels: [256, 128, 128], fc_dims: [256] }
+      - { kernel_sizes: [7, 5, 3],    conv_channels: [256, 128, 128], fc_dims: [512, 256] }
+      - { kernel_sizes: [5, 5, 3],    conv_channels: [128, 128, 128], fc_dims: [256] }
