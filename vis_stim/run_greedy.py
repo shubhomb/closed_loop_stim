@@ -241,8 +241,11 @@ def _float_collate(batch):
     return xs, ys
 
 
-def make_loaders(pattern_df, spike_responses, channel_to_index, timing_to_pattern,
-                 train_indices, test_indices, cfg, device):
+def build_datasets(pattern_df, spike_responses, channel_to_index, timing_to_pattern,
+                   train_indices, test_indices, cfg):
+    """Construct (train_ds, test_ds). Pulled out of make_loaders so callers
+    (e.g. the local sweep) can build these once per worker and reuse them
+    across trials — they don't depend on the seed or any hyperparameter."""
     common = dict(
         pattern_df=pattern_df,
         spike_responses=spike_responses,
@@ -259,6 +262,19 @@ def make_loaders(pattern_df, spike_responses, channel_to_index, timing_to_patter
     )
     train_ds = BinnedStimSpikeDataset(trial_indices=train_indices, **common)
     test_ds = BinnedStimSpikeDataset(trial_indices=test_indices, **common)
+    return train_ds, test_ds
+
+
+def make_loaders(pattern_df, spike_responses, channel_to_index, timing_to_pattern,
+                 train_indices, test_indices, cfg, device,
+                 prebuilt_datasets=None):
+    if prebuilt_datasets is not None:
+        train_ds, test_ds = prebuilt_datasets
+    else:
+        train_ds, test_ds = build_datasets(
+            pattern_df, spike_responses, channel_to_index, timing_to_pattern,
+            train_indices, test_indices, cfg,
+        )
 
     n_total = len(train_ds)
     perm = np.random.RandomState(cfg["seed"]).permutation(n_total)
@@ -266,12 +282,18 @@ def make_loaders(pattern_df, spike_responses, channel_to_index, timing_to_patter
     val_idx, tr_idx = perm[:n_val].tolist(), perm[n_val:].tolist()
 
     pin = device.type == "cuda"
+    nw = cfg.get("num_workers", 4)
+    persistent = nw > 0
+    loader_kwargs = dict(collate_fn=_float_collate, pin_memory=pin,
+                         num_workers=nw, persistent_workers=persistent)
+    if nw > 0:
+        loader_kwargs["prefetch_factor"] = 4
     train_loader = DataLoader(Subset(train_ds, tr_idx), batch_size=cfg["batch_size"],
-                              shuffle=True, collate_fn=_float_collate, pin_memory=pin)
+                              shuffle=True, **loader_kwargs)
     val_loader = DataLoader(Subset(train_ds, val_idx), batch_size=cfg["batch_size"],
-                            shuffle=False, collate_fn=_float_collate, pin_memory=pin)
+                            shuffle=False, **loader_kwargs)
     test_loader = DataLoader(test_ds, batch_size=cfg["batch_size"], shuffle=False,
-                             collate_fn=_float_collate, pin_memory=pin)
+                             **loader_kwargs)
     return train_loader, val_loader, test_loader, test_ds, len(tr_idx), len(val_idx)
 
 

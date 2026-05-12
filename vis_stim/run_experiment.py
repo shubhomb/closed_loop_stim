@@ -111,7 +111,7 @@ def _train_loop(model, train_loader, val_loader, run_dir: Path, cfg: dict,
 
 
 def run_experiment(cfg: dict, run_dir, device_spec: Optional[str] = None,
-                   preloaded_data=None) -> dict:
+                   preloaded_data=None, prebuilt_datasets=None) -> dict:
     """Train a SimpleCausalSpikeCNN and write artifacts to ``run_dir``.
 
     Returns a flat ``summary`` dict suitable for JSON serialisation.
@@ -158,6 +158,7 @@ def run_experiment(cfg: dict, run_dir, device_spec: Optional[str] = None,
     train_loader, val_loader, test_loader, test_ds, n_tr, n_val = make_loaders(
         pattern_df, spike_responses, channel_to_index, timing_to_pattern,
         train_indices, test_indices, cfg, device,
+        prebuilt_datasets=prebuilt_datasets,
     )
 
     # ---- Model ----

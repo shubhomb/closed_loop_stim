@@ -1,0 +1,56 @@
+# =====================================================================
+# Local practice sweep — 4 trials, single fold, short epochs.
+# Goal: verify the local multi-GPU pipeline and get a wall-clock number
+# to compare against an equivalent NOTS run.
+#
+# Usage:
+#   python local/local_sweep.py --sweep-config local/local_sweep_test.yaml
+# =====================================================================
+
+sweep_name: "local_test"
+strategy: "grid"
+metric: "all_test_correlation"
+direction: "maximize"
+seed: 42
+k_cross: 1   # single fold for a quick smoke test
+
+base_config:
+  datadir: "data/oracle_ICMS_150/"
+  problematic_neurons: [19, 104, 201, 211, 300, 310, 311, 312]
+  inference_mode: false
+  artifact_path: null
+  seed: 42
+  split_mode: "oracle"
+  input_bin_size_ms: 10
+  output_bin_size_ms: 10
+  n_input_bins: 60
+  n_output_bins: 60
+  output_offset: 0
+  max_time_ms: 600
+  encoding_mode: "current"
+  history: 0
+  batch_size: 16
+  model_type: "cnn"
+  embedding_dim: 0
+  dropout: 0.2
+  pooling: "none"
+  init_bias: null
+  init_state: true
+  num_epochs: 5
+  weight_loss: 1
+  sum_loss: false
+  patience: 3
+  criterion_fn: "poisson"
+  pattern_limit: 50
+  skip_oracle_plots: true
+
+search_space:
+  learning_rate:
+    type: categorical
+    values: [0.001, 0.005]
+
+  _arch:
+    type: categorical
+    values:
+      - { kernel_sizes: [5],  conv_channels: [128], fc_dims: [256] }
+      - { kernel_sizes: [10], conv_channels: [128], fc_dims: [256] }

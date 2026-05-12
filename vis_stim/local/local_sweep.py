@@ -54,6 +54,17 @@ from datetime import datetime
 
 import yaml
 
+# Per-worker module-global cache for preloaded data. Each worker process
+# holds its own copy. Keys are tuples of data-affecting cfg keys that
+# would change the result of load_data + preprocessing.
+_DATA_CACHE = {}
+
+# Per-worker cache for the constructed BinnedStimSpikeDataset pair. The
+# datasets only depend on cfg fields that affect binning (max_time_ms,
+# bin sizes, encoding_mode) — not on seed or hyperparameters — so they
+# can be built once per worker and reused across every trial in the sweep.
+_DATASET_CACHE = {}
+
 # Allow `from slurm.slurm_sweep import ...` regardless of cwd
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if _PROJECT_ROOT not in sys.path:
@@ -72,24 +83,107 @@ from slurm.slurm_sweep import (  # noqa: E402
 # Worker
 # ---------------------------------------------------------------------------
 
-def _run_one_trial(args: tuple) -> dict:
-    """Worker entry point. Runs in a fresh process.
+def _init_worker(gpu_id: int):
+    """Run once per persistent worker, before the first trial.
 
     Pins ``CUDA_VISIBLE_DEVICES`` *before* importing torch so the worker
-    only ever sees a single GPU. Calls the same ``slurm_experiment``
-    function that the cluster invokes per array task.
+    only ever sees this single GPU for its entire life.
     """
-    gpu_id, exp_dir, config_path, seed, run_id = args
-
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
-    # Match the slurm template's thread caps so a local 2-trial run does
-    # not oversubscribe CPU cores.
     os.environ.setdefault("OMP_NUM_THREADS", "4")
     os.environ.setdefault("MKL_NUM_THREADS", "4")
     os.environ.setdefault("OPENBLAS_NUM_THREADS", "4")
-
-    # Defer the heavy imports until after CUDA_VISIBLE_DEVICES is set
     sys.path.insert(0, _PROJECT_ROOT)
+
+
+def _load_data_for_cfg(cfg: dict):
+    """Load + preprocess the dataset and return the tuple expected by
+    ``run_experiment(..., preloaded_data=...)``. Cached per-worker on
+    a key that captures every cfg field that influences the result."""
+    # Importing run_experiment first wires up the patterns_5k sys.path
+    # entries it relies on, so the imports below resolve cleanly.
+    import numpy as np  # noqa: WPS433
+    import run_experiment  # noqa: F401, WPS433
+    from run_greedy import load_data, build_orientation_responses  # noqa: WPS433
+    from utils import trial_breakout_spikes_and_patterns  # noqa: WPS433
+
+    key = (
+        cfg["datadir"],
+        cfg["max_time_ms"],
+        cfg.get("encoding_mode", "current"),
+        cfg.get("input_bin_ms"),
+        cfg.get("output_bin_ms"),
+    )
+    if key in _DATA_CACHE:
+        return _DATA_CACHE[key]
+
+    print(f"[worker] preloading data for {key} ...", flush=True)
+    t0 = time.time()
+    spikes_df, pattern_df, visual_trial_df, visual_spikes = load_data(cfg["datadir"])
+    _ = build_orientation_responses(visual_trial_df, visual_spikes, cfg)
+    channel_to_index = {ch: i for i, ch in
+                        enumerate(sorted(pattern_df["channel"].dropna().unique()))}
+    spiking_neurons = np.sort(spikes_df.neuron_id.unique())
+    spiking_neuron_to_index = {n: i for i, n in enumerate(spiking_neurons)}
+    n_stim_channels = len(channel_to_index)
+
+    _, _, spike_responses, timing_to_pattern, _ = trial_breakout_spikes_and_patterns(
+        spikes_df, pattern_df, channel_to_index,
+        spiking_neurons=spiking_neurons,
+        spiking_neuron_to_index=spiking_neuron_to_index,
+        stim_time_ms=cfg["max_time_ms"],
+    )
+    info = pattern_df[["pattern_timing_index", "pattern_name", "is_oracle"]].drop_duplicates()
+    train_indices = info[~info.is_oracle].pattern_timing_index.tolist()
+    test_indices = info[info.is_oracle].pattern_timing_index.tolist()
+
+    preloaded = (pattern_df, spike_responses, channel_to_index, timing_to_pattern,
+                 spiking_neurons, n_stim_channels, train_indices, test_indices)
+    _DATA_CACHE[key] = preloaded
+    print(f"[worker] preload done in {time.time() - t0:.1f}s", flush=True)
+    return preloaded
+
+
+def _build_datasets_for_cfg(cfg: dict, preloaded):
+    """Construct the two BinnedStimSpikeDataset objects (train + test) for
+    this cfg and cache them per-worker. Dataset content depends only on
+    binning-related cfg fields, so the cache key reuses those — making
+    every trial in the sweep reuse the same datasets."""
+    from run_greedy import build_datasets  # noqa: WPS433
+
+    (pattern_df, spike_responses, channel_to_index, timing_to_pattern,
+     _spiking_neurons, _n_stim_channels, train_indices, test_indices) = preloaded
+
+    key = (
+        cfg["datadir"],
+        cfg["max_time_ms"],
+        cfg.get("encoding_mode", "current"),
+        cfg.get("input_bin_ms"),
+        cfg.get("output_bin_ms"),
+    )
+    if key in _DATASET_CACHE:
+        return _DATASET_CACHE[key]
+
+    print(f"[worker] building datasets for {key} ...", flush=True)
+    t0 = time.time()
+    datasets = build_datasets(
+        pattern_df, spike_responses, channel_to_index, timing_to_pattern,
+        train_indices, test_indices, cfg,
+    )
+    _DATASET_CACHE[key] = datasets
+    print(f"[worker] dataset build done in {time.time() - t0:.1f}s", flush=True)
+    return datasets
+
+
+def _run_one_trial(args: tuple) -> dict:
+    """Worker entry point. Reuses cached data across trials in this worker.
+
+    The worker process was already pinned to a single GPU by
+    ``_init_worker`` before torch was imported.
+    """
+    gpu_id, exp_dir, config_path, seed, run_id = args
+
+    # Deferred imports happen on first call; subsequent calls reuse them.
     from slurm.slurm_experiment import slurm_experiment  # noqa: WPS433
 
     with open(config_path, "r") as f:
@@ -98,7 +192,10 @@ def _run_one_trial(args: tuple) -> dict:
 
     t0 = time.time()
     try:
-        summary = slurm_experiment(cfg, exp_dir)
+        preloaded = _load_data_for_cfg(cfg)
+        prebuilt = _build_datasets_for_cfg(cfg, preloaded)
+        summary = slurm_experiment(cfg, exp_dir, preloaded_data=preloaded,
+                                   prebuilt_datasets=prebuilt)
         summary["status"] = "completed"
     except Exception as e:  # noqa: BLE001
         import traceback
@@ -277,24 +374,35 @@ def main():
         log.info("Nothing to do.")
         return
 
-    # Round-robin assignment of GPUs
-    tasks = []
+    # One pool per GPU, each with a single persistent worker. Each worker
+    # is pinned to its GPU once (via _init_worker) and loads the dataset
+    # exactly once; subsequent trials reuse the cached data, eliminating
+    # the per-trial ~100s preload cost.
+    per_gpu_items = {g: [] for g in gpu_ids}
     for i, w in enumerate(work_items):
         gpu = gpu_ids[i % len(gpu_ids)]
-        tasks.append((gpu, w["exp_dir"], w["config_path"], w["seed"], w["run_id"]))
+        per_gpu_items[gpu].append(
+            (gpu, w["exp_dir"], w["config_path"], w["seed"], w["run_id"])
+        )
 
     t_start = time.time()
     n_done = 0
     n_fail = 0
-    # max_tasks_per_child=1 forces a fresh process per trial. Without it,
-    # ProcessPoolExecutor reuses workers, and once torch is imported in a
-    # worker with CUDA_VISIBLE_DEVICES=X, that worker is permanently
-    # pinned to GPU X — a second trial routed to it with a different
-    # gpu_id silently lands on the wrong device.
-    with ProcessPoolExecutor(
-        max_workers=len(gpu_ids), max_tasks_per_child=1,
-    ) as pool:
-        futures = {pool.submit(_run_one_trial, t): t for t in tasks}
+    n_total = sum(len(v) for v in per_gpu_items.values())
+
+    pools = {}
+    futures = {}
+    try:
+        for gpu, items in per_gpu_items.items():
+            if not items:
+                continue
+            pool = ProcessPoolExecutor(max_workers=1, initializer=_init_worker,
+                                       initargs=(gpu,))
+            pools[gpu] = pool
+            for t in items:
+                fut = pool.submit(_run_one_trial, t)
+                futures[fut] = t
+
         for fut in as_completed(futures):
             t = futures[fut]
             try:
@@ -305,13 +413,16 @@ def main():
                     n_fail += 1
                 elapsed = res["elapsed"]
                 log.info(
-                    f"[{n_done}/{len(tasks)}] gpu{res['gpu_id']}  "
+                    f"[{n_done}/{n_total}] gpu{res['gpu_id']}  "
                     f"{res['run_id']}  {status}  ({elapsed:.1f}s)"
                 )
             except Exception as e:  # noqa: BLE001
                 n_done += 1
                 n_fail += 1
                 log.error(f"Trial crashed: {t[4]}: {e}")
+    finally:
+        for pool in pools.values():
+            pool.shutdown(wait=True)
 
     total = time.time() - t_start
     log.info("=" * 60)

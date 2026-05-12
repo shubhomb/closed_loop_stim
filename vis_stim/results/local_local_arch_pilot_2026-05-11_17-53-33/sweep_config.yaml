@@ -1,0 +1,57 @@
+# =====================================================================
+# Pilot run to validate the dataset-caching optimization on local_sweep.
+#
+# 4 archs x 1 lr x 1 wd x 1 seed = 4 trials, n_epochs=3.
+# Run on a single GPU so all 4 trials share one worker — that way we
+# can see the cache effect clearly: trial 1 pays the data-load +
+# dataset-build cost; trials 2-4 should be near the pure training floor.
+# =====================================================================
+
+sweep_name: "local_arch_pilot"
+strategy: "grid"
+metric: "test_corr"
+direction: "maximize"
+seed: 42
+
+base_config:
+  datadir: "data/"
+  sample_rate: 30000
+  stim_ms: 600
+  bin_ms: 10
+  n_vis_trials: 100
+  max_time_ms: 660
+  input_bin_ms: 10
+  output_bin_ms: 10
+  encoding_mode: "current"
+  val_frac: 0.2
+  batch_size: 512
+  num_workers: 4
+  n_epochs: 3
+  patience: 3
+  use_batch_norm: true
+  vis_orient_time: 600
+  budget_per_step: 4
+  encodings: [-1, 0, 1, 2]
+  require_improvement: true
+  k_trials_per_pattern: 10
+  shuffle_seed: 0
+  dropout: 0.3
+
+search_space:
+  _arch:
+    type: categorical
+    values:
+      - { kernel_sizes: [10, 7], conv_channels: [256, 256], fc_dims: [512] }
+      - { kernel_sizes: [10, 5], conv_channels: [256, 256], fc_dims: [512] }
+      - { kernel_sizes: [7, 5],  conv_channels: [256, 256], fc_dims: [512] }
+      - { kernel_sizes: [7, 3],  conv_channels: [256, 256], fc_dims: [512] }
+  lr:
+    type: float_uniform
+    low: 1.0e-4
+    high: 1.0e-4
+    n_grid_points: 1
+  weight_decay:
+    type: float_uniform
+    low: 0
+    high: 0
+    n_grid_points: 1

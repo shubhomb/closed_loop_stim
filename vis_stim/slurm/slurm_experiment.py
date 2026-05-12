@@ -26,10 +26,12 @@ if _VIS_STIM_ROOT not in sys.path:
 import yaml
 
 
-def slurm_experiment(cfg: dict, run_dir: str, preloaded_data=None) -> dict:
+def slurm_experiment(cfg: dict, run_dir: str, preloaded_data=None,
+                     prebuilt_datasets=None) -> dict:
     """Thin wrapper around vis_stim.run_experiment.run_experiment."""
     from run_experiment import run_experiment
-    return run_experiment(cfg, run_dir, preloaded_data=preloaded_data)
+    return run_experiment(cfg, run_dir, preloaded_data=preloaded_data,
+                          prebuilt_datasets=prebuilt_datasets)
 
 
 def main():
