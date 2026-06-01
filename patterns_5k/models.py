@@ -268,7 +268,8 @@ class HistoryCacheCausalCNN(nn.Module):
         return embedded.reshape(B, self.n_neurons * self.cache_embed_dim)
 
     def _build_cache_channels_tf(self, spike_context: torch.Tensor,
-                                 T: int) -> torch.Tensor:
+                                 T: int,
+                                 initial_cache: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Build cache input channels for **all** timesteps from GT (teacher forcing).
 
         Parameters
@@ -280,6 +281,10 @@ class HistoryCacheCausalCNN(nn.Module):
             *t* < cache_size).
         T : int
             Number of input timesteps to produce cache channels for.
+        initial_cache : (B, n_neurons, cache_size) or None
+            Spike counts to seed the cache with (e.g. the previous trial's
+            last ``cache_size`` bins).  When ``None`` the cache is left-padded
+            with zeros (the default cold start).
 
         Returns
         -------
@@ -288,8 +293,12 @@ class HistoryCacheCausalCNN(nn.Module):
         B = spike_context.shape[0]
         device = spike_context.device
 
-        # Pad left so indexing never goes negative
-        padded = F.pad(spike_context, (self.cache_size, 0), value=0.0)
+        # Pad left so indexing never goes negative.  Either seed with the
+        # previous trial's tail (initial_cache) or with zeros.
+        if initial_cache is not None:
+            padded = torch.cat([initial_cache.to(spike_context.dtype), spike_context], dim=2)
+        else:
+            padded = F.pad(spike_context, (self.cache_size, 0), value=0.0)
         # padded[:, :, t : t + cache_size] gives cache at input time t
 
         # Use unfold to get all sliding windows at once
@@ -312,13 +321,18 @@ class HistoryCacheCausalCNN(nn.Module):
     # ------------------------------------------------------------------
     def forward(self, stim_input: torch.Tensor,
                 spike_context: Optional[torch.Tensor] = None,
-                mode: str = 'teacher_forcing') -> torch.Tensor:
+                mode: str = 'teacher_forcing',
+                initial_cache: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
         Parameters
         ----------
         stim_input : (B, n_stim_channels, T_in)
             Stimulus-only input (may include init-state padding bins on
             the left when ``use_init_state=True``).
+        initial_cache : (B, n_neurons, cache_size) or None
+            Optional spike counts to seed the spike-history cache at t=0
+            (e.g. the previous trial's last ``cache_size`` bins).  When
+            ``None`` the cache starts cold (all zeros).  Applies to all modes.
         spike_context : (B, n_neurons, T_ctx) or None
             Ground-truth spike counts used for building the cache.
 
@@ -337,18 +351,19 @@ class HistoryCacheCausalCNN(nn.Module):
         (B, n_neurons, T_out)  predicted log-rates.
         """
         if mode == 'teacher_forcing':
-            return self._forward_teacher_forcing(stim_input, spike_context)
+            return self._forward_teacher_forcing(stim_input, spike_context, initial_cache)
         elif mode in ('semi_ar', 'ar'):
-            return self._forward_sequential(stim_input, spike_context, mode)
+            return self._forward_sequential(stim_input, spike_context, mode, initial_cache)
         else:
             raise ValueError(f"Unknown mode '{mode}'. Use 'teacher_forcing', 'semi_ar', or 'ar'.")
 
     # ------------------------------------------------------------------
     def _forward_teacher_forcing(self, stim_input: torch.Tensor,
-                                  spike_context: torch.Tensor) -> torch.Tensor:
+                                  spike_context: torch.Tensor,
+                                  initial_cache: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Parallel teacher-forced forward pass."""
         B, _, T_in = stim_input.shape
-        cache_ch = self._build_cache_channels_tf(spike_context, T_in)
+        cache_ch = self._build_cache_channels_tf(spike_context, T_in, initial_cache)
         x = torch.cat([stim_input, cache_ch], dim=1)   # (B, in_ch, T_in)
         features = self.conv_stack(x)                   # (B, conv_ch, T_out)
         features = features.transpose(1, 2)             # (B, T_out, conv_ch)
@@ -358,7 +373,8 @@ class HistoryCacheCausalCNN(nn.Module):
     # ------------------------------------------------------------------
     def _forward_sequential(self, stim_input: torch.Tensor,
                              spike_context: Optional[torch.Tensor],
-                             mode: str) -> torch.Tensor:
+                             mode: str,
+                             initial_cache: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Sequential forward with streaming conv buffer (semi_ar / ar).
 
         Processes one input timestep at a time:
@@ -378,8 +394,12 @@ class HistoryCacheCausalCNN(nn.Module):
 
         outputs = torch.zeros(B, self.n_neurons, T_out, device=device)
 
-        # Cache: (B, n_neurons, cache_size) — initialised to zeros
-        cache = torch.zeros(B, self.n_neurons, self.cache_size, device=device)
+        # Cache: (B, n_neurons, cache_size) — seeded from the previous trial's
+        # tail when initial_cache is given, otherwise a cold (zeros) start.
+        if initial_cache is not None:
+            cache = initial_cache.to(device=device, dtype=stim_input.dtype).clone()
+        else:
+            cache = torch.zeros(B, self.n_neurons, self.cache_size, device=device)
 
         # Streaming conv buffer: (B, in_ch, rf)
         buf = torch.zeros(B, in_ch, rf, device=device)
@@ -411,8 +431,9 @@ class HistoryCacheCausalCNN(nn.Module):
 
                 # 5. Update cache
                 pred_rate = torch.exp(pred_log).detach()
+                sampled_spikes = torch.poisson(pred_rate)  # (B, n_neurons)
                 cache = torch.cat([cache[:, :, 1:],
-                                   pred_rate.unsqueeze(-1)], dim=-1)
+                                   sampled_spikes.unsqueeze(-1)], dim=-1)
 
                 # Semi-AR: replace oldest bin with GT (delayed observation)
                 if mode == 'semi_ar' and spike_context is not None:
@@ -543,7 +564,7 @@ def sliding_window_predict_trial(model_tuple, cfg, test_loader, timing_idx,
 
 
 def sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx,
-                                     stim_binned=None, chunk_length=None):
+                                     stim_binned=None, chunk_length=None, n_sampling_trials=100):
     """Single-trial **autoregressive** sliding-window prediction.
 
     Same interface as :func:`sliding_window_predict_trial` but the model's
@@ -1082,13 +1103,13 @@ def train_epoch(model, loader, criterion, optimizer, device, grad_clip=True, max
                 predictions = model(batch_x)
             
             if sum_loss:
-                    # 1. Convert log-rates to rates (counts)
-                    rates = torch.exp(predictions)
-                    # 2. Sum the rates to get total predicted count
-                    summed_rates = rates.sum(dim=-1)
-                    # 3. Convert back to log-space for PoissonNLLLoss(log_input=True) w a tiny eps
-                    predictions = torch.log(summed_rates + 1e-8)
-                    batch_y = batch_y.sum(dim=-1)
+                # 1. Convert log-rates to rates (counts)
+                rates = torch.exp(predictions)
+                # 2. Sum the rates to get total predicted count
+                summed_rates = rates.sum(dim=-1)
+                # 3. Convert back to log-space for PoissonNLLLoss(log_input=True) w a tiny eps
+                predictions = torch.log(summed_rates + 1e-8)
+                batch_y = batch_y.sum(dim=-1)
             weights = torch.ones_like(batch_y)
             weights[batch_y > 0] = weight_loss # weight nonzeros more
             loss = (weights * criterion(predictions, batch_y)).mean()

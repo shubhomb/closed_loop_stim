@@ -76,7 +76,7 @@ Splits per session:
 CFG_XS = dict(
     SOURCE = 'icms150',          # pretraining session (chosen per run)
     TARGET = 'vis_stim',         # finetuning target (asserted != 'icms148')
-    COMMON_CH = 40,              # shared backbone input width
+    COMMON_CH = 40,              # shared backbone input width (try over-complete e.g. 64 later)
     N_TRAIN_EXAMPLES = None,     # cap on source non-oracle training patterns
     EVAL_USE_SINGLE_TRIALS = False,
     FINETUNE_N_GRID = [10, 25, 50, 100, 250, 500],

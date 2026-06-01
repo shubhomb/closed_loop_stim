@@ -1,0 +1,50 @@
+{
+  "SOURCE": "icms150",
+  "TARGET": "vis_stim",
+  "COMMON_CH": 40,
+  "N_TRAIN_EXAMPLES": null,
+  "EVAL_USE_SINGLE_TRIALS": false,
+  "FINETUNE_N_GRID": [
+    500,
+    1000,
+    2000,
+    3000
+  ],
+  "PROTOCOLS": [
+    "frozen_backbone",
+    "full_finetune",
+    "from_scratch"
+  ],
+  "SEEDS": [
+    0,
+    1
+  ],
+  "MAX_TIME_MS": 600,
+  "INPUT_BIN_MS": 10,
+  "OUTPUT_BIN_MS": 10,
+  "ENCODING_MODE": "current",
+  "CONV_CHANNELS": [
+    256,
+    256
+  ],
+  "KERNEL_SIZES": [
+    5,
+    3
+  ],
+  "FC_DIMS": [
+    512
+  ],
+  "DROPOUT": 0.3,
+  "BATCH_SIZE": 16,
+  "PRETRAIN_EPOCHS": 200,
+  "FINETUNE_EPOCHS": 150,
+  "LR": 0.003,
+  "WEIGHT_DECAY": 1e-05,
+  "VAL_FRAC": 0.2,
+  "SEED": 42,
+  "N_INPUT_BINS": 60,
+  "N_OUTPUT_BINS": 60,
+  "source_eval_nll": 0.1715235731601715,
+  "source_eval_corr": 0.3017993457526265,
+  "n_source_train": 4000
+}

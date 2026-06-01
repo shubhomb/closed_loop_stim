@@ -1033,6 +1033,48 @@ def open_model_and_data(results_dir, n_stim_channels=42, n_neurons=63):
     return model, cfg, raw_data, test_loader
 
 
+def train_model_if_missing(run_dir, n_stim_channels=42, n_neurons=63, preloaded_data=None,
+                           weights_name="best_stim_spike_model.pt"):
+    """Train the model defined by ``run_dir/config.yaml`` if its weights don't exist yet.
+
+    Looks for ``run_dir/<weights_name>``.  If it's missing, the config in the
+    same directory is loaded and ``run_experiment`` is run to train and save the
+    model into ``run_dir``.  If it already exists, training is skipped.  Either
+    way, the trained model and its data are returned via ``open_model_and_data``.
+
+    Parameters
+    ----------
+    run_dir : str
+        Directory containing ``config.yaml`` (and where the ``.pt`` will be written).
+    n_stim_channels, n_neurons : int
+        Passed through to ``open_model_and_data`` when loading the result.
+    preloaded_data : dict, optional
+        Output of ``load_raw_data(cfg)``; forwarded to ``run_experiment`` to skip I/O.
+    weights_name : str
+        Filename of the model weights to check for inside ``run_dir``.
+
+    Returns
+    -------
+    model, cfg, raw_data, test_loader
+        Same tuple as ``open_model_and_data``.
+    """
+    weights_path = os.path.join(run_dir, weights_name)
+    if os.path.exists(weights_path):
+        print(f"[train_model_if_missing] Found {weights_path}, skipping training.")
+    else:
+        cfg_path = os.path.join(run_dir, "config.yaml")
+        if not os.path.exists(cfg_path):
+            raise FileNotFoundError(f"No config.yaml in {run_dir}; cannot train.")
+        with open(cfg_path, "r") as f:
+            cfg = yaml.safe_load(f)
+
+        print(f"[train_model_if_missing] {weights_path} missing; training from {cfg_path}...")
+        from run_experiment import run_experiment
+        run_experiment(cfg, run_dir, preloaded_data=preloaded_data)
+
+    return open_model_and_data(run_dir, n_stim_channels=n_stim_channels, n_neurons=n_neurons)
+
+
 def get_oracle_trial_response_and_loo_average(raw_data, pattern_name, output_bin_size_ms=10, max_time_ms=600):
     spike_responses = raw_data["spike_responses"]
     pattern_df = raw_data["pattern_df"]
