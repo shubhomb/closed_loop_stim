@@ -1,0 +1,45 @@
+batch_size: 512
+bin_ms: 10
+budget_per_step: 4
+conv_channels:
+- 256
+- 256
+- 256
+datadir: data/icms_150_6_2_26
+dropout: 0.3
+encoding_mode: current
+encodings:
+- -1
+- 0
+- 1
+- 2
+fc_dims:
+- 512
+input_bin_ms: 10
+k_trials_per_pattern: 10
+kernel_sizes:
+- 10
+- 7
+- 5
+lr: 0.0003
+max_time_ms: 660
+n_epochs: 50
+n_neurons: 63
+n_params: 1055039
+n_stim_channels: 40
+n_test: 1000
+n_train: 2400
+n_val: 600
+n_vis_trials: 100
+num_workers: 4
+output_bin_ms: 10
+patience: 3
+require_improvement: true
+sample_rate: 30000
+seed: 0
+shuffle_seed: 0
+stim_ms: 600
+use_batch_norm: true
+val_frac: 0.2
+vis_orient_time: 600
+weight_decay: 0

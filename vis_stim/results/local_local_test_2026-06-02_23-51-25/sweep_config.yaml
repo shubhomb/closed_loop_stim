@@ -1,0 +1,50 @@
+# =====================================================================
+# Local practice sweep — 4 trials, short epochs.
+# Goal: verify the local multi-GPU pipeline and get a wall-clock number
+# to compare against an equivalent NOTS run.
+#
+# Usage:
+#   python local/local_sweep.py --sweep-config local/local_sweep_test.yaml
+# =====================================================================
+
+sweep_name: "local_test"
+strategy: "grid"
+metric: "test_corr"
+direction: "maximize"
+seed: 42
+
+base_config:
+  datadir: "data/vis_stim_data"
+  sample_rate: 30000
+  stim_ms: 500
+  bin_ms: 10
+  n_vis_trials: 100
+  max_time_ms: 720
+  input_bin_ms: 10
+  output_bin_ms: 10
+  encoding_mode: "current"
+  val_frac: 0.2
+  batch_size: 16
+  n_epochs: 5         # short for smoke test
+  patience: 3
+  use_batch_norm: true
+  lr: 0.001
+  weight_decay: 1.0e-05
+  dropout: 0.3
+  vis_orient_time: 600
+  budget_per_step: 4
+  encodings: [-1, 0, 1, 2]
+  require_improvement: true
+  k_trials_per_pattern: 10
+  shuffle_seed: 0
+
+search_space:
+  lr:
+    type: categorical
+    values: [0.001, 0.005]
+
+  _arch:
+    type: categorical
+    values:
+      - { kernel_sizes: [5, 3],  conv_channels: [256, 256], fc_dims: [512] }
+      - { kernel_sizes: [3, 3], conv_channels: [256, 256], fc_dims: [512] }
