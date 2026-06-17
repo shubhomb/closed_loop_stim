@@ -23,7 +23,7 @@ def get_model(model_type: str, **kwargs) -> nn.Module:
     Factory function to create models.
     
     Args:
-        model_type: One of 'mlp', 'cnn', 'causal_cnn'
+        model_type: One of 'mlp', 'cnn', 'causal_cnn', 'gru'
         **kwargs: Model-specific arguments
     
     Returns:
@@ -31,6 +31,7 @@ def get_model(model_type: str, **kwargs) -> nn.Module:
     """
     models = {
         'cnn': SimpleCausalSpikeCNN,
+        'gru': SequenceGRU,
         'cache_cnn': HistoryCacheCausalCNN
     }
     
@@ -39,6 +40,157 @@ def get_model(model_type: str, **kwargs) -> nn.Module:
     
     return models[model_type](**kwargs)
 
+class SequenceGRU(nn.Module):
+    """GRU sequence model for stim -> spike prediction.
+
+    Drop-in comparison for :class:`SimpleCausalSpikeCNN`.  Consumes the exact
+    same tensors produced by :class:`BinnedStimSpikeDataset`:
+
+    * Input  ``x``: ``(B, n_channels, n_input_bins)`` — categorical stim
+      indices (when ``embedding_dim > 1``) or real-valued / current-encoded
+      stim, optionally with spike-history channels concatenated on the channel
+      axis (so ``n_channels = n_stim_channels [+ n_neurons]``).
+    * Output ``y``: ``(B, n_neurons, n_output_bins)`` — predicted log-rates.
+
+    The GRU runs left-to-right over the time axis (so it is naturally causal),
+    producing one hidden state per input bin.  A per-timestep FC head maps each
+    hidden state to ``n_neurons`` log-rates.  The last ``n_output_bins`` output
+    positions are returned, aligned with the dataset's output slicing
+    (``n_input_bins == n_output_bins`` with ``output_offset == 0`` keeps every
+    timestep).
+
+    Initial state (``init_state=True``)
+    -----------------------------------
+    To mirror :class:`SimpleCausalSpikeCNN` run with ``use_init_state=True``,
+    the dataset prepends ``n_initial_state_bins`` *context* bins to the input:
+    these carry the pre-onset window (empty / zero stimulation plus the
+    spike-history channels with the previous trial's neural activity).  The CNN
+    consumes those bins via valid convolution so they never produce outputs.
+
+    The GRU analogue is to **project that pre-onset window into the GRU's
+    initial hidden state** ``h_0`` instead of unrolling over it.  An MLP
+    (:attr:`init_encoder`) flattens the ``n_initial_state_bins`` context frames
+    and maps them to ``(num_layers * num_directions, B, hidden_size)``.  The
+    GRU then unrolls only over the ``n_input_bins`` pattern frames seeded with
+    this ``h_0``, producing exactly ``n_output_bins`` outputs.  When
+    ``init_state=False`` the hidden state starts at zeros (cold start).
+
+    Parameters mirror ``SimpleCausalSpikeCNN`` where they overlap
+    (``n_stim_channels``, ``n_neurons``, ``embedding_dim``, ``fc_dims``,
+    ``dropout``, ``num_stim_levels``, ``init_state``, ``n_initial_state_bins``)
+    so the two can be swapped in the notebook with the same config keys.
+    """
+
+    def __init__(self,
+                 n_stim_channels: int,
+                 n_neurons: int,
+                 n_input_bins: int = 60,
+                 n_output_bins: int = 60,
+                 hidden_size: int = 128,
+                 num_layers: int = 1,
+                 embedding_dim: int = 0,
+                 fc_dims: List[int] = [128],
+                 dropout: float = 0.2,
+                 num_stim_levels: int = 5,
+                 bidirectional: bool = False,
+                 init_state: bool = False,
+                 n_initial_state_bins: int = 1):
+        super().__init__()
+
+        self.n_input_bins = n_input_bins
+        self.n_output_bins = n_output_bins
+        self.bidirectional = bidirectional
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.init_state = init_state
+        self.n_initial_state_bins = n_initial_state_bins
+        self.num_directions = 2 if bidirectional else 1
+
+        # ---- Embedding (optional, matches SimpleCausalSpikeCNN semantics) ----
+        # embedding_dim <= 1 -> treat input as already real-valued (e.g. the
+        # 'current' encoding or concatenated spike-history channels).
+        self.embedding_dim = max(embedding_dim, 1)
+        if self.embedding_dim <= 1:
+            self.embedding = nn.Identity()
+            input_size = n_stim_channels
+        else:
+            self.embedding = nn.Embedding(num_embeddings=num_stim_levels,
+                                          embedding_dim=embedding_dim)
+            input_size = n_stim_channels * self.embedding_dim
+
+        # ---- Init-state encoder: pre-onset window -> initial hidden state ----
+        # Flattens (n_initial_state_bins * input_size) context features and
+        # projects them to the full GRU hidden state across layers/directions.
+        if self.init_state:
+            self.init_encoder = nn.Sequential(
+                nn.Linear(n_initial_state_bins * input_size, hidden_size),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_size,
+                          num_layers * self.num_directions * hidden_size),
+            )
+
+        # ---- GRU over the time axis (batch_first) ----
+        self.gru = nn.GRU(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0.0,
+            bidirectional=bidirectional,
+        )
+
+        # ---- Per-timestep FC head ----
+        fc_layers: list[nn.Module] = []
+        curr_dim = hidden_size * self.num_directions
+        for fc_dim in fc_dims:
+            fc_layers.extend([
+                nn.Linear(curr_dim, fc_dim),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+            ])
+            curr_dim = fc_dim
+        fc_layers.append(nn.Linear(curr_dim, n_neurons))
+        self.fc = nn.Sequential(*fc_layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        batch_size, n_channels, T_in = x.shape
+
+        # 1. Embed & reshape to (B, channels*emb, T) when using an embedding
+        if self.embedding_dim > 1:
+            x = self.embedding(x.long())
+            x = x.permute(0, 1, 3, 2).reshape(batch_size, -1, T_in)
+
+        # 2. GRU expects (B, T, features) -> transpose channels/time
+        x = x.transpose(1, 2)                 # (B, T, features)
+
+        # 3. Initial hidden state.  With init_state, split off the leading
+        #    n_initial_state_bins pre-onset frames and project them into h_0;
+        #    the GRU then unrolls over the remaining pattern frames only.
+        h_0 = None
+        if self.init_state and self.n_initial_state_bins > 0:
+            n_init = self.n_initial_state_bins
+            init_window = x[:, :n_init, :]            # (B, n_init, features)
+            x = x[:, n_init:, :]                      # (B, T_pattern, features)
+            flat = init_window.reshape(batch_size, -1)
+            h_0 = self.init_encoder(flat)            # (B, layers*dirs*hidden)
+            h_0 = h_0.reshape(batch_size,
+                              self.num_layers * self.num_directions,
+                              self.hidden_size)
+            h_0 = h_0.permute(1, 0, 2).contiguous()  # (layers*dirs, B, hidden)
+
+        output, _ = self.gru(x, h_0)          # (B, T, hidden*dirs)
+
+        # 4. Per-timestep FC head -> (B, T, n_neurons)
+        y = self.fc(output)
+        y = y.transpose(1, 2)                 # (B, n_neurons, T)
+
+        # 5. Align to the requested number of output bins (causal: take the
+        #    last n_output_bins timesteps, mirroring the dataset's output slice
+        #    when the pattern window is longer than n_output_bins).
+        if y.shape[-1] > self.n_output_bins:
+            y = y[:, :, -self.n_output_bins:]
+        return y
 
 class SimpleCausalSpikeCNN(nn.Module):
     def __init__(self,

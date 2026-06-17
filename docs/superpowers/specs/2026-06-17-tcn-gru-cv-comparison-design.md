@@ -60,7 +60,7 @@ Both from `patterns_5k/metrics.py` (no changes needed).
 
 ## Outputs
 
-- Two grouped matplotlib bar charts (x = 4 models):
+- Two grouped Plotly bar charts (x = 4 models):
   - Chart 1: full test correlation. Bar = mean over 5 folds, error bar = std err (std/sqrt(5)).
   - Chart 2: global FVE. Same aggregation.
 - Saved to `RUN_DIR`. Results dict (`{model: {metric: [per-fold values]}}`) kept

@@ -12,7 +12,12 @@
       "Bash(python3 -c \"import json; nb=json.load\\(open\\('vis_stim/greedy_2day_june_2026.ipynb'\\)\\); print\\([repr\\(''.join\\(c['source']\\)[:60]\\) for c in nb['cells'] if c.get\\('id'\\)=='4f19bac8']\\)\")",
       "Bash(python3 -c \"import json,sys; nb=json.load\\(sys.stdin\\); print\\([repr\\(''.join\\(c['source']\\)\\) for c in nb['cells'] if c.get\\('id'\\)=='4f19bac8']\\)\")",
       "Bash(python -c ' *)",
-      "Bash(python3 -c \"import json; nb=json.load\\(open\\('vis_stim/greedy_2day_june_2026.ipynb'\\)\\); print\\('cells:', len\\(nb['cells']\\)\\)\")"
+      "Bash(python3 -c \"import json; nb=json.load\\(open\\('vis_stim/greedy_2day_june_2026.ipynb'\\)\\); print\\('cells:', len\\(nb['cells']\\)\\)\")",
+      "Bash(python /tmp/build_rnn_nb.py)",
+      "Bash(python -c \"import nbformat; nb=nbformat.read\\('rnn_pattern_encoder.ipynb', as_version=4\\); nbformat.validate\\(nb\\); print\\('valid notebook,', len\\(nb.cells\\), 'cells'\\)\")",
+      "Bash(python -c \"import nbformat; nb=nbformat.read\\('rnn_pattern_encoder.ipynb', as_version=4\\); nbformat.validate\\(nb\\); print\\('valid,', len\\(nb.cells\\), 'cells'\\)\")",
+      "Bash(python3 /tmp/fix_cells.py)",
+      "Bash(python3 -c \"import nbformat; nb=nbformat.read\\('greedy_2day_june_2026.ipynb', as_version=4\\); nbformat.validate\\(nb\\); print\\('valid,', len\\(nb.cells\\), 'cells'\\)\")"
     ]
   }
 }
