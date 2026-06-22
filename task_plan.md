@@ -25,6 +25,13 @@ Complete
 - [x] Summarize changes for the user.
 - **Status:** complete
 
+### Phase 4: Loss-Trajectory Figure
+- [x] Track per-optimization-step distances inside `StimCreator.create_stim`.
+- [x] Collect distance histories while generating `est_stims`.
+- [x] Add a figure cell showing distance to target as a function of optimization step.
+- [x] Validate the notebook JSON after edits.
+- **Status:** complete
+
 ## Key Questions
 1. How does the source notebook define `SWEEP_CONFIG` and load the trained TCN?
 2. How does the source notebook instantiate `StimCreator`?
@@ -35,6 +42,7 @@ Complete
 |----------|-----------|
 | Use notebook JSON patching | Keeps the `.ipynb` valid and avoids manual cell-output churn. |
 | Leave `dynamics_analysis.ipynb` unchanged | It already contains source-identical cells for the requested model and `StimCreator`. |
+| Store distance history on `StimCreator` | Preserves the existing `(created_stim, final_dist)` return signature while exposing the optimization trajectory. |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

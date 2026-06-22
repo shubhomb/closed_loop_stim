@@ -12,6 +12,19 @@
   - `vis_stim/data/icms_150_6_2_26/dynamics_analysis.ipynb`
   - `progress.md`
 
+### Follow-up: Greedy Loss-Trajectory Figure
+- **Status:** complete
+- Actions taken:
+  - Modified `StimCreator.create_stim` to keep baseline and intermediate target-distance histories.
+  - Updated the greedy stim generation cell to collect those histories per orientation.
+  - Added a markdown/code cell that plots distance to target and improvement from baseline across 60 ms optimization steps.
+  - Validated the notebook JSON and parsed the modified code cells with `ast`.
+- Files created/modified:
+  - `vis_stim/data/icms_150_6_2_26/dynamics_analysis.ipynb`
+  - `task_plan.md`
+  - `findings.md`
+  - `progress.md`
+
 ### Phase 1: Source Discovery
 - **Status:** complete
 - **Started:** 2026-06-22
@@ -54,6 +67,8 @@
 | Source cell comparison | Source vs target notebooks | Requested model/creator cells match | All 27 source cells match | Pass |
 | Sweep artifact check | `vis_stim/results/local_local_arch_full_2026-06-03_01-24-25` | Config/results/checkpoint exist | `sweep_results.csv`, `sweep_config.yaml`, selected `best.pth` exist | Pass |
 | Edited target notebook JSON parse | `dynamics_analysis.ipynb` | Valid JSON after markdown edit | Valid JSON; 28 cells | Pass |
+| Loss-trajectory edit JSON parse | `dynamics_analysis.ipynb` | Valid JSON after plot edit | Valid JSON; 30 cells | Pass |
+| Modified code syntax | Cells with distance tracking/plotting | Python syntax parses | `ast.parse` passed | Pass |
 
 ## Error Log
 | Timestamp | Error | Attempt | Resolution |
