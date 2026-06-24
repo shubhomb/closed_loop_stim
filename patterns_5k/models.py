@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import warnings
 from typing import List, Optional
 from collections import defaultdict
 from tqdm import tqdm
@@ -542,12 +543,151 @@ def sliding_window_predict_trial(model_tuple, cfg, test_loader, timing_idx,
     return np.exp(pa)
 
 
+def predict_trial_ar_binwise(model_tuple, cfg, test_loader, timing_idx,
+                             stim_binned=None, chunk_length=None,
+                             sample=False, seed=None, max_rate=2.0):
+    """True **bin-by-bin** autoregressive rollout for a single-pass model.
+
+    Use this when the model predicts the whole trial in one forward pass
+    (``n_input_bins == n_output_bins``, ``output_offset == 0``).  The model
+    is re-run once per output bin; after each step the freshly predicted
+    bin (optionally Poisson-sampled to an integer count) is written into
+    the spike buffer so it becomes the ``history`` input for the next bin,
+    exactly mirroring the dataset's training-time layout
+    (``BinnedStimSpikeDataset.__getitem__``).
+
+    Parameters
+    ----------
+    chunk_length : int or None
+        If given, every *chunk_length* output bins the committed AR buffer
+        is overwritten with ground-truth spikes (periodic correction).
+    sample : bool
+        If True, each committed bin is a Poisson **sample** drawn from the
+        predicted rate (discrete integer counts, matching the training-time
+        history distribution).  If False, the continuous rate is fed back.
+    seed : int or None
+        Seed for the Poisson RNG; a fixed seed makes the rollout
+        reproducible.  Ignored when ``sample=False``.
+    max_rate : float
+        Spikes/bin cap (default 2).  The predicted rate is clipped to
+        ``[0, max_rate]`` (NaN/inf sanitised) and, when sampling, the
+        Poisson draw is also clamped to ``<= max_rate`` before being fed
+        back as history, so a diverging AR rollout cannot blow up.
+
+    Returns
+    -------
+    np.ndarray, shape ``(n_neurons, tot_out)``
+        Predicted firing rates (rate space, not log).
+    """
+    model, _, device = model_tuple
+    ds = test_loader.dataset
+
+    n_neurons       = ds.n_neurons
+    n_input_bins    = cfg['n_input_bins']
+    n_output_bins   = cfg['n_output_bins']
+    output_offset   = cfg.get('output_offset', 0)
+    history         = cfg.get('history', 0)
+    init_state_flag = cfg.get('init_state', False)
+    n_init          = getattr(ds, 'n_initial_state_bins', 0)
+
+    if history is None or history == 0:
+        raise ValueError("AR prediction requires history > 0.")
+    if not (n_input_bins == n_output_bins and output_offset == 0):
+        raise ValueError(
+            "predict_trial_ar_binwise requires a single-pass model "
+            f"(n_input_bins == n_output_bins, output_offset == 0); got "
+            f"n_input_bins={n_input_bins}, n_output_bins={n_output_bins}, "
+            f"output_offset={output_offset}.")
+
+    rng = np.random.default_rng(seed) if sample else None
+
+    if stim_binned is None:
+        stim_binned = ds.pattern_stims[ds.timing_to_pattern[timing_idx]]
+    gt_spikes = ds.spike_responses_binned[timing_idx].astype(np.float32)
+    tot_out   = gt_spikes.shape[1]
+
+    # --- stim input (always ground truth), padded for valid-conv context ---
+    if init_state_flag and n_init > 0:
+        stim_full = np.pad(stim_binned, ((0, 0), (n_init, 0)), mode='constant')
+        spike_prepend = n_init + history
+        prev = ds.spike_responses_binned.get(
+            timing_idx - 1, np.zeros((n_neurons, spike_prepend), dtype=np.float32))
+        if prev.shape[1] >= spike_prepend:
+            prev_ctx = prev[:, -spike_prepend:].astype(np.float32)
+        else:
+            prev_ctx = np.zeros((n_neurons, spike_prepend), dtype=np.float32)
+            prev_ctx[:, -prev.shape[1]:] = prev
+        x_width      = n_init + n_input_bins
+        spike_offset = history
+    else:
+        stim_full    = stim_binned
+        prev_ctx     = np.zeros((n_neurons, history), dtype=np.float32)
+        x_width      = n_input_bins
+        spike_offset = 0
+
+    x = stim_full[:, 0:x_width].astype(np.float32)            # (n_chan, x_width)
+
+    # spikes_full = [prev-trial context | running AR buffer for this trial]
+    ar_buf      = np.zeros((n_neurons, tot_out), dtype=np.float32)
+    spikes_full = np.concatenate([prev_ctx, ar_buf], axis=1)
+    lag_start   = spike_offset - history                       # = 0 for these models
+
+    model.eval()
+    with torch.no_grad():
+        for k in range(tot_out):
+            # periodic ground-truth correction of already-committed bins
+            if chunk_length is not None and k > 0 and k % chunk_length == 0:
+                spikes_full[:, prev_ctx.shape[1]:prev_ctx.shape[1] + k] = \
+                    gt_spikes[:, :k]
+
+            # history channel aligned exactly as in __getitem__
+            y_hist = np.zeros((n_neurons, x_width), dtype=np.float32)
+            if lag_start >= 0:
+                y_hist[:] = spikes_full[:, lag_start:lag_start + x_width]
+            else:
+                vf = -lag_start
+                y_hist[:, vf:] = spikes_full[:, 0:x_width - vf]
+
+            xs = np.concatenate([x, y_hist], axis=0)
+            bx = torch.tensor(xs, dtype=torch.float32).unsqueeze(0).to(device)
+            pr = model(bx).cpu().numpy()[0]                    # (n_neurons, tot_out)
+
+            # clip to <= max_rate spikes/bin: a diverging AR rollout can blow
+            # exp(pr) up unboundedly and feed the blow-up back as history.
+            rate_k = np.exp(pr[:, k])
+            rate_k = np.clip(np.nan_to_num(rate_k, nan=0.0, posinf=max_rate),
+                             0.0, max_rate)
+            if sample:
+                fed = np.minimum(rng.poisson(rate_k), max_rate).astype(np.float32)
+            else:
+                fed = rate_k
+            ar_buf[:, k] = fed 
+            spikes_full[:, prev_ctx.shape[1] + k] = ar_buf[:, k] # Rewrite spikes full input for next step
+            # Last step writes the final predicted bin into spikes_full,
+
+    # final pass already gives full-trial rates; recompute clean rate output
+    with torch.no_grad():
+        y_hist = np.zeros((n_neurons, x_width), dtype=np.float32)
+        if lag_start >= 0:
+            y_hist[:] = spikes_full[:, lag_start:lag_start + x_width]
+        else:
+            vf = -lag_start
+            y_hist[:, vf:] = spikes_full[:, 0:x_width - vf]
+        xs = np.concatenate([x, y_hist], axis=0)
+        bx = torch.tensor(xs, dtype=torch.float32).unsqueeze(0).to(device)
+        pr = model(bx).cpu().numpy()[0]
+    out = np.clip(np.nan_to_num(np.exp(pr), nan=0.0, posinf=max_rate),
+                  0.0, max_rate)
+    return out.astype(np.float32)
+
+
 def sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx,
-                                     stim_binned=None, chunk_length=None):
+                                     stim_binned=None, chunk_length=None,
+                                     sample=False, seed=None):
     """Single-trial **autoregressive** sliding-window prediction.
 
     Same interface as :func:`sliding_window_predict_trial` but the model's
-    own predicted rates are fed back as spike-history instead of ground-truth.
+    own predicted output is fed back as spike-history instead of ground-truth.
     The init-state context from the previous trial is always ground-truth.
 
     Parameters
@@ -555,6 +695,15 @@ def sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx,
     chunk_length : int or None
         If given, every *chunk_length* output bins the AR history buffer is
         replaced by ground-truth spikes (periodic correction).
+    sample : bool
+        If True, the fed-back history is a Poisson **sample** drawn from the
+        predicted rate (discrete counts, matching the training-time history
+        distribution) instead of the continuous rate lambda itself. The
+        returned array is still the (sampled) spike-count rollout.
+    seed : int or None
+        Seed for the Poisson sampling RNG. With ``sample=True`` a fixed seed
+        makes the predicted spike train fully reproducible for a given input.
+        Ignored when ``sample=False``.
     """
     model, _, device = model_tuple
     ds = test_loader.dataset
@@ -572,6 +721,16 @@ def sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx,
 
     if history is None or history == 0:
         raise ValueError("AR prediction requires history > 0.")
+
+    rng = np.random.default_rng(seed) if sample else None
+    if sample and n_output_bins > 1:
+        warnings.warn(
+            f"sample=True with n_output_bins={n_output_bins}: overlapping "
+            "windows average multiple Poisson draws per bin, so the fed-back "
+            "history is not strictly integer. Use n_output_bins=1 for a "
+            "purely discrete AR rollout.",
+            stacklevel=2,
+        )
 
     tot_out = max_time_ms // output_bin_size
     tot_in  = max_time_ms // input_bin_size
@@ -645,7 +804,9 @@ def sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx,
                 if tb < tot_out:
                     p_sum[:, tb] += pr[0, :, o]
                     p_cnt[tb] += 1
-                    ar_sum[:, tb] += np.exp(pr[0, :, o])
+                    rate = np.exp(pr[0, :, o])
+                    fed = rng.poisson(rate).astype(np.float32) if sample else rate
+                    ar_sum[:, tb] += fed
                     ar_cnt[tb] += 1
 
     msk = p_cnt > 0
@@ -654,176 +815,50 @@ def sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx,
     return np.exp(pa)
 
 
-# =====================
-# Autoregressive Prediction
-# =====================
+def sliding_window_predict_trial_ar_sampled(model_tuple, cfg, test_loader,
+                                             timing_idx, stim_binned=None,
+                                             chunk_length=None, n_samples=20,
+                                             seed=0, return_samples=False):
+    """Average of :func:`predict_trial_ar_binwise`.
 
-def predict_autoregressive(model_tuple, loader, chunk_length=None, coarse_factor=0):
-    """Generate autoregressive (AR) predictions for every sample in *loader*.
+    Runs the bin-by-bin autoregressive rollout *n_samples* times, each with
+    discrete Poisson-sampled spike history (so the fed-back history matches
+    the discrete training-time distribution), and averages the per-sample
+    predicted-rate trajectories into an empirical expectation.
 
-    Instead of ground-truth spike history the model receives its own
-    previous predicted rates as the history input.  This lets you evaluate
-    how well the model performs without access to observed neural activity.
+    Each sample uses a distinct, deterministic seed derived from *seed*
+    (``seed + i``), so the whole estimate is reproducible while individual
+    samples explore different stochastic rollouts.
 
     Parameters
     ----------
-    model_tuple : tuple
-        ``(model, cfg_or_criterion, device)`` as returned by
-        ``open_model_and_data``.
-    loader : DataLoader
-        Test ``DataLoader`` whose underlying dataset is a
-        ``BinnedStimSpikeDataset`` with ``history > 0``.
-    chunk_length : int or None
-        Maximum number of **output time-bins** the model predicts
-        autoregressively before its history buffer is reset to ground-truth.
-        
-        * ``None`` (default) – fully autoregressive: the model never sees
-          ground-truth history for the current trial (init-state from the
-          previous trial is always ground-truth).
-        * An integer *L* – every *L* output bins within a trial the AR
-          history buffer is overwritten with the actual spike counts,
-          simulating periodic closed-loop correction.
-    coarse_factor : int
-        If > 0 the returned arrays are temporally coarsened (averaged)
-        by this factor before being returned.
+    n_samples : int
+        Number of independent sampled rollouts to average.
+    seed : int
+        Base seed; sample ``i`` uses ``seed + i``.
+    return_samples : bool
+        If True, also return the stacked per-sample predictions
+        ``(n_samples, n_neurons, tot_out)``.
 
     Returns
     -------
-    all_pred : np.ndarray, shape ``(N_samples, n_neurons, n_output_bins')``
-        Predicted firing rates (rate space, **not** log) per sample.
-    all_true : np.ndarray, shape ``(N_samples, n_neurons, n_output_bins')``
-        Ground-truth spike counts per sample (matching ``all_pred``).
+    np.ndarray
+        Mean predicted-rate trajectory ``(n_neurons, tot_out)``, or
+        ``(mean, samples)`` if ``return_samples`` is True.
     """
-    model, _, device = model_tuple
-    dataset = loader.dataset
-    model.eval()
-
-    history = dataset.history if dataset.history else 0
-    if history == 0:
-        raise ValueError("Autoregressive prediction requires a model with history > 0.")
-
-    n_neurons     = dataset.n_neurons
-    n_input_bins  = dataset.n_input_bins
-    n_output_bins = dataset.n_output_bins
-    output_offset = dataset.output_offset
-    use_init_state        = dataset.init_state
-    n_initial_state_bins  = getattr(dataset, 'n_initial_state_bins', 0)
-    total_out_bins        = dataset.total_bins_output
-
-    # ---- group samples by trial, sorted in time order ----
-    trial_to_samples = defaultdict(list)
-    for sample_idx, (timing_idx, t) in enumerate(dataset.samples):
-        trial_to_samples[timing_idx].append((t, sample_idx))
-    for timing_idx in trial_to_samples:
-        trial_to_samples[timing_idx].sort()
-
-    n_samples = len(dataset)
-    all_pred = np.zeros((n_samples, n_neurons, n_output_bins), dtype=np.float32)
-    all_true = np.zeros((n_samples, n_neurons, n_output_bins), dtype=np.float32)
-
-    with torch.no_grad():
-        for timing_idx, time_samples in tqdm(trial_to_samples.items(),
-                                             desc="AR predict", leave=False):
-            gt_spikes = dataset.spike_responses_binned[timing_idx]   # (neurons, total_out_bins)
-            stim = dataset.pattern_stims[dataset.timing_to_pattern[timing_idx]]
-
-            # ---- init-state context from previous trial (always GT) ----
-            if use_init_state:
-                spike_prepend = n_initial_state_bins + history
-                prev_trial = dataset.spike_responses_binned.get(
-                    timing_idx - 1,
-                    np.zeros((n_neurons, total_out_bins), dtype=np.float32),
-                )
-                available = prev_trial.shape[1]
-                if spike_prepend <= available:
-                    init_ctx = prev_trial[:, -spike_prepend:]
-                else:
-                    init_ctx = np.zeros((n_neurons, spike_prepend), dtype=np.float32)
-                    init_ctx[:, -available:] = prev_trial
-
-                stim_padded = np.pad(stim, ((0, 0), (n_initial_state_bins, 0)),
-                                     mode='constant')
-                x_width      = n_initial_state_bins + n_input_bins
-                spike_offset = history
-            else:
-                init_ctx     = None
-                stim_padded  = stim
-                x_width      = n_input_bins
-                spike_offset = 0
-
-            # ---- AR rate buffer (running sum & count per output bin) ----
-            ar_sum   = np.zeros((n_neurons, total_out_bins), dtype=np.float32)
-            ar_count = np.zeros(total_out_bins, dtype=np.float32)
-
-            for t, sample_idx in time_samples:
-                # -- chunk correction: reset AR buffer to GT --
-                if chunk_length is not None:
-                    t_out = t + output_offset
-                    if t_out > 0 and t_out % chunk_length == 0:
-                        ar_sum[:, :t_out]   = gt_spikes[:, :t_out].astype(np.float32)
-                        ar_count[:t_out]    = 1.0
-
-                # -- stim input (always GT) --
-                x = stim_padded[:, t : t + x_width].copy().astype(np.float32)
-
-                # -- build AR history channel --
-                ar_avg = np.zeros((n_neurons, total_out_bins), dtype=np.float32)
-                mask = ar_count > 0
-                if mask.any():
-                    ar_avg[:, mask] = ar_sum[:, mask] / ar_count[mask]
-
-                if use_init_state:
-                    spikes_for_hist = np.concatenate([init_ctx, ar_avg], axis=1)
-                else:
-                    spikes_for_hist = ar_avg
-
-                # replicate __getitem__ lag logic
-                n_time    = x_width
-                lag_start = t + spike_offset - history
-                y_history = np.zeros((n_neurons, n_time), dtype=np.float32)
-                if lag_start >= 0:
-                    y_history[:] = spikes_for_hist[:, lag_start : lag_start + n_time]
-                else:
-                    valid_from = -lag_start
-                    avail = n_time - valid_from
-                    if avail > 0:
-                        y_history[:, valid_from:] = spikes_for_hist[:, 0 : avail]
-
-                x_input = np.concatenate([x, y_history], axis=0)   # (channels, time)
-
-                # -- forward pass --
-                bx = torch.tensor(x_input, dtype=torch.float32).unsqueeze(0).to(device)
-                pred_log = model(bx).cpu().numpy()[0]              # (neurons, n_output_bins)
-                pred_rates = np.exp(pred_log)
-
-                # -- store per-sample result --
-                all_pred[sample_idx] = pred_rates
-
-                if use_init_state:
-                    out_start = t + output_offset + n_initial_state_bins + spike_offset
-                    gt_full = np.concatenate([init_ctx, gt_spikes], axis=1)
-                else:
-                    out_start = t + output_offset
-                    gt_full = gt_spikes
-                all_true[sample_idx] = gt_full[:, out_start : out_start + n_output_bins]
-
-                # -- update AR buffer with new predictions --
-                for o in range(n_output_bins):
-                    tb = t + output_offset + o
-                    if 0 <= tb < total_out_bins:
-                        ar_sum[:, tb]  += pred_rates[:, o]
-                        ar_count[tb]   += 1
-
-    # ---- optional coarsening ----
-    if coarse_factor > 0:
-        def _coarsen_3d(arr, factor):
-            N, neurons, fine = arr.shape
-            coarse = fine // factor
-            return arr[:, :, :coarse * factor].reshape(N, neurons, coarse, factor).mean(axis=3)
-        all_pred = _coarsen_3d(all_pred, coarse_factor)
-        all_true = _coarsen_3d(all_true, coarse_factor)
-
-    return all_pred, all_true
+    samples = []
+    for i in range(n_samples):
+        pred = predict_trial_ar_binwise(
+            model_tuple, cfg, test_loader, timing_idx,
+            stim_binned=stim_binned, chunk_length=chunk_length,
+            sample=True, seed=seed + i,
+        )
+        samples.append(pred)
+    samples = np.stack(samples, axis=0)
+    mean_pred = samples.mean(axis=0)
+    if return_samples:
+        return mean_pred, samples
+    return mean_pred
 
 
 # =====================

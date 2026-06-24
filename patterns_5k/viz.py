@@ -1765,7 +1765,11 @@ def plot_single_oracle_trial(pattern_name, trial_idx, model_tuple, cfg, raw_data
                               coarse_factor=1, coarse_method='mean',
                               nonhistory_model_tuple=None, nonhistory_cfg=None,
                               nonhistory_test_loader=None,
-                              save_path=None):
+                              save_path=None,
+                              show_ar=True, avg_all_trials=False,
+                              ar_n_samples=20, ar_seed=0,
+                              overlay_spikes=False, spike_tick_color='red',
+                              spike_tick_alpha=0.85, spike_tick_lw=0.6):
     """Plot a single oracle trial comparing model predictions.
 
     Panels (top → bottom):
@@ -1794,7 +1798,8 @@ def plot_single_oracle_trial(pattern_name, trial_idx, model_tuple, cfg, raw_data
     fig
     """
     from matplotlib.colors import PowerNorm
-    from models import sliding_window_predict_trial, sliding_window_predict_trial_ar
+    from models import (sliding_window_predict_trial,
+                        sliding_window_predict_trial_ar_sampled)
     from utils import coarsen_2d
 
     model, _, device = model_tuple
@@ -1821,18 +1826,23 @@ def plot_single_oracle_trial(pattern_name, trial_idx, model_tuple, cfg, raw_data
     actual_response = bin_spike_response(spike_responses[timing_idx],
                                          output_bin_size_ms, max_time_ms, remainder="append")
 
-    # --- LOO average ---
-    other_timings = [t for t in timing_list if t != timing_idx]
-    loo_avg = compute_avg_spikes_across_trials(other_timings, spike_responses,
+    # --- LOO / all-trial average ---
+    if avg_all_trials:
+        avg_timings = list(timing_list)
+    else:
+        avg_timings = [t for t in timing_list if t != timing_idx]
+    loo_avg = compute_avg_spikes_across_trials(avg_timings, spike_responses,
                                                 output_bin_size_ms, max_time_ms)
 
     # --- teacher-forced prediction ---
     pred_rates = sliding_window_predict_trial(model_tuple, cfg, test_loader, timing_idx)
 
-    # --- autoregressive prediction (if history > 0) ---
+    # --- autoregressive prediction (if history > 0 and AR panel requested) ---
     ar_pred_rates = None
-    if history and history > 0:
-        ar_pred_rates = sliding_window_predict_trial_ar(model_tuple, cfg, test_loader, timing_idx)
+    if show_ar and history and history > 0:
+        ar_pred_rates = sliding_window_predict_trial_ar_sampled(
+            model_tuple, cfg, test_loader, timing_idx,
+            n_samples=ar_n_samples, seed=ar_seed)
 
     # --- non-history model prediction ---
     nohist_pred_rates = None
@@ -1894,13 +1904,33 @@ def plot_single_oracle_trial(pattern_name, trial_idx, model_tuple, cfg, raw_data
     axes[1].set_ylabel('Neuron')
     axes[1].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
 
+    # --- Precompute ground-truth spike-tick coordinates for overlay (1ms res) ---
+    _spike_ticks_xy = None
+    if overlay_spikes:
+        _raw_resp = spike_responses[timing_idx][:, :max_time_ms]
+        _neurons_idx, _t_ms_idx = np.nonzero(_raw_resp > 0)
+        if _neurons_idx.size > 0:
+            _t_ms = _t_ms_idx.astype(np.float32) + 0.5
+            _t_disp = _t_ms * (display_max_ms / max_time_ms)
+            _y_centers = _neurons_idx.astype(np.float32) + 0.5
+            _spike_ticks_xy = (_t_disp, _y_centers)
+
+    def _overlay_ticks(ax):
+        if _spike_ticks_xy is None:
+            return
+        xs, ys = _spike_ticks_xy
+        ax.vlines(xs, ys - 0.45, ys + 0.45,
+                  colors=spike_tick_color, alpha=spike_tick_alpha,
+                  linewidth=spike_tick_lw, zorder=4)
+
     # Panel 2: teacher-forced
     hist_label = f" (history={history})" if history and history > 0 else ""
     im2 = axes[2].imshow(pred_rates, aspect='auto', cmap=spike_cmap, norm=pnorm,
                    interpolation='nearest', extent=[0, display_max_ms, n_neurons, 0])
-    axes[2].set_title(f'Ground Truth Observed History prediction{hist_label} ({bin_label})')
+    axes[2].set_title(f'Trial {trial_idx} - prediction ({bin_label})')
     axes[2].set_ylabel('Neuron')
     axes[2].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+    _overlay_ticks(axes[2])
 
     panel_idx = 3
 
@@ -1911,13 +1941,14 @@ def plot_single_oracle_trial(pattern_name, trial_idx, model_tuple, cfg, raw_data
         axes[panel_idx].set_title(f'Self Generated (AR) History Prediction (history={history}) ({bin_label})')
         axes[panel_idx].set_ylabel('Neuron')
         axes[panel_idx].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+        _overlay_ticks(axes[panel_idx])
         panel_idx += 1
 
     # Panel: non-history model
     if nohist_pred_rates is not None:
         axes[panel_idx].imshow(nohist_pred_rates, aspect='auto', cmap=spike_cmap, norm=pnorm,
                        interpolation='nearest', extent=[0, display_max_ms, n_neurons, 0])
-        axes[panel_idx].set_title(f'No History (Stim only) Model Prediction ({bin_label})')
+        axes[panel_idx].set_title(f'No history prediction ({bin_label})')
         axes[panel_idx].set_ylabel('Neuron')
         axes[panel_idx].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
         panel_idx += 1
@@ -1925,12 +1956,114 @@ def plot_single_oracle_trial(pattern_name, trial_idx, model_tuple, cfg, raw_data
     # Panel: LOO
     axes[panel_idx].imshow(loo_avg, aspect='auto', cmap=spike_cmap, norm=pnorm,
                    interpolation='nearest', extent=[0, display_max_ms, n_neurons, 0])
-    axes[panel_idx].set_title(f'LOO avg over {len(other_timings)} other trials ({bin_label})')
+    _avg_label = ('Avg over all {n} trials' if avg_all_trials
+                  else 'LOO avg over {n} other trials').format(n=len(avg_timings))
+    axes[panel_idx].set_title(f'{_avg_label} ({bin_label})')
     axes[panel_idx].set_ylabel('Neuron')
     axes[panel_idx].set_xlabel('Time (ms)')
     axes[panel_idx].axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
 
     fig.colorbar(im2, ax=axes[1:].tolist(), orientation='vertical', shrink=0.8, label='Spike count')
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight', transparent=False)
+    plt.close()
+    return fig
+
+
+def plot_single_neuron_raster_oracles(neuron, pattern_name, model_tuple, cfg,
+                                       raw_data, test_loader,
+                                       use_ar=False,
+                                       ar_n_samples=20, ar_seed=0,
+                                       save_path=None,
+                                       spike_dot_color='red',
+                                       spike_dot_size=6,
+                                       spike_dot_alpha=0.85):
+    """Raster of model predictions for a single neuron across all oracle trials.
+
+    For the given ``pattern_name`` every oracle trial is predicted and the
+    chosen ``neuron``'s predicted firing is laid out as a raster image
+    (x = time, y = trial number). Ground-truth spikes for that neuron are
+    overlaid as red dots.
+
+    Parameters
+    ----------
+    neuron : int            – neuron index to plot
+    pattern_name : int/str
+    model_tuple : tuple     – ``(model, cfg_or_crit, device)``
+    cfg : dict              – experiment config
+    raw_data : dict         – from ``load_raw_data``
+    test_loader : DataLoader
+    use_ar : bool           – use autoregressive prediction (needs history > 0)
+    save_path : str or None – save figure here.
+
+    Returns
+    -------
+    fig
+    """
+    from models import (sliding_window_predict_trial,
+                        sliding_window_predict_trial_ar_sampled)
+    from matplotlib.colors import PowerNorm
+
+    pattern_df      = raw_data["pattern_df"]
+    spike_responses = raw_data["spike_responses"]
+
+    output_bin_size_ms = cfg['output_bin_size_ms']
+    max_time_ms        = cfg['max_time_ms']
+    history            = cfg.get('history', 0)
+
+    unique_trials = pattern_df[['pattern_timing_index', 'pattern_name', 'is_oracle']].drop_duplicates()
+    timing_list = sorted(
+        unique_trials[(unique_trials['pattern_name'] == pattern_name)
+                      & (unique_trials['is_oracle'])]['pattern_timing_index'].tolist()
+    )
+    if len(timing_list) == 0:
+        raise ValueError(f"No oracle trials found for pattern {pattern_name}")
+
+    do_ar = use_ar and history and history > 0
+
+    pred_rows = []
+    for timing_idx in timing_list:
+        if do_ar:
+            pr = sliding_window_predict_trial_ar_sampled(
+                model_tuple, cfg, test_loader, timing_idx,
+                n_samples=ar_n_samples, seed=ar_seed)
+        else:
+            pr = sliding_window_predict_trial(model_tuple, cfg, test_loader, timing_idx)
+        pred_rows.append(pr[neuron])
+    raster = np.vstack(pred_rows)  # (n_trials, n_bins)
+
+    n_trials  = raster.shape[0]
+    n_bins    = raster.shape[1]
+    disp_max  = n_bins * output_bin_size_ms
+
+    # --- ground-truth spike dots (1ms res, mapped to display coords) ---
+    gt_x, gt_y = [], []
+    for row, timing_idx in enumerate(timing_list):
+        resp = spike_responses[timing_idx][neuron, :max_time_ms]
+        t_idx = np.nonzero(resp > 0)[0]
+        if t_idx.size > 0:
+            t_ms = (t_idx.astype(np.float32) + 0.5) * (disp_max / max_time_ms)
+            gt_x.append(t_ms)
+            gt_y.append(np.full(t_idx.shape, row + 0.5, dtype=np.float32))
+
+    pnorm = PowerNorm(gamma=0.5, vmin=0, vmax=3.4)
+    fig, ax = plt.subplots(figsize=(7, max(3, 0.18 * n_trials)),
+                           constrained_layout=True)
+    im = ax.imshow(raster, aspect='auto', cmap=plt.cm.Greys, norm=pnorm,
+                   interpolation='nearest', extent=[0, disp_max, n_trials, 0])
+    if gt_x:
+        ax.scatter(np.concatenate(gt_x), np.concatenate(gt_y),
+                   s=spike_dot_size, c=spike_dot_color,
+                   alpha=spike_dot_alpha, edgecolors='none', zorder=4)
+
+    ax.set_title(f'Pattern {pattern_name} – Neuron {neuron}')
+    ax.set_xlabel('Time (ms)')
+    ax.set_ylabel('Trial')
+    ax.set_yticks(np.arange(n_trials) + 0.5)
+    ax.set_yticklabels(np.arange(1, n_trials + 1))
+    ax.axvline(x=600, color='red', linestyle='--', linewidth=1, alpha=0.7)
+    fig.colorbar(im, ax=ax, orientation='vertical', shrink=0.8, label='Spike count')
+
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight', transparent=False)
     plt.close()

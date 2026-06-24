@@ -1473,6 +1473,10 @@ def plot_psth_from_cv_results(
     color_by_order=False,
     order_column='first_trial',
     order_cmap='Blues',
+    show_titles=True,
+    separate_roi_files=False,
+    stack_ground_truth=True,
+    save_format='png',
 ):
     """
     Plot PSTHs using cross-validation results.
@@ -1499,6 +1503,15 @@ def plot_psth_from_cv_results(
     order_cmap : str
         Sequential matplotlib colormap name used when `color_by_order=True`
         (e.g. 'Blues', 'viridis', 'plasma').
+    show_titles : bool
+        If True, add subplot titles with config, ROI, session, and panel type.
+    separate_roi_files : bool
+        If True, save a separate figure for each config/ROI pair.
+    stack_ground_truth : bool
+        If True with `show_ground_truth`, place ground truth above predictions
+        for each session instead of using side-by-side columns.
+    save_format : str
+        File extension/format to save, e.g. 'png' or 'svg'.
     """
     split_strategy = cv_hparams['split_strategy']
     n_units = cv_hparams['n_units']
@@ -1609,35 +1622,64 @@ def plot_psth_from_cv_results(
         
         logging.info(f"Config {config}: {len(matching_df)} snippets, neurons: {neurons_of_interest}")
         
-        # Create figure - double columns if showing ground truth
-        n_cols = n_sessions * 2 if show_ground_truth else n_sessions
-        f, ax = plt.subplots(
-            len(neurons_of_interest), n_cols,
-            figsize=(subplot_size * n_cols, subplot_size * len(neurons_of_interest)),
-            sharex=True, sharey=True, squeeze=False
-        )
+        # Create figure - either one combined config figure, or one figure per ROI.
+        if not separate_roi_files:
+            if show_ground_truth and stack_ground_truth:
+                n_rows = len(neurons_of_interest) * 2
+                n_cols = n_sessions
+                figsize = (subplot_size * n_cols, subplot_size * n_rows)
+            else:
+                n_rows = len(neurons_of_interest)
+                n_cols = n_sessions * 2 if show_ground_truth else n_sessions
+                figsize = (subplot_size * n_cols, subplot_size * n_rows)
+            f, ax = plt.subplots(
+                n_rows, n_cols, figsize=figsize,
+                sharex=True, sharey=True, squeeze=False
+            )
         
         for row_idx, neuron in enumerate(neurons_of_interest):
+            if separate_roi_files:
+                if show_ground_truth and stack_ground_truth:
+                    n_rows = 2
+                    n_cols = n_sessions
+                else:
+                    n_rows = 1
+                    n_cols = n_sessions * 2 if show_ground_truth else n_sessions
+                f, ax = plt.subplots(
+                    n_rows, n_cols,
+                    figsize=(subplot_size * n_cols, subplot_size * n_rows),
+                    sharex=True, sharey=True, squeeze=False
+                )
+
             dfof_idx = neuron_to_dfof_idx[neuron]
             output_idx = neuron_to_output_idx[neuron]
             
             for sess_idx in range(n_sessions):
-                # Column indices: if show_ground_truth, pred is at 2*sess_idx, GT is at 2*sess_idx+1
-                if show_ground_truth:
+                if show_ground_truth and stack_ground_truth:
+                    if separate_roi_files:
+                        gt_ax = ax[0, sess_idx]
+                        pred_ax = ax[1, sess_idx]
+                    else:
+                        gt_ax = ax[row_idx * 2, sess_idx]
+                        pred_ax = ax[row_idx * 2 + 1, sess_idx]
+                elif show_ground_truth:
+                    figure_row = 0 if separate_roi_files else row_idx
                     pred_col = sess_idx * 2
                     gt_col = sess_idx * 2 + 1
-                    pred_ax = ax[row_idx, pred_col]
-                    gt_ax = ax[row_idx, gt_col]
+                    pred_ax = ax[figure_row, pred_col]
+                    gt_ax = ax[figure_row, gt_col]
                 else:
+                    figure_row = 0 if separate_roi_files else row_idx
                     pred_col = sess_idx
-                    pred_ax = ax[row_idx, pred_col]
+                    pred_ax = ax[figure_row, pred_col]
                     gt_ax = None
                 
                 session_df = matching_df[matching_df['session'] == sess_idx]
                 
                 if len(session_df) == 0:
-                    pred_ax.set_title(f"Config {config}, ROI {neuron}, Sess {sess_idx+1}\nPredicted (no data)")
-                    if gt_ax is not None:
+                    if show_titles:
+                        pred_ax.set_title(f"Config {config}, ROI {neuron}, Sess {sess_idx+1}\nPredicted (no data)")
+                    if gt_ax is not None and show_titles:
                         gt_ax.set_title(f"Config {config}, ROI {neuron}, Sess {sess_idx+1}\nGround Truth (no data)")
                     continue
                 
@@ -1732,20 +1774,21 @@ def plot_psth_from_cv_results(
                         current = int(stim_snippet[t_idx, e_idx])
                         vcol = current_colors.get(current, 'gray')
                         vlab = f"Stim (I={current})" if not stim_lines_added_pred.get(current, False) else None
-                        pred_ax.axvline(x=t_idx - stim_delay, color=vcol, linestyle=':', alpha=0.7, label=vlab)
+                        pred_ax.axvline(x=t_idx - stim_delay, color=vcol, linestyle=':', alpha=line_alpha, label=vlab)
                         stim_lines_added_pred[current] = True
                         
                         # Also add stim lines to GT subplot
                         if gt_ax is not None:
                             vlab_gt = f"Stim (I={current})" if not stim_lines_added_gt.get(current, False) else None
-                            gt_ax.axvline(x=t_idx - stim_delay, color=vcol, linestyle=':', alpha=0.7, label=vlab_gt)
+                            gt_ax.axvline(x=t_idx - stim_delay, color=vcol, linestyle=':', alpha=line_alpha, label=vlab_gt)
                             stim_lines_added_gt[current] = True
                 
                 # Axis formatting for prediction subplot
                 pred_ax.set_ylim(-0.5, 1.0)
                 pred_ax.set_yticks([-0.5, 0, 0.5, 1.0])
                 pred_ax.set_xticks([0, 50])
-                pred_ax.set_title(f"Config {config}, ROI {neuron}, Sess {sess_idx+1}\nPredicted")
+                if show_titles:
+                    pred_ax.set_title(f"Config {config}, ROI {neuron}, Sess {sess_idx+1}\nPredicted")
                 pred_ax.set_xlabel("Time (frames)")
                 pred_ax.set_ylabel("Activity")
                 
@@ -1754,15 +1797,26 @@ def plot_psth_from_cv_results(
                     gt_ax.set_ylim(-0.5, 1.0)
                     gt_ax.set_yticks([-0.5, 0, 0.5, 1.0])
                     gt_ax.set_xticks([0, 50])
-                    gt_ax.set_title(f"Config {config}, ROI {neuron}, Sess {sess_idx+1}\nGround Truth")
+                    if show_titles:
+                        gt_ax.set_title(f"Config {config}, ROI {neuron}, Sess {sess_idx+1}\nGround Truth")
                     gt_ax.set_xlabel("Time (frames)")
                     gt_ax.set_ylabel("Activity")
+
+            if separate_roi_files:
+                plt.tight_layout()
+                outpath = os.path.join(
+                    save_dir, f"config_{config}_roi_{neuron}_cv.{save_format}"
+                )
+                plt.savefig(outpath, dpi=200)
+                plt.close(f)
+                logging.info(f"Saved CV PSTH: {outpath}")
         
-        plt.tight_layout()
-        outpath = os.path.join(save_dir, f"config_{config}_cv.png")
-        plt.savefig(outpath, dpi=200)
-        plt.close(f)
-        logging.info(f"Saved CV PSTH: {outpath}")
+        if not separate_roi_files:
+            plt.tight_layout()
+            outpath = os.path.join(save_dir, f"config_{config}_cv.{save_format}")
+            plt.savefig(outpath, dpi=200)
+            plt.close(f)
+            logging.info(f"Saved CV PSTH: {outpath}")
     
     # Clear model cache
     model_cache.clear()
