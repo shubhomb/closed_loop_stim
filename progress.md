@@ -1,5 +1,32 @@
 # Progress Log
 
+## Session: 2026-06-23
+
+### RNN Pattern Encoder Comparison
+- **Status:** complete
+- Actions taken:
+  - Read planning skill instructions.
+  - Read existing planning files and added a new active plan for the requested notebook refactor.
+  - Inspected `rnn_pattern_encoder.ipynb`, `model_playground.ipynb`, and supporting model/metric utilities.
+  - Patched the CV comparison section to include an instantaneous MLP control and coarsening-factor metric sweep.
+  - Fixed a notebook-source f-string escaping issue in the modified architecture-summary cell.
+  - Validated notebook JSON and parsed modified code cells 23-27 with `ast`.
+  - Ran a lightweight PyTorch shape smoke test for `InstantaneousStimMLP`: `(4, 42, 60) -> (4, 63, 60)`.
+- Files created/modified:
+  - `task_plan.md`
+  - `findings.md`
+  - `progress.md`
+  - `patterns_5k/rnn_pattern_encoder.ipynb`
+
+## Test Results
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| Notebook JSON parse | `patterns_5k/rnn_pattern_encoder.ipynb` | Valid JSON | Valid JSON; 28 cells | Pass |
+| Modified code syntax | Cells 23-27 | Python syntax parses | `ast.parse` passed | Pass |
+| MLP shape smoke | `(batch=4, channels=42, bins=60)` | `(4, 63, 60)` | `(4, 63, 60)` | Pass |
+
+---
+
 ## Session: 2026-06-22
 
 ### Follow-up: Explicit Notebook Edit
@@ -19,6 +46,19 @@
   - Updated the greedy stim generation cell to collect those histories per orientation.
   - Added a markdown/code cell that plots distance to target and improvement from baseline across 60 ms optimization steps.
   - Validated the notebook JSON and parsed the modified code cells with `ast`.
+- Files created/modified:
+  - `vis_stim/data/icms_150_6_2_26/dynamics_analysis.ipynb`
+  - `task_plan.md`
+  - `findings.md`
+  - `progress.md`
+
+### Follow-up: Long Arbitrary PC-Space Reconstruction
+- **Status:** complete
+- Actions taken:
+  - Added a notebook section that builds a 390-bin PC1/PC2 target sequence from 0, 90, 180, and 270 degree visual trajectories with gray PC=(0, 0) epochs.
+  - Added independent 60 ms greedy solves for all 65 chunks and concatenates them into one long stimulation.
+  - Added model-prediction comparison plots for PC1, PC2, PC1/PC2 phase trajectory, and per-chunk PC-space distances.
+  - Validated notebook JSON and parsed the new code cell with `ast`.
 - Files created/modified:
   - `vis_stim/data/icms_150_6_2_26/dynamics_analysis.ipynb`
   - `task_plan.md`
@@ -69,6 +109,7 @@
 | Edited target notebook JSON parse | `dynamics_analysis.ipynb` | Valid JSON after markdown edit | Valid JSON; 28 cells | Pass |
 | Loss-trajectory edit JSON parse | `dynamics_analysis.ipynb` | Valid JSON after plot edit | Valid JSON; 30 cells | Pass |
 | Modified code syntax | Cells with distance tracking/plotting | Python syntax parses | `ast.parse` passed | Pass |
+| Long PC target edit JSON/syntax | New long-target section | Valid notebook and Python syntax | Valid JSON; new cell parses | Pass |
 
 ## Error Log
 | Timestamp | Error | Attempt | Resolution |
